@@ -174,88 +174,107 @@ def _hex_to_rgb(hex_str) -> np.ndarray:
     return np.array([128, 128, 128], dtype=np.float32)
 
 
-def _score_ref(fname: str, features: dict) -> float:
-    """features와 레퍼런스 태그 유사도 점수 (높을수록 유사)"""
+def _score_ref_top(fname: str, features: dict) -> float:
+    """상의 기준 유사도 점수"""
     tag = _REF_TAGS.get(fname, {})
     if not tag:
         return 0.0
-
     score = 0.0
-    top_style  = (features.get("top_style",    "") or "").lower()
-    bot_style  = (features.get("bottom_style", "") or "").lower()
+    top_style  = (features.get("top_style", "") or "").lower()
     gender_exp = (features.get("gender_expression", "") or "").lower()
     ref_tags   = [t.lower() for t in tag.get("style_tags", [])]
-    ref_top    = (tag.get("top_style",    "") or "").lower()
-    ref_bot    = (tag.get("bottom_style", "") or "").lower()
-    ref_gender = (tag.get("gender",       "") or "").lower()
+    ref_top    = (tag.get("top_style", "") or "").lower()
+    ref_gender = (tag.get("gender", "") or "").lower()
 
-    # 1) 스타일 태그 키워드 매칭 (가장 중요)
-    combined_input = top_style + " " + bot_style
     for rt in ref_tags:
-        if rt in combined_input:
+        if rt in top_style:
             score += 15.0
-
-    # 2) 상의/하의 스타일 텍스트 유사도
     for word in top_style.split():
         if len(word) > 1 and word in ref_top:
-            score += 8.0
-    for word in bot_style.split():
-        if len(word) > 1 and word in ref_bot:
-            score += 6.0
+            score += 10.0
 
-    # 3) 성별 표현 매칭
     gender_map = {"여성적": "여성", "남성적": "남성", "중성적": "중성"}
     if gender_map.get(gender_exp) == ref_gender:
         score += 5.0
 
-    # 4) 색상 유사도 (보조)
-    top_rgb = parse_color(features.get("top_color", "") or "#888888")
-    bot_rgb = parse_color(features.get("bottom_color", "") or "#888888")
+    top_rgb = parse_color(features.get("top_color") or "#888888")
     ref_top_rgb = _hex_to_rgb(tag.get("top_color") or "#888888")
-    ref_bot_rgb = _hex_to_rgb(tag.get("bottom_color") or "#888888")
     t = np.array(top_rgb, dtype=np.float32)
-    b = np.array(bot_rgb, dtype=np.float32)
-    color_dist = float(np.sum((ref_top_rgb - t)**2) * 0.7 + np.sum((ref_bot_rgb - b)**2) * 0.3)
+    color_dist = float(np.sum((ref_top_rgb - t) ** 2))
     score += max(0.0, 10.0 - color_dist / 3000.0)
-
     return score
 
 
-def _select_ref_skin(features: dict) -> np.ndarray:
-    """의상 특징에 맞는 레퍼런스 스킨 선택 (캐시)"""
-    top_style = (features.get("top_style",    "") or "").lower()
+def _score_ref_bot(fname: str, features: dict) -> float:
+    """하의 기준 유사도 점수"""
+    tag = _REF_TAGS.get(fname, {})
+    if not tag:
+        return 0.0
+    score = 0.0
+    bot_style  = (features.get("bottom_style", "") or "").lower()
+    gender_exp = (features.get("gender_expression", "") or "").lower()
+    ref_tags   = [t.lower() for t in tag.get("style_tags", [])]
+    ref_bot    = (tag.get("bottom_style", "") or "").lower()
+    ref_gender = (tag.get("gender", "") or "").lower()
+
+    for rt in ref_tags:
+        if rt in bot_style:
+            score += 15.0
+    for word in bot_style.split():
+        if len(word) > 1 and word in ref_bot:
+            score += 10.0
+
+    gender_map = {"여성적": "여성", "남성적": "남성", "중성적": "중성"}
+    if gender_map.get(gender_exp) == ref_gender:
+        score += 5.0
+
+    bot_rgb = parse_color(features.get("bottom_color") or "#888888")
+    ref_bot_rgb = _hex_to_rgb(tag.get("bottom_color") or "#888888")
+    b = np.array(bot_rgb, dtype=np.float32)
+    color_dist = float(np.sum((ref_bot_rgb - b) ** 2))
+    score += max(0.0, 10.0 - color_dist / 3000.0)
+    return score
+
+
+def _best_ref(score_fn, features: dict, fallback: str) -> str:
+    all_refs = sorted(BASESKIN_DIR.glob("reference (*).png"))
+    best_fname = fallback
+    best_score = -1.0
+    for p in all_refs:
+        s = score_fn(p.name, features)
+        if s > best_score:
+            best_score = s
+            best_fname = p.name
+    return best_fname, best_score
+
+
+def _load_ref(fname: str) -> np.ndarray:
+    if fname not in _REF_SKIN_CACHE:
+        path = BASESKIN_DIR / fname
+        if not path.exists():
+            path = BASESKIN_DIR / _REF_FALLBACK
+        _REF_SKIN_CACHE[fname] = np.array(Image.open(path).convert("RGBA"), dtype=np.uint8)
+    return _REF_SKIN_CACHE[fname]
+
+
+def _select_ref_pair(features: dict) -> tuple:
+    """(top_ref_arr, bot_ref_arr) 반환 — 상의/하의 각각 최적 레퍼런스"""
+    top_style = (features.get("top_style", "") or "").lower()
     bot_style = (features.get("bottom_style", "") or "").lower()
 
-    # 1) 특수 스타일 키워드 우선 매칭 (한복, 웨딩, 수영복 등 명확한 경우)
-    chosen = None
+    # 특수 스타일: 상하의 동일 레퍼런스 강제
     for top_kws, bot_kws, fname in _STYLE_REF_MAP:
         top_ok = (not top_kws) or any(k in top_style for k in top_kws)
         bot_ok = (not bot_kws) or any(k in bot_style for k in bot_kws)
-        if top_ok and bot_ok:
-            p = BASESKIN_DIR / fname
-            if p.exists():
-                chosen = fname
-                break
+        if top_ok and bot_ok and (BASESKIN_DIR / fname).exists():
+            arr = _load_ref(fname)
+            print(f"[ref_select] special → {fname} (top+bot)")
+            return arr, arr
 
-    # 2) 태그 기반 유사도 점수로 최적 레퍼런스 선택
-    if chosen is None:
-        all_refs = sorted(BASESKIN_DIR.glob("reference (*).png"))
-        best_fname = _REF_FALLBACK
-        best_score = -1.0
-        for p in all_refs:
-            s = _score_ref(p.name, features)
-            if s > best_score:
-                best_score = s
-                best_fname = p.name
-        chosen = best_fname
-        print(f"[ref_select] {chosen} (score={best_score:.1f})")
-
-    if chosen not in _REF_SKIN_CACHE:
-        path = BASESKIN_DIR / chosen
-        if not path.exists():
-            path = BASESKIN_DIR / _REF_FALLBACK
-        _REF_SKIN_CACHE[chosen] = np.array(Image.open(path).convert("RGBA"), dtype=np.uint8)
-    return _REF_SKIN_CACHE[chosen]
+    top_fname, top_score = _best_ref(_score_ref_top, features, _REF_FALLBACK)
+    bot_fname, bot_score = _best_ref(_score_ref_bot, features, _REF_FALLBACK)
+    print(f"[ref_select] top={top_fname}({top_score:.1f})  bot={bot_fname}({bot_score:.1f})")
+    return _load_ref(top_fname), _load_ref(bot_fname)
 
 
 def _build_zone_masks(mask_arr: np.ndarray) -> dict:
@@ -273,27 +292,40 @@ def _build_zone_masks(mask_arr: np.ndarray) -> dict:
     }
 
 
-def _zone_stats(ref_arr: np.ndarray, mask_arr: np.ndarray) -> dict:
-    """존별 최대 V 계산 (numpy 벡터화)"""
-    ref_v = _np_rgb2v(ref_arr[:, :, :3])
-    ref_valid = ref_arr[:, :, 3] > 10
+_TOP_ZONES = {"top", "jacket", "acc"}
+_BOT_ZONES = {"bottom", "shoes"}
+
+
+def _zone_stats_split(top_ref: np.ndarray, bot_ref: np.ndarray, mask_arr: np.ndarray) -> dict:
+    """존별 최대 V — 상의 존은 top_ref, 하의 존은 bot_ref 기준"""
+    top_v = _np_rgb2v(top_ref[:, :, :3])
+    bot_v = _np_rgb2v(bot_ref[:, :, :3])
+    top_valid = top_ref[:, :, 3] > 10
+    bot_valid = bot_ref[:, :, 3] > 10
     maxv: dict = {}
     for zone, zmask in _build_zone_masks(mask_arr).items():
+        ref_v, ref_valid = (top_v, top_valid) if zone in _TOP_ZONES else (bot_v, bot_valid)
         combined = zmask & ref_valid
         if combined.any():
             maxv[zone] = float(ref_v[combined].max())
     return maxv
 
 
-def _paint_mask(arr, mask_arr, ref_arr, zone_colors, zone_maxv):
-    """numpy 벡터화 HSV 색조 변환으로 레퍼런스 텍스처 재채색"""
-    ref_v_map = _np_rgb2v(ref_arr[:, :, :3])          # (64,64) float32
-    ref_valid  = ref_arr[:, :, 3] > 10
+def _paint_mask(arr, mask_arr, top_ref, bot_ref, zone_colors, zone_maxv):
+    """존별로 다른 레퍼런스 텍스처를 사용해 HSV 색조 변환 적용"""
+    top_v_map = _np_rgb2v(top_ref[:, :, :3])
+    bot_v_map = _np_rgb2v(bot_ref[:, :, :3])
+    top_valid = top_ref[:, :, 3] > 10
+    bot_valid = bot_ref[:, :, 3] > 10
     zone_masks = _build_zone_masks(mask_arr)
 
     for zone, zmask in zone_masks.items():
         if not zmask.any():
             continue
+        is_top   = zone in _TOP_ZONES
+        ref_v_map = top_v_map if is_top else bot_v_map
+        ref_valid = top_valid  if is_top else bot_valid
+
         target_rgb = zone_colors.get(zone, DEFAULT_COLOR)
         tr, tg, tb = target_rgb
         t_h, t_s, t_v = rgb_to_hsv(tr/255, tg/255, tb/255)
@@ -303,9 +335,6 @@ def _paint_mask(arr, mask_arr, ref_arr, zone_colors, zone_maxv):
         no_ref  = zmask & ~ref_valid
 
         if has_ref.any():
-            rv = ref_v_map[has_ref]
-            norm_v  = np.clip(rv / max(mv, 0.01), 0.0, 1.0)
-            final_v = np.clip(norm_v * max(t_v, 0.15) * BRIGHTNESS_BOOST, 0.0, 1.0)
             rgb_out = _np_hsv_recolor(arr[:, :, :3], arr[:, :, 3],
                                       t_h, t_s, ref_v_map, mv, t_v)
             ys, xs = np.where(has_ref)
@@ -342,23 +371,20 @@ def apply_mask_clothing(arr: np.ndarray, features: dict):
 
     mask_path = pick_mask(features)
     mask_arr  = np.array(Image.open(mask_path).convert("RGBA"), dtype=np.uint8)
-    ref_arr   = _select_ref_skin(features)
-    zone_maxv = _zone_stats(ref_arr, mask_arr)
+    top_ref, bot_ref = _select_ref_pair(features)
+    zone_maxv = _zone_stats_split(top_ref, bot_ref, mask_arr)
 
     # 자켓 스타일: longsleeve를 먼저 깔고 jacket 오버레이 덮기
     if "jacket" in mask_path.name:
         base_mask_path = BASESKIN_DIR / "mask_longsleeve.png"
         if base_mask_path.exists():
             base_mask = np.array(Image.open(base_mask_path).convert("RGBA"), dtype=np.uint8)
-            base_maxv = _zone_stats(ref_arr, base_mask)
+            base_maxv = _zone_stats_split(top_ref, bot_ref, base_mask)
             tmp_mask = base_mask.copy()
-            for y in range(64):
-                for x in range(64):
-                    if mask_arr[y, x, 3] > 10:
-                        tmp_mask[y, x, 3] = 0
-            _paint_mask(arr, tmp_mask, ref_arr, zone_colors, base_maxv)
+            tmp_mask[mask_arr[:, :, 3] > 10, 3] = 0
+            _paint_mask(arr, tmp_mask, top_ref, bot_ref, zone_colors, base_maxv)
 
-    _paint_mask(arr, mask_arr, ref_arr, zone_colors, zone_maxv)
+    _paint_mask(arr, mask_arr, top_ref, bot_ref, zone_colors, zone_maxv)
 
 
 def _mirror_clothing_to_layer2(arr: np.ndarray):
