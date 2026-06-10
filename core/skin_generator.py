@@ -101,7 +101,7 @@ def generate_skin(features: dict) -> Image.Image:
     prompt = SKIN_GEN_PROMPT.format(character_description=char_desc)
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash-preview-image-generation",
+        model="gemini-2.0-flash-exp-image-generation",
         contents=[*ref_parts, base_part, prompt],
         config=types.GenerateContentConfig(
             response_modalities=["IMAGE", "TEXT"],
