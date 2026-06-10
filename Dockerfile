@@ -9,4 +9,5 @@ COPY . .
 
 EXPOSE 7860
 
-CMD ["python", "app.py"]
+ENV PYTHONUNBUFFERED=1
+CMD ["python", "-u", "app.py"]

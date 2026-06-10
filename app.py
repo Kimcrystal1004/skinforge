@@ -47,10 +47,14 @@ footer, .built-with { display: none !important; }
 #upload-wrap .upload-text span { color: #888 !important; font-size: 14px !important; }
 #upload-wrap > label.svelte-116rqfv { display: none !important; }
 /* 카메라·클립보드 아이콘 숨기기 */
-#upload-wrap .icon-buttons, #upload-wrap .upload-icon-btn,
-#upload-wrap button[title="Upload from webcam"],
-#upload-wrap button[title="Paste from clipboard"],
-#upload-wrap .svelte-1ipelgc { display: none !important; }
+#upload-wrap .icon-buttons,
+#upload-wrap .upload-icon-btn,
+#upload-wrap button[title*="webcam"],
+#upload-wrap button[title*="clipboard"],
+#upload-wrap button[title*="Webcam"],
+#upload-wrap button[title*="Clipboard"],
+#upload-wrap .source-selection,
+#upload-wrap [data-testid="source-select"] { display: none !important; }
 
 /* ── generate button ── */
 #gen-btn button {
@@ -252,8 +256,7 @@ def process(photo: Image.Image):
         return VIEWER_EMPTY, None, f"❌ 오류: {e}"
 
 
-with gr.Blocks(title="SkinForge AI") as demo:
-    gr.HTML(f"<style>{CSS}</style>")
+with gr.Blocks(css=CSS, title="SkinForge AI") as demo:
     gr.HTML(HEADER_HTML)
 
     with gr.Row(equal_height=True):
@@ -300,4 +303,5 @@ with gr.Blocks(title="SkinForge AI") as demo:
     """)
 
 if __name__ == "__main__":
+    demo.queue()
     demo.launch(server_name="0.0.0.0", server_port=7860)
