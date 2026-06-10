@@ -271,6 +271,24 @@ def apply_mask_clothing(arr: np.ndarray, features: dict):
             _paint_mask(arr, tmp_mask, ref_arr, zone_colors, base_maxv)
 
     _paint_mask(arr, mask_arr, ref_arr, zone_colors, zone_maxv)
+    _mirror_clothing_to_layer2(arr)
+
+
+def _mirror_clothing_to_layer2(arr: np.ndarray):
+    """Layer1 의상 픽셀을 Layer2(오버레이) 위치에 그대로 복사"""
+    # (src_y, src_x, dst_y, dst_x, h, w)
+    PAIRS = [
+        (16, 16, 32, 16, 16, 24),  # 몸통
+        (16, 40, 32, 40, 16, 16),  # 오른팔
+        (48, 32, 48, 48, 16, 16),  # 왼팔
+        (16,  0, 32,  0, 16, 16),  # 오른다리
+        (48, 16, 48,  0, 16, 16),  # 왼다리
+    ]
+    for sy, sx, dy, dx, h, w in PAIRS:
+        src = arr[sy:sy+h, sx:sx+w]
+        alive = src[:, :, 3] > 10
+        if alive.any():
+            arr[dy:dy+h, dx:dx+w][alive] = src[alive]
 
 
 # ── 머리카락 ──────────────────────────────────────────────────────

@@ -238,61 +238,85 @@ _RESULT_EMPTY = """
 def make_result_html(view_imgs: list, skin_img: Image.Image) -> str:
     """캐러셀 미리보기(앞→오른→뒤→왼) + 다운로드 버튼"""
     labels = ["앞", "오른쪽", "뒤", "왼쪽"]
+    n = len(view_imgs)
 
-    imgs_js = []
+    imgs_b64 = []
     for img in view_imgs:
         buf = io.BytesIO()
         img.save(buf, format="PNG")
-        imgs_js.append(base64.b64encode(buf.getvalue()).decode())
-
-    imgs_json = "[" + ",".join(f'"{b}"' for b in imgs_js) + "]"
-    labels_json = "[" + ",".join(f'"{l}"' for l in labels[:len(view_imgs)]) + "]"
+        imgs_b64.append(base64.b64encode(buf.getvalue()).decode())
 
     sb = io.BytesIO()
     skin_img.save(sb, format="PNG")
     skin_b64 = base64.b64encode(sb.getvalue()).decode()
 
+    # 이미지를 숨겨진 span 에 저장 — script 없이 순수 inline onclick으로 접근
+    hidden_imgs = "".join(
+        f'<span id="sfi{i}" style="display:none">{imgs_b64[i]}</span>'
+        for i in range(n)
+    )
+    # 인디케이터 점
+    dots = "".join(
+        f'<div id="sfd{i}" style="width:7px;height:7px;border-radius:50%;'
+        f'background:{"#00C9A7" if i==0 else "rgba(255,255,255,.3)"};'
+        f'transition:background .2s;"></div>'
+        for i in range(n)
+    )
+
+    # inline onclick — 외부 함수 없이 self-contained
+    def nav_onclick(d: int) -> str:
+        return (
+            "var w=document.getElementById('sfwrap');"
+            f"var n=(parseInt(w.dataset.idx||0)+({d})+{n})%{n};"
+            "w.dataset.idx=n;"
+            "document.getElementById('sfimg').src='data:image/png;base64,'+document.getElementById('sfi'+n).textContent.trim();"
+            f"var lb=[{','.join(repr(l) for l in labels[:n])}];"
+            "document.getElementById('sflbl').textContent=lb[n];"
+            f"for(var i=0;i<{n};i++){{"
+            "document.getElementById('sfd'+i).style.background=(i===n?'#00C9A7':'rgba(255,255,255,.3)');}"
+        )
+
     return f"""
 <div style="background:#111;border-radius:16px;border:1px solid #1a1a1a;
     padding:20px;display:flex;flex-direction:column;gap:14px;">
+  {hidden_imgs}
 
   <!-- 캐러셀 -->
-  <div style="position:relative;background:#0a0a0a;border-radius:12px;
-      border:1px solid #181818;overflow:hidden;user-select:none;">
+  <div id="sfwrap" data-idx="0"
+       style="position:relative;background:#0a0a0a;border-radius:12px;
+              border:1px solid #181818;overflow:hidden;user-select:none;">
 
     <!-- 방향 라벨 -->
-    <div id="sf-label"
+    <div id="sflbl"
          style="position:absolute;top:10px;left:50%;transform:translateX(-50%);
-                background:rgba(0,0,0,.55);color:#00C9A7;font-size:12px;
+                background:rgba(0,0,0,.6);color:#00C9A7;font-size:12px;
                 font-weight:700;padding:3px 12px;border-radius:20px;z-index:2;
-                font-family:sans-serif;">앞</div>
+                font-family:sans-serif;white-space:nowrap;">앞</div>
 
     <!-- 이미지 -->
-    <img id="sf-img"
-         src="data:image/png;base64,{imgs_js[0]}"
-         style="width:100%;height:auto;image-rendering:pixelated;display:block;"
+    <img id="sfimg"
+         src="data:image/png;base64,{imgs_b64[0]}"
+         style="width:100%;height:340px;object-fit:contain;
+                image-rendering:pixelated;display:block;"
          alt="skin preview">
 
     <!-- 왼쪽 화살표 -->
-    <button onclick="sfNav(-1)"
+    <button onclick="{nav_onclick(-1)}"
       style="position:absolute;left:8px;top:50%;transform:translateY(-50%);
-             background:rgba(0,0,0,.5);border:1px solid #333;color:#ccc;
+             background:rgba(0,0,0,.55);border:1px solid #444;color:#ddd;
              width:36px;height:36px;border-radius:50%;font-size:18px;
-             cursor:pointer;z-index:2;display:flex;align-items:center;
-             justify-content:center;padding:0;">&#8592;</button>
+             cursor:pointer;z-index:2;line-height:1;padding:0;">&#8592;</button>
 
     <!-- 오른쪽 화살표 -->
-    <button onclick="sfNav(1)"
+    <button onclick="{nav_onclick(1)}"
       style="position:absolute;right:8px;top:50%;transform:translateY(-50%);
-             background:rgba(0,0,0,.5);border:1px solid #333;color:#ccc;
+             background:rgba(0,0,0,.55);border:1px solid #444;color:#ddd;
              width:36px;height:36px;border-radius:50%;font-size:18px;
-             cursor:pointer;z-index:2;display:flex;align-items:center;
-             justify-content:center;padding:0;">&#8594;</button>
+             cursor:pointer;z-index:2;line-height:1;padding:0;">&#8594;</button>
 
     <!-- 인디케이터 -->
-    <div id="sf-dots"
-         style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
-                display:flex;gap:6px;z-index:2;"></div>
+    <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+                display:flex;gap:6px;z-index:2;">{dots}</div>
   </div>
 
   <!-- 다운로드 버튼 -->
@@ -307,39 +331,6 @@ def make_result_html(view_imgs: list, skin_img: Image.Image) -> str:
     ⬇️ PNG 다운로드
   </a>
 </div>
-
-<script>
-(function(){{
-  var imgs   = {imgs_json};
-  var labels = {labels_json};
-  var idx    = 0;
-
-  var imgEl   = document.getElementById('sf-img');
-  var lblEl   = document.getElementById('sf-label');
-  var dotsEl  = document.getElementById('sf-dots');
-
-  // 인디케이터 점 생성
-  labels.forEach(function(_, i) {{
-    var d = document.createElement('div');
-    d.style.cssText = 'width:7px;height:7px;border-radius:50%;background:' +
-                      (i===0 ? '#00C9A7' : 'rgba(255,255,255,.3)') + ';transition:background .2s;';
-    dotsEl.appendChild(d);
-  }});
-
-  function update() {{
-    imgEl.src   = 'data:image/png;base64,' + imgs[idx];
-    lblEl.textContent = labels[idx];
-    Array.from(dotsEl.children).forEach(function(d, i) {{
-      d.style.background = i === idx ? '#00C9A7' : 'rgba(255,255,255,.3)';
-    }});
-  }}
-
-  window.sfNav = function(dir) {{
-    idx = (idx + dir + imgs.length) % imgs.length;
-    update();
-  }};
-}})();
-</script>
 """
 
 
