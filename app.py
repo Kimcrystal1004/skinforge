@@ -1,6 +1,5 @@
 """
-app.py
-SkinForge AI — 사진 업로드 → 마인크래프트 스킨 생성 → 3D 미리보기·다운로드
+app.py — SkinForge AI
 """
 
 import os
@@ -21,133 +20,177 @@ OUTPUT_DIR = Path("output")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 CSS = """
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-* { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; }
+
 body, .gradio-container {
-    background: #0d0d0d !important;
+    background: #0a0a0a !important;
     color: #e0e0e0 !important;
     font-family: 'Inter', sans-serif !important;
+    margin: 0 !important; padding: 0 !important;
 }
-.gradio-container { max-width: 1080px !important; margin: 0 auto !important; padding: 0 !important; }
-footer { display: none !important; }
-.main { padding: 0 !important; }
+.gradio-container { max-width: 100% !important; }
+footer, .built-with { display: none !important; }
+.main.svelte-1kyws56 { padding: 0 !important; }
 
-/* header */
-#sf-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 28px; background: #111; border-bottom: 1px solid #1e1e1e;
-    margin-bottom: 0;
-}
-
-/* upload component 스타일 */
-#upload-wrap { background: transparent !important; }
+/* ── upload ── */
 #upload-wrap .wrap {
     border: 2px dashed #00C9A7 !important;
-    border-radius: 14px !important;
+    border-radius: 16px !important;
     background: #111 !important;
-    min-height: 260px !important;
+    min-height: 320px !important;
+    transition: background .2s !important;
 }
-#upload-wrap .wrap:hover { background: #141414 !important; }
-#upload-wrap svg { color: #00C9A7 !important; }
-#upload-wrap .upload-text span { color: #aaa !important; }
-#upload-wrap label { display: none !important; }
+#upload-wrap .wrap:hover { background: #161616 !important; }
+#upload-wrap svg { color: #00C9A7 !important; width: 48px !important; height: 48px !important; }
+#upload-wrap .upload-text span { color: #888 !important; font-size: 14px !important; }
+#upload-wrap > label.svelte-116rqfv { display: none !important; }
 
-/* 생성 버튼 */
+/* ── generate button ── */
 #gen-btn button {
-    background: #00C9A7 !important;
-    color: #000 !important;
-    font-weight: 700 !important;
-    font-size: 16px !important;
-    border-radius: 10px !important;
-    border: none !important;
-    width: 100% !important;
-    padding: 14px !important;
-    cursor: pointer !important;
+    background: linear-gradient(135deg, #00C9A7, #00a888) !important;
+    color: #000 !important; font-weight: 700 !important;
+    font-size: 16px !important; letter-spacing: .3px !important;
+    border-radius: 12px !important; border: none !important;
+    width: 100% !important; padding: 15px !important;
+    box-shadow: 0 4px 20px rgba(0,201,167,.25) !important;
+    transition: all .2s !important; cursor: pointer !important;
 }
-#gen-btn button:hover { background: #00b396 !important; }
+#gen-btn button:hover {
+    background: linear-gradient(135deg, #00ddb8, #00C9A7) !important;
+    box-shadow: 0 6px 28px rgba(0,201,167,.4) !important;
+    transform: translateY(-1px) !important;
+}
+#gen-btn button:active { transform: translateY(0) !important; }
 
-/* 상태 텍스트박스 */
-#status-box { margin-top: 0 !important; }
-#status-box label { display: none !important; }
+/* ── status ── */
+#status-box > label { display: none !important; }
 #status-box textarea {
-    background: #111 !important;
-    border: 1px solid #1e1e1e !important;
-    border-radius: 8px !important;
-    color: #888 !important;
-    font-size: 12px !important;
-    min-height: 36px !important;
-    resize: none !important;
+    background: #0f0f0f !important; border: 1px solid #1e1e1e !important;
+    border-radius: 8px !important; color: #777 !important;
+    font-size: 12px !important; min-height: 32px !important;
+    padding: 8px 12px !important; resize: none !important;
 }
 
-/* 하단 버튼 행 */
-#bottom-row { margin-top: 4px !important; }
-#uv-btn button {
-    background: #1a1a1a !important;
-    color: #ccc !important;
-    border: 1px solid #2a2a2a !important;
-    border-radius: 8px !important;
-    font-size: 14px !important;
-    width: 100% !important;
-    padding: 12px !important;
+/* ── bottom buttons ── */
+#uv-btn button, #dl-btn button {
+    background: #131313 !important; color: #bbb !important;
+    border: 1px solid #252525 !important; border-radius: 10px !important;
+    font-size: 14px !important; font-weight: 500 !important;
+    width: 100% !important; padding: 13px !important;
+    transition: all .2s !important; cursor: pointer !important;
 }
-#uv-btn button:hover { border-color: #00C9A7 !important; color: #00C9A7 !important; }
-
-/* 다운로드 버튼 */
-#dl-btn button {
-    background: #1a1a1a !important;
-    color: #ccc !important;
-    border: 1px solid #2a2a2a !important;
-    border-radius: 8px !important;
-    font-size: 14px !important;
-    width: 100% !important;
-    padding: 12px !important;
+#uv-btn button:hover, #dl-btn button:hover {
+    border-color: #00C9A7 !important; color: #00C9A7 !important;
+    background: #0f1f1c !important;
 }
-#dl-btn button:hover { border-color: #00C9A7 !important; color: #00C9A7 !important; }
 
-/* gr.File 숨기기 */
 #dl-file { display: none !important; }
 
-/* 뷰어 HTML */
-#viewer-html { background: transparent !important; padding: 0 !important; }
-#viewer-html > div { margin: 0 !important; }
+/* ── modal ── */
+#guide-modal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.75); z-index: 9999;
+    justify-content: center; align-items: center;
+}
+#guide-modal.open { display: flex; }
+#guide-box {
+    background: #141414; border: 1px solid #252525;
+    border-radius: 16px; padding: 32px; max-width: 480px; width: 90%;
+}
+#guide-box h2 { color: #00C9A7; margin: 0 0 20px; font-size: 18px; }
+#guide-box ol { color: #bbb; line-height: 2; padding-left: 20px; margin: 0 0 24px; }
+#guide-box ol li { font-size: 14px; }
+#guide-close {
+    background: #00C9A7; color: #000; border: none;
+    border-radius: 8px; padding: 10px 24px; font-weight: 700;
+    cursor: pointer; float: right; font-family: inherit;
+}
+"""
 
-/* 전체 패널 패딩 */
-#left-col { padding: 24px 16px 24px 28px !important; }
-#right-col { padding: 24px 28px 24px 16px !important; }
+HEADER_HTML = """
+<div style="display:flex;align-items:center;justify-content:space-between;
+    padding:16px 32px;background:#111;border-bottom:1px solid #1a1a1a;">
+  <div style="display:flex;align-items:center;gap:10px;
+      font-size:20px;font-weight:700;color:#00C9A7;">
+    <span style="font-size:28px;">🎮</span> SkinForge AI
+  </div>
+  <button onclick="document.getElementById('guide-modal').classList.add('open')"
+      style="background:transparent;border:1px solid #2a2a2a;color:#aaa;
+      padding:7px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;">
+    📋 사용 가이드
+  </button>
+</div>
+
+<div id="guide-modal">
+  <div id="guide-box">
+    <h2>📋 SkinForge AI 사용 가이드</h2>
+    <ol>
+      <li>인물이 잘 보이는 <b>전신 사진</b>을 준비하세요</li>
+      <li>왼쪽 업로드 영역에 <b>사진을 드래그</b>하거나 클릭하여 업로드</li>
+      <li><b>✨ 스킨 생성하기</b> 버튼 클릭</li>
+      <li>Gemini AI가 분석 후 <b>64×64 마인크래프트 스킨</b>을 생성합니다 (약 30초)</li>
+      <li>오른쪽 3D 뷰어에서 미리보기 후 <b>PNG 다운로드</b></li>
+      <li>마인크래프트 → 프로필 → 스킨 변경에서 적용!</li>
+    </ol>
+    <button id="guide-close"
+        onclick="document.getElementById('guide-modal').classList.remove('open')">
+      확인
+    </button>
+  </div>
+</div>
 """
 
 VIEWER_EMPTY = """
-<div style="background:#111; border-radius:14px; padding:20px; border:1px solid #1e1e1e; height:420px; display:flex; flex-direction:column;">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-    <span style="color:#aaa; font-size:14px; font-weight:600;">3D 미리보기</span>
-    <span style="color:#444; font-size:12px;">🎮 Minecraft Java Edition</span>
+<div style="background:#111;border-radius:16px;padding:20px;
+    border:1px solid #1a1a1a;height:100%;min-height:420px;
+    display:flex;flex-direction:column;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <span style="color:#aaa;font-size:14px;font-weight:600;">3D 미리보기</span>
+    <span style="color:#444;font-size:12px;">🎮 Minecraft Java Edition</span>
   </div>
-  <div style="flex:1; display:flex; justify-content:center; align-items:center; background:#0a0a0a; border-radius:10px; border:1px solid #1a1a1a;">
-    <span style="color:#444; font-size:13px;">스킨을 생성하면 3D 미리보기가 표시됩니다</span>
+  <div style="flex:1;display:flex;justify-content:center;align-items:center;
+      background:#0a0a0a;border-radius:12px;border:1px solid #181818;">
+    <div style="text-align:center;">
+      <div style="font-size:40px;margin-bottom:12px;opacity:.3;">🧱</div>
+      <span style="color:#444;font-size:13px;">스킨을 생성하면<br>3D 미리보기가 표시됩니다</span>
+    </div>
   </div>
-  <div style="display:flex; justify-content:center; gap:10px; margin-top:14px;">
-    <button disabled style="background:#161616; border:1px solid #222; color:#444; padding:9px 28px; border-radius:8px; font-size:16px; cursor:not-allowed;">←</button>
-    <button disabled style="background:#161616; border:1px solid #222; color:#444; padding:9px 28px; border-radius:8px; font-size:16px; cursor:not-allowed;">⬜</button>
-    <button disabled style="background:#161616; border:1px solid #222; color:#444; padding:9px 28px; border-radius:8px; font-size:16px; cursor:not-allowed;">→</button>
+  <div style="display:flex;justify-content:center;gap:8px;margin-top:14px;">
+    <button disabled style="background:#0f0f0f;border:1px solid #1e1e1e;color:#333;
+        padding:9px 28px;border-radius:8px;font-size:15px;cursor:not-allowed;">←</button>
+    <button disabled style="background:#0f0f0f;border:1px solid #1e1e1e;color:#333;
+        padding:9px 28px;border-radius:8px;font-size:15px;cursor:not-allowed;">⬜</button>
+    <button disabled style="background:#0f0f0f;border:1px solid #1e1e1e;color:#333;
+        padding:9px 28px;border-radius:8px;font-size:15px;cursor:not-allowed;">→</button>
   </div>
 </div>
 """
 
 def make_viewer_html(skin_b64: str) -> str:
     return f"""
-<div style="background:#111; border-radius:14px; padding:20px; border:1px solid #1e1e1e; height:420px; display:flex; flex-direction:column;">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-    <span style="color:#aaa; font-size:14px; font-weight:600;">3D 미리보기</span>
-    <span style="color:#444; font-size:12px;">🎮 Minecraft Java Edition</span>
+<div style="background:#111;border-radius:16px;padding:20px;
+    border:1px solid #1a1a1a;height:100%;min-height:420px;
+    display:flex;flex-direction:column;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <span style="color:#aaa;font-size:14px;font-weight:600;">3D 미리보기</span>
+    <span style="color:#444;font-size:12px;">🎮 Minecraft Java Edition</span>
   </div>
-  <div style="flex:1; display:flex; justify-content:center; align-items:center; background:#0a0a0a; border-radius:10px; border:1px solid #1a1a1a; overflow:hidden;">
-    <canvas id="skinCanvas" style="width:100%; height:100%; display:block;"></canvas>
+  <div id="sv-wrap" style="flex:1;background:#0a0a0a;border-radius:12px;
+      border:1px solid #181818;overflow:hidden;min-height:300px;">
+    <canvas id="skinCanvas" style="width:100%;height:100%;display:block;"></canvas>
   </div>
-  <div style="display:flex; justify-content:center; gap:10px; margin-top:14px;">
-    <button onclick="if(window._sv)window._sv.playerObject.rotation.y-=0.4" style="background:#1a1a1a; border:1px solid #2a2a2a; color:#ccc; padding:9px 28px; border-radius:8px; font-size:16px; cursor:pointer; transition:border-color .2s;">←</button>
-    <button onclick="if(window._sv){{window._sv.playerObject.rotation.y=0;window._sv.playerObject.rotation.x=0;}}" style="background:#1a1a1a; border:1px solid #2a2a2a; color:#ccc; padding:9px 28px; border-radius:8px; font-size:16px; cursor:pointer;">⬜</button>
-    <button onclick="if(window._sv)window._sv.playerObject.rotation.y+=0.4" style="background:#1a1a1a; border:1px solid #2a2a2a; color:#ccc; padding:9px 28px; border-radius:8px; font-size:16px; cursor:pointer;">→</button>
+  <div style="display:flex;justify-content:center;gap:8px;margin-top:14px;">
+    <button onclick="if(window._sv)window._sv.playerObject.rotation.y-=0.4"
+        style="background:#131313;border:1px solid #252525;color:#ccc;
+        padding:9px 28px;border-radius:8px;font-size:15px;cursor:pointer;">←</button>
+    <button onclick="if(window._sv){{window._sv.playerObject.rotation.y=0;window._sv.autoRotate=!window._sv.autoRotate;}}"
+        style="background:#131313;border:1px solid #252525;color:#ccc;
+        padding:9px 28px;border-radius:8px;font-size:15px;cursor:pointer;">⏸</button>
+    <button onclick="if(window._sv)window._sv.playerObject.rotation.y+=0.4"
+        style="background:#131313;border:1px solid #252525;color:#ccc;
+        padding:9px 28px;border-radius:8px;font-size:15px;cursor:pointer;">→</button>
   </div>
 </div>
 <script src="https://unpkg.com/skinview3d@2.1.1/bundles/skinview3d.bundle.js"></script>
@@ -155,14 +198,12 @@ def make_viewer_html(skin_b64: str) -> str:
 (function() {{
   function init() {{
     const canvas = document.getElementById('skinCanvas');
-    if (!canvas) {{ setTimeout(init, 200); return; }}
-    const wrap = canvas.parentElement;
-    const w = wrap.clientWidth || 300;
-    const h = wrap.clientHeight || 300;
+    if (!canvas || typeof skinview3d === 'undefined') {{ setTimeout(init, 300); return; }}
+    const wrap = document.getElementById('sv-wrap');
     const viewer = new skinview3d.SkinViewer({{
       canvas: canvas,
-      width: w,
-      height: h,
+      width: wrap.clientWidth || 340,
+      height: wrap.clientHeight || 320,
       skin: "data:image/png;base64,{skin_b64}"
     }});
     viewer.renderer.setClearColor(0x0a0a0a, 1);
@@ -171,7 +212,7 @@ def make_viewer_html(skin_b64: str) -> str:
     viewer.zoom = 0.85;
     window._sv = viewer;
   }}
-  init();
+  setTimeout(init, 400);
 }})();
 </script>
 """
@@ -183,12 +224,12 @@ def process(photo: Image.Image):
     try:
         features = extract_features(photo)
         tone = features.get("skin_tone", "warm_bright")
-        status = f"✅ 피부톤: {tone} | 헤어: {features.get('hair_color')} {features.get('hair_style')}"
+        status = f"✅ 피부톤: {tone} | 헤어: {features.get('hair_color')} {features.get('hair_style')} | 상의: {features.get('top_style')}"
 
         skin_img = generate_skin(features)
         skin_img, is_valid, errors = validate_and_fix(skin_img)
         if not is_valid:
-            status += f" | ⚠️ {errors}"
+            status += f" | ⚠️ 보정: {errors}"
 
         tmp = tempfile.NamedTemporaryFile(suffix=".png", dir=OUTPUT_DIR, delete=False)
         skin_img.save(tmp.name, format="PNG")
@@ -199,44 +240,42 @@ def process(photo: Image.Image):
         return make_viewer_html(skin_b64), tmp.name, status
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return VIEWER_EMPTY, None, f"❌ 오류: {e}"
 
-
-HEADER_HTML = """
-<div id="sf-header">
-  <div style="display:flex; align-items:center; gap:10px; font-size:20px; font-weight:700; color:#00C9A7;">
-    <span style="font-size:26px;">🎮</span> SkinForge AI
-  </div>
-  <button style="background:transparent; border:1px solid #333; color:#aaa; padding:6px 14px; border-radius:6px; font-size:13px; cursor:pointer; font-family:inherit;">
-    📋 사용 가이드
-  </button>
-</div>
-"""
 
 with gr.Blocks(css=CSS, title="SkinForge AI") as demo:
     gr.HTML(HEADER_HTML)
 
-    with gr.Row():
-        with gr.Column(elem_id="left-col"):
+    with gr.Row(equal_height=True):
+        # 왼쪽 패널
+        with gr.Column(scale=1, min_width=300):
+            gr.HTML("<div style='height:16px'></div>")
             photo_input = gr.Image(
                 type="pil",
                 label="upload",
                 elem_id="upload-wrap",
+                show_label=False,
             )
+            gr.HTML("<div style='height:10px'></div>")
             generate_btn = gr.Button("✨ 스킨 생성하기", elem_id="gen-btn")
             status_output = gr.Textbox(
-                label="status",
-                interactive=False,
-                elem_id="status-box",
+                label="status", interactive=False,
+                elem_id="status-box", show_label=False,
                 placeholder="사진을 업로드하고 스킨 생성하기를 누르세요",
             )
+            gr.HTML("<div style='height:8px'></div>")
 
-        with gr.Column(elem_id="right-col"):
-            viewer_output = gr.HTML(value=VIEWER_EMPTY, elem_id="viewer-html")
-            with gr.Row(elem_id="bottom-row"):
+        # 오른쪽 패널
+        with gr.Column(scale=1, min_width=300):
+            gr.HTML("<div style='height:16px'></div>")
+            viewer_output = gr.HTML(value=VIEWER_EMPTY)
+            with gr.Row():
                 uv_btn = gr.Button("📐 UV 맵 보기", elem_id="uv-btn")
                 dl_btn = gr.Button("⬇️ PNG 다운로드", elem_id="dl-btn")
             dl_file = gr.File(label="dl", elem_id="dl-file", visible=False)
+            gr.HTML("<div style='height:8px'></div>")
 
     generate_btn.click(
         fn=process,
@@ -246,9 +285,9 @@ with gr.Blocks(css=CSS, title="SkinForge AI") as demo:
 
     dl_btn.click(fn=None, js="""
     () => {
-      const link = document.querySelector('#dl-file a');
-      if (link) link.click();
-      else alert('먼저 스킨을 생성해주세요.');
+      const a = document.querySelector('#dl-file a');
+      if (a) { a.click(); }
+      else { alert('먼저 스킨을 생성해 주세요.'); }
     }
     """)
 
