@@ -116,9 +116,23 @@ footer, .built-with { display: none !important; }
     background: #00ddb8 !important;
 }
 
-/* ── 업로드 영역 너비 = 버튼과 동일 ── */
+/* ── 업로드 영역 고정 높이 + 이미지 맞춤 ── */
 #upload-wrap .wrap {
     width: 100% !important;
+    height: 380px !important;
+    max-height: 380px !important;
+}
+#upload-wrap img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    max-height: 380px !important;
+}
+#upload-wrap .preview-image,
+#upload-wrap [data-testid="image"] {
+    height: 380px !important;
+    max-height: 380px !important;
+    overflow: hidden !important;
 }
 
 /* ── 뷰어 ── */
