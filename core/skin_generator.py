@@ -105,20 +105,47 @@ def pick_mask(features: dict) -> Path:
 
 _REF_SKIN_CACHE: dict = {}
 
-def _load_ref_skin() -> np.ndarray:
-    """의상 텍스처 레퍼런스 스킨 로드 (캐시)"""
-    key = "clothing_ref"
-    if key not in _REF_SKIN_CACHE:
-        path = BASESKIN_DIR / "기본수소.png"
+# ── 스타일 키워드 → 레퍼런스 스킨 매핑 ──────────────────────────────
+# 우선순위 높은 것부터
+_STYLE_REF_MAP = [
+    # (상의 키워드, 하의 키워드, 레퍼런스 파일)
+    (["교복", "school uniform", "세일러"],  [],                     "교복수소.png"),
+    (["정장", "suit", "비즈니스", "포멀"],  ["슬랙스", "정장"],      "정장수소.png"),
+    (["자켓", "블레이저", "jacket"],        [],                     "정장수소.png"),
+    (["한복"],                              [],                     "한복수소.png"),
+    (["경찰", "police", "군복"],            [],                     "경찰수소.png"),
+    (["멜빵"],                              [],                     "멜빵무나.png"),
+    (["원피스", "드레스", "dress"],          [],                     "기본수소.png"),
+    ([],                                   ["한복", "치마", "스커트"], "기본수소.png"),
+]
+_REF_FALLBACK = "기본수소.png"
+
+
+def _select_ref_skin(features: dict) -> np.ndarray:
+    """의상 특징에 맞는 레퍼런스 스킨 선택 (캐시)"""
+    top  = (features.get("top_style",    "") or "").lower()
+    bot  = (features.get("bottom_style", "") or "").lower()
+
+    chosen = _REF_FALLBACK
+    for top_kws, bot_kws, fname in _STYLE_REF_MAP:
+        top_ok = (not top_kws) or any(k in top for k in top_kws)
+        bot_ok = (not bot_kws) or any(k in bot for k in bot_kws)
+        if top_ok and bot_ok:
+            p = BASESKIN_DIR / fname
+            if p.exists():
+                chosen = fname
+                break
+
+    if chosen not in _REF_SKIN_CACHE:
+        path = BASESKIN_DIR / chosen
         if not path.exists():
-            # fallback: base_warm_bright
-            path = BASESKIN_DIR / "base_warm_bright.png"
-        _REF_SKIN_CACHE[key] = np.array(Image.open(path).convert("RGBA"), dtype=np.uint8)
-    return _REF_SKIN_CACHE[key]
+            path = BASESKIN_DIR / _REF_FALLBACK
+        _REF_SKIN_CACHE[chosen] = np.array(Image.open(path).convert("RGBA"), dtype=np.uint8)
+    return _REF_SKIN_CACHE[chosen]
 
 
-def _zone_max_v(ref_arr: np.ndarray, mask_arr: np.ndarray) -> dict:
-    """존별 최대 밝기 계산 (정규화용)"""
+def _zone_stats(ref_arr: np.ndarray, mask_arr: np.ndarray) -> dict:
+    """존별 밝기 최대·평균 계산 (정규화용)"""
     maxv: dict = {}
     for y in range(64):
         for x in range(64):
@@ -138,7 +165,7 @@ def _zone_max_v(ref_arr: np.ndarray, mask_arr: np.ndarray) -> dict:
 
 
 def _paint_mask(arr, mask_arr, ref_arr, zone_colors, zone_maxv):
-    """마스크 기반으로 레퍼런스 텍스처 재채색 후 arr에 합성"""
+    """HSV 색조 변환으로 레퍼런스 텍스처 패턴을 타겟 색상으로 재채색"""
     for y in range(64):
         for x in range(64):
             mr, mg, mb, ma = mask_arr[y, x]
@@ -147,30 +174,31 @@ def _paint_mask(arr, mask_arr, ref_arr, zone_colors, zone_maxv):
             zone = detect_zone(int(mr), int(mg), int(mb))
             if zone == "skip":
                 continue
-            base_rgb = zone_colors.get(zone, DEFAULT_COLOR)
 
-            # 레퍼런스 스킨의 해당 픽셀 밝기를 텍스처로 사용
+            tr, tg, tb = zone_colors.get(zone, DEFAULT_COLOR)
+            t_h, t_s, t_v = rgb_to_hsv(tr/255, tg/255, tb/255)
+
             rr, rg, rb, ra = ref_arr[y, x]
             if ra > 10:
-                _, _, v = rgb_to_hsv(rr/255, rg/255, rb/255)
+                _, _, ref_v = rgb_to_hsv(rr/255, rg/255, rb/255)
                 mv = zone_maxv.get(zone, 1.0)
-                # 레퍼런스 밝기 그대로 사용 (면별 명암이 이미 포함돼 있음)
-                # shade_map은 아주 부드럽게만 적용 (0~15% 영향)
-                soft_shade = 0.85 + 0.15 * float(_SHADE_MAP[y, x])
-                brightness = (v / max(mv, 0.01)) * soft_shade
+                # 레퍼런스 밝기를 타겟 밝기 범위로 스케일 (텍스처 패턴 보존)
+                norm_v = ref_v / max(mv, 0.01)   # 0..1 상대 밝기
+                final_v = min(1.0, norm_v * max(t_v, 0.15))
             else:
-                brightness = 0.75 + 0.25 * float(_SHADE_MAP[y, x])
+                final_v = t_v * (0.8 + 0.2 * float(_SHADE_MAP[y, x]))
 
+            out_r, out_g, out_b = hsv_to_rgb(t_h, t_s, final_v)
             arr[y, x] = [
-                max(0, min(255, int(base_rgb[0] * brightness))),
-                max(0, min(255, int(base_rgb[1] * brightness))),
-                max(0, min(255, int(base_rgb[2] * brightness))),
+                int(out_r * 255),
+                int(out_g * 255),
+                int(out_b * 255),
                 255,
             ]
 
 
 def apply_mask_clothing(arr: np.ndarray, features: dict):
-    """마스크 + 레퍼런스 스킨 텍스처 기반으로 의상 색상 적용"""
+    """스타일별 레퍼런스 스킨 텍스처 + HSV 색조 변환으로 의상 적용"""
     top_rgb    = parse_color(features.get("top_color",    "흰색"))
     bottom_rgb = parse_color(features.get("bottom_color", "네이비"))
     shoes_rgb  = parse_color(features.get("shoes_color",  "검정"))
@@ -185,21 +213,20 @@ def apply_mask_clothing(arr: np.ndarray, features: dict):
 
     mask_path = pick_mask(features)
     mask_arr  = np.array(Image.open(mask_path).convert("RGBA"), dtype=np.uint8)
-    ref_arr   = _load_ref_skin()
-    zone_maxv = _zone_max_v(ref_arr, mask_arr)
+    ref_arr   = _select_ref_skin(features)
+    zone_maxv = _zone_stats(ref_arr, mask_arr)
 
     # 자켓 스타일: longsleeve를 먼저 깔고 jacket 오버레이 덮기
     if "jacket" in mask_path.name:
         base_mask_path = BASESKIN_DIR / "mask_longsleeve.png"
         if base_mask_path.exists():
             base_mask = np.array(Image.open(base_mask_path).convert("RGBA"), dtype=np.uint8)
-            base_maxv = _zone_max_v(ref_arr, base_mask)
-            # jacket이 칠하지 않는 영역만 longsleeve로 채움
+            base_maxv = _zone_stats(ref_arr, base_mask)
             tmp_mask = base_mask.copy()
             for y in range(64):
                 for x in range(64):
                     if mask_arr[y, x, 3] > 10:
-                        tmp_mask[y, x, 3] = 0  # 재킷이 덮을 부분은 제외
+                        tmp_mask[y, x, 3] = 0
             _paint_mask(arr, tmp_mask, ref_arr, zone_colors, base_maxv)
 
     _paint_mask(arr, mask_arr, ref_arr, zone_colors, zone_maxv)
