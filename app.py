@@ -252,7 +252,8 @@ def process(photo: Image.Image):
         return VIEWER_EMPTY, None, f"❌ 오류: {e}"
 
 
-with gr.Blocks(css=CSS, title="SkinForge AI") as demo:
+with gr.Blocks(title="SkinForge AI") as demo:
+    gr.HTML(f"<style>{CSS}</style>")
     gr.HTML(HEADER_HTML)
 
     with gr.Row(equal_height=True):

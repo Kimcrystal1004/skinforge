@@ -7,12 +7,12 @@ import os
 import io
 from pathlib import Path
 from PIL import Image
-import google.generativeai as genai
-from google.generativeai import types
+from google import genai
+from google.genai import types
 
 from .recolor_skin import load_base, apply_skin_tone
 
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
 REFERENCE_DIR = Path(__file__).parent.parent / "reference"
 
@@ -78,7 +78,6 @@ Add ONLY: hair, clothing, shoes, accessories on top.
 
 
 def _load_references() -> list:
-    """reference/ 폴더의 PNG 파일들을 Gemini parts로 변환"""
     parts = []
     for p in sorted(REFERENCE_DIR.glob("*.png"))[:4]:
         with open(p, "rb") as f:
@@ -87,36 +86,29 @@ def _load_references() -> list:
 
 
 def generate_skin(features: dict) -> Image.Image:
-    """
-    특징 딕셔너리 → 64×64 마인크래프트 스킨 PNG (PIL Image)
-    """
     tone_key = features.get("skin_tone", "warm_bright")
     base_img = load_base(tone_key)
     recolored_base = apply_skin_tone(base_img, tone_key)
 
-    # 베이스 스킨 bytes
     buf = io.BytesIO()
     recolored_base.save(buf, format="PNG")
     buf.seek(0)
     base_part = types.Part.from_bytes(data=buf.read(), mime_type="image/png")
 
-    # 레퍼런스 스킨들
     ref_parts = _load_references()
 
-    # 프롬프트 완성
     char_desc = _build_character_description(features)
     prompt = SKIN_GEN_PROMPT.format(character_description=char_desc)
 
-    model = genai.GenerativeModel("gemini-2.5-flash-preview-05-14")
-    response = model.generate_content(
-        [*ref_parts, base_part, prompt],
-        generation_config=types.GenerationConfig(
+    response = client.models.generate_content(
+        model="gemini-2.5-flash-preview-05-14",
+        contents=[*ref_parts, base_part, prompt],
+        config=types.GenerateContentConfig(
             response_modalities=["IMAGE", "TEXT"],
             temperature=0.2,
         ),
     )
 
-    # 이미지 파트 추출
     for part in response.candidates[0].content.parts:
         if part.inline_data and part.inline_data.mime_type.startswith("image"):
             img = Image.open(io.BytesIO(part.inline_data.data)).convert("RGBA")
