@@ -46,20 +46,26 @@ footer, .built-with { display: none !important; }
 #upload-wrap svg { color: #00C9A7 !important; width: 48px !important; height: 48px !important; }
 #upload-wrap .upload-text span { color: #888 !important; font-size: 14px !important; }
 #upload-wrap > label.svelte-116rqfv { display: none !important; }
+/* 카메라·클립보드 아이콘 숨기기 */
+#upload-wrap .icon-buttons, #upload-wrap .upload-icon-btn,
+#upload-wrap button[title="Upload from webcam"],
+#upload-wrap button[title="Paste from clipboard"],
+#upload-wrap .svelte-1ipelgc { display: none !important; }
 
 /* ── generate button ── */
 #gen-btn button {
-    background: linear-gradient(135deg, #00C9A7, #00a888) !important;
-    color: #000 !important; font-weight: 700 !important;
+    background: transparent !important;
+    color: #00C9A7 !important; font-weight: 700 !important;
     font-size: 16px !important; letter-spacing: .3px !important;
-    border-radius: 12px !important; border: none !important;
+    border-radius: 12px !important;
+    border: 2px solid #00C9A7 !important;
     width: 100% !important; padding: 15px !important;
-    box-shadow: 0 4px 20px rgba(0,201,167,.25) !important;
+    box-shadow: 0 0 16px rgba(0,201,167,.15) !important;
     transition: all .2s !important; cursor: pointer !important;
 }
 #gen-btn button:hover {
-    background: linear-gradient(135deg, #00ddb8, #00C9A7) !important;
-    box-shadow: 0 6px 28px rgba(0,201,167,.4) !important;
+    background: rgba(0,201,167,.08) !important;
+    box-shadow: 0 0 28px rgba(0,201,167,.3) !important;
     transform: translateY(-1px) !important;
 }
 #gen-btn button:active { transform: translateY(0) !important; }
@@ -75,15 +81,16 @@ footer, .built-with { display: none !important; }
 
 /* ── bottom buttons ── */
 #uv-btn button, #dl-btn button {
-    background: #131313 !important; color: #bbb !important;
-    border: 1px solid #252525 !important; border-radius: 10px !important;
-    font-size: 14px !important; font-weight: 500 !important;
+    background: transparent !important;
+    color: #00C9A7 !important;
+    border: 1.5px solid #00C9A7 !important; border-radius: 10px !important;
+    font-size: 14px !important; font-weight: 600 !important;
     width: 100% !important; padding: 13px !important;
     transition: all .2s !important; cursor: pointer !important;
 }
 #uv-btn button:hover, #dl-btn button:hover {
-    border-color: #00C9A7 !important; color: #00C9A7 !important;
-    background: #0f1f1c !important;
+    background: rgba(0,201,167,.08) !important;
+    box-shadow: 0 0 16px rgba(0,201,167,.2) !important;
 }
 
 #dl-file { display: none !important; }
