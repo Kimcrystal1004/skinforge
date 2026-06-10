@@ -12,7 +12,7 @@ import gradio as gr
 load_dotenv()
 
 from core.feature_extractor import extract_features
-from core.skin_generator import generate_skin
+from core.skin_generator import generate_skin, generate_skin_from_photo
 from core.skin_validator import validate_and_fix
 
 TEAL = gr.themes.Color(
@@ -349,7 +349,7 @@ def process(photo: Image.Image):
                   f"헤어: {features.get('hair_color')} {features.get('hair_style')} | "
                   f"상의: {features.get('top_style')}")
 
-        skin_img = generate_skin(features)
+        skin_img = generate_skin_from_photo(photo, features)
         skin_img, is_valid, errors = validate_and_fix(skin_img)
         if not is_valid:
             status += f" | ⚠️ {errors}"

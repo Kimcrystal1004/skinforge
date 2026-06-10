@@ -509,3 +509,108 @@ def generate_skin(features: dict) -> Image.Image:
         draw_glasses(arr)
 
     return Image.fromarray(arr, "RGBA")
+
+
+# ── 사진 직접 매핑 ────────────────────────────────────────────────
+
+def generate_skin_from_photo(photo: Image.Image, features: dict) -> Image.Image:
+    """사진 픽셀을 직접 UV 위치에 매핑하여 스킨 생성"""
+    tone_key = features.get("skin_tone", "warm_bright")
+    if tone_key not in VALID_TONES:
+        tone_key = "warm_bright"
+    arr = np.array(apply_skin_tone(load_base(tone_key), tone_key), dtype=np.uint8).copy()
+
+    # 사진을 RGBA로 변환, 세로가 긴 형태 보정
+    img = photo.convert("RGBA")
+    W, H = img.size
+    # 너무 가로가 넓으면 중앙 크롭
+    if W > H * 0.7:
+        cx = W // 2
+        half = int(H * 0.35)
+        img = img.crop((cx - half, 0, cx + half, H))
+        W, H = img.size
+
+    img_np = np.array(img, dtype=np.uint8)
+
+    def paste_region(dst_x, dst_y, dst_w, dst_h,
+                     src_x_frac, src_y_frac, src_w_frac, src_h_frac,
+                     darken=1.0):
+        """사진의 비율 좌표 영역을 UV 위치에 리샘플링"""
+        sx = int(W * src_x_frac)
+        sy = int(H * src_y_frac)
+        sw = max(1, int(W * src_w_frac))
+        sh = max(1, int(H * src_h_frac))
+        crop = img.crop((sx, sy, sx + sw, sy + sh))
+        resized = crop.resize((dst_w, dst_h), Image.LANCZOS)
+        patch = np.array(resized, dtype=np.uint8)
+        if darken != 1.0:
+            patch[:, :, :3] = np.clip(patch[:, :, :3] * darken, 0, 255).astype(np.uint8)
+        arr[dst_y:dst_y+dst_h, dst_x:dst_x+dst_w] = patch
+
+    cx_f = 0.5   # 사진 중앙 x 비율
+
+    # ── 머리 ─────────────────────────────────────
+    # 앞면 (8,8,8,8)
+    paste_region(8, 8, 8, 8,   cx_f-0.15, 0.03, 0.30, 0.17)
+    # 뒷면 (24,8,8,8)
+    paste_region(24, 8, 8, 8,  cx_f-0.15, 0.03, 0.30, 0.17, darken=0.75)
+    # 오른면 (0,8,4,8) / 왼면 (16,8,4,8)
+    paste_region(0,  8, 4, 8,  cx_f-0.15, 0.03, 0.10, 0.17, darken=0.85)
+    paste_region(16, 8, 4, 8,  cx_f+0.05, 0.03, 0.10, 0.17, darken=0.85)
+    # 윗면 (8,0,8,8) — 머리 색으로 채움
+    paste_region(8,  0, 8, 8,  cx_f-0.15, 0.03, 0.30, 0.10)
+
+    # ── 몸통 ─────────────────────────────────────
+    # 앞면 (20,20,8,12)
+    paste_region(20, 20, 8, 12,  cx_f-0.22, 0.20, 0.44, 0.32)
+    # 뒷면 (32,20,8,12)
+    paste_region(32, 20, 8, 12,  cx_f-0.22, 0.20, 0.44, 0.32, darken=0.72)
+    # 오른면 (16,20,4,12)
+    paste_region(16, 20, 4, 12,  cx_f-0.22, 0.20, 0.12, 0.32, darken=0.80)
+    # 왼면 (28,20,4,12)
+    paste_region(28, 20, 4, 12,  cx_f+0.10, 0.20, 0.12, 0.32, darken=0.80)
+
+    # ── 오른팔 ────────────────────────────────────
+    # 앞면 (44,20,4,12)
+    paste_region(44, 20, 4, 12,  cx_f-0.44, 0.20, 0.15, 0.32)
+    # 뒷면 (52,20,4,12)
+    paste_region(52, 20, 4, 12,  cx_f-0.44, 0.20, 0.15, 0.32, darken=0.72)
+    # 옆면 (40,20,4,12)
+    paste_region(40, 20, 4, 12,  cx_f-0.44, 0.20, 0.08, 0.32, darken=0.82)
+
+    # ── 왼팔 (새 포맷 y=48~64 영역) ──────────────
+    # 앞면 (36,52,4,12)
+    paste_region(36, 52, 4, 12,  cx_f+0.29, 0.20, 0.15, 0.32)
+    # 뒷면 (44,52,4,12)
+    paste_region(44, 52, 4, 12,  cx_f+0.29, 0.20, 0.15, 0.32, darken=0.72)
+    # 옆면 (32,52,4,12)
+    paste_region(32, 52, 4, 12,  cx_f+0.29, 0.20, 0.08, 0.32, darken=0.82)
+
+    # ── 오른다리 ──────────────────────────────────
+    # 앞면 (4,20,4,12)
+    paste_region(4,  20, 4, 12,  cx_f-0.22, 0.52, 0.18, 0.35)
+    # 뒷면 (12,20,4,12)
+    paste_region(12, 20, 4, 12,  cx_f-0.22, 0.52, 0.18, 0.35, darken=0.72)
+    # 옆면 (0,20,4,12)
+    paste_region(0,  20, 4, 12,  cx_f-0.22, 0.52, 0.08, 0.35, darken=0.82)
+
+    # ── 왼다리 (새 포맷 y=48~64 영역) ────────────
+    # 앞면 (20,52,4,12)
+    paste_region(20, 52, 4, 12,  cx_f+0.04, 0.52, 0.18, 0.35)
+    # 뒷면 (28,52,4,12)
+    paste_region(28, 52, 4, 12,  cx_f+0.04, 0.52, 0.18, 0.35, darken=0.72)
+    # 옆면 (16,52,4,12)
+    paste_region(16, 52, 4, 12,  cx_f+0.04, 0.52, 0.08, 0.35, darken=0.82)
+
+    # 머리카락 · 앞머리는 기존 방식 유지 (photo 색 위에 덮기)
+    hair_rgb   = parse_color(features.get("hair_color", "검정"))
+    hair_style = features.get("hair_style", "")
+    hair_bangs = features.get("hair_bangs", "")
+    draw_hair_body_only(arr, hair_rgb, hair_style)
+    draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
+    _mirror_clothing_to_layer2(arr)
+
+    if features.get("glasses", False):
+        draw_glasses(arr)
+
+    return Image.fromarray(arr, "RGBA")
