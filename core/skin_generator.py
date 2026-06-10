@@ -7,6 +7,33 @@ import numpy as np
 from PIL import Image
 from pathlib import Path
 from colorsys import rgb_to_hsv, hsv_to_rgb
+
+# ── numpy 벡터화 HSV 변환 ──────────────────────────────────────────
+def _np_rgb2v(rgb_u8: np.ndarray) -> np.ndarray:
+    """(H,W,3) uint8 → (H,W) V float32"""
+    f = rgb_u8.astype(np.float32) / 255.0
+    return f.max(axis=-1)
+
+def _np_hsv_recolor(rgb_u8: np.ndarray, alpha: np.ndarray,
+                    t_h: float, t_s: float,
+                    ref_v: np.ndarray, max_v: float,
+                    t_v: float) -> np.ndarray:
+    """ref_v 밝기를 유지하며 HSV 색조를 (t_h, t_s)로 교체. (H,W,3) uint8 반환"""
+    norm_v = np.clip(ref_v / max(max_v, 0.01), 0.0, 1.0)
+    final_v = np.clip(norm_v * max(t_v, 0.15), 0.0, 1.0)
+
+    v = final_v
+    s = t_s
+    hi = (t_h * 6.0).astype(np.float32) if isinstance(t_h, np.ndarray) else float(t_h) * 6.0
+    hi_i = int(hi) % 6
+    f = hi - int(hi)
+    p = v * (1.0 - s)
+    q = v * (1.0 - f * s)
+    t = v * (1.0 - (1.0 - f) * s)
+    lut = [(v, t, p, p, q, v), (t, v, v, q, p, p), (p, p, t, v, v, q)]
+    r = lut[0][hi_i]; g = lut[1][hi_i]; b = lut[2][hi_i]
+    out = np.stack([r, g, b], axis=-1)
+    return np.clip(out * 255, 0, 255).astype(np.uint8)
 from .recolor_skin import load_base, apply_skin_tone
 
 BASESKIN_DIR = Path(__file__).parent.parent / "baseskin"
@@ -144,57 +171,72 @@ def _select_ref_skin(features: dict) -> np.ndarray:
     return _REF_SKIN_CACHE[chosen]
 
 
+def _build_zone_masks(mask_arr: np.ndarray) -> dict:
+    """마스크 배열 → 존별 bool 마스크 (numpy 벡터화)"""
+    valid = mask_arr[:, :, 3] > 10
+    r = mask_arr[:, :, 0].astype(np.int16)
+    g = mask_arr[:, :, 1].astype(np.int16)
+    b = mask_arr[:, :, 2].astype(np.int16)
+    return {
+        "top":    valid & (r < 30) & (g > 200) & (b < 40),
+        "bottom": valid & (r < 30) & (g < 30)  & (b > 200),
+        "shoes":  valid & (r > 200) & (g > 200) & (b < 40),
+        "acc":    valid & (r > 200) & (g < 30)  & (b > 200),
+        "jacket": valid & (r < 30) & (g > 200)  & (b > 200),
+    }
+
+
 def _zone_stats(ref_arr: np.ndarray, mask_arr: np.ndarray) -> dict:
-    """존별 밝기 최대·평균 계산 (정규화용)"""
+    """존별 최대 V 계산 (numpy 벡터화)"""
+    ref_v = _np_rgb2v(ref_arr[:, :, :3])
+    ref_valid = ref_arr[:, :, 3] > 10
     maxv: dict = {}
-    for y in range(64):
-        for x in range(64):
-            mr, mg, mb, ma = mask_arr[y, x]
-            if ma < 10:
-                continue
-            zone = detect_zone(int(mr), int(mg), int(mb))
-            if zone == "skip":
-                continue
-            rr, rg, rb, ra = ref_arr[y, x]
-            if ra < 10:
-                continue
-            _, _, v = rgb_to_hsv(rr/255, rg/255, rb/255)
-            if v > maxv.get(zone, 0.0):
-                maxv[zone] = v
+    for zone, zmask in _build_zone_masks(mask_arr).items():
+        combined = zmask & ref_valid
+        if combined.any():
+            maxv[zone] = float(ref_v[combined].max())
     return maxv
 
 
 def _paint_mask(arr, mask_arr, ref_arr, zone_colors, zone_maxv):
-    """HSV 색조 변환으로 레퍼런스 텍스처 패턴을 타겟 색상으로 재채색"""
-    for y in range(64):
-        for x in range(64):
-            mr, mg, mb, ma = mask_arr[y, x]
-            if ma < 10:
-                continue
-            zone = detect_zone(int(mr), int(mg), int(mb))
-            if zone == "skip":
-                continue
+    """numpy 벡터화 HSV 색조 변환으로 레퍼런스 텍스처 재채색"""
+    ref_v_map = _np_rgb2v(ref_arr[:, :, :3])          # (64,64) float32
+    ref_valid  = ref_arr[:, :, 3] > 10
+    zone_masks = _build_zone_masks(mask_arr)
 
-            tr, tg, tb = zone_colors.get(zone, DEFAULT_COLOR)
-            t_h, t_s, t_v = rgb_to_hsv(tr/255, tg/255, tb/255)
+    for zone, zmask in zone_masks.items():
+        if not zmask.any():
+            continue
+        target_rgb = zone_colors.get(zone, DEFAULT_COLOR)
+        tr, tg, tb = target_rgb
+        t_h, t_s, t_v = rgb_to_hsv(tr/255, tg/255, tb/255)
+        mv = zone_maxv.get(zone, 1.0)
 
-            rr, rg, rb, ra = ref_arr[y, x]
-            if ra > 10:
-                _, _, ref_v = rgb_to_hsv(rr/255, rg/255, rb/255)
-                mv = zone_maxv.get(zone, 1.0)
-                # 레퍼런스 밝기를 타겟 밝기 범위로 스케일 (텍스처 패턴 보존)
-                norm_v = ref_v / max(mv, 0.01)   # 0..1 상대 밝기
-                final_v = min(1.0, norm_v * max(t_v, 0.15))
-            else:
-                final_v = t_v * (0.8 + 0.2 * float(_SHADE_MAP[y, x]))
+        has_ref = zmask & ref_valid
+        no_ref  = zmask & ~ref_valid
 
-            out_r, out_g, out_b = hsv_to_rgb(t_h, t_s, final_v)
-            arr[y, x] = [
-                int(out_r * 255),
-                int(out_g * 255),
-                int(out_b * 255),
-                255,
-            ]
+        if has_ref.any():
+            rv = ref_v_map[has_ref]
+            norm_v  = np.clip(rv / max(mv, 0.01), 0.0, 1.0)
+            final_v = np.clip(norm_v * max(t_v, 0.15), 0.0, 1.0)
+            rgb_out = _np_hsv_recolor(arr[:, :, :3], arr[:, :, 3],
+                                      t_h, t_s, ref_v_map, mv, t_v)
+            ys, xs = np.where(has_ref)
+            arr[ys, xs, :3] = rgb_out[ys, xs]
+            arr[ys, xs, 3]  = 255
+
+        if no_ref.any():
+            final_v = np.clip(t_v * (0.8 + 0.2 * _SHADE_MAP[no_ref]), 0.0, 1.0)
+            v = final_v; s = t_s; hi_f = t_h * 6.0; hi_i = int(hi_f) % 6
+            frac = hi_f - int(hi_f)
+            p = v*(1-s); q = v*(1-frac*s); tv_ = v*(1-(1-frac)*s)
+            lut_r = [v, q, p, p, tv_, v]; lut_g = [tv_, v, v, q, p, p]; lut_b = [p, p, tv_, v, v, q]
+            r_out = np.clip(lut_r[hi_i] * 255, 0, 255).astype(np.uint8)
+            g_out = np.clip(lut_g[hi_i] * 255, 0, 255).astype(np.uint8)
+            b_out = np.clip(lut_b[hi_i] * 255, 0, 255).astype(np.uint8)
+            ys, xs = np.where(no_ref)
+            arr[ys, xs, 0] = r_out; arr[ys, xs, 1] = g_out; arr[ys, xs, 2] = b_out
+            arr[ys, xs, 3] = 255
 
 
 def apply_mask_clothing(arr: np.ndarray, features: dict):
@@ -284,53 +326,37 @@ def load_hair_base(hair_style: str = "", hair_bangs: str = "") -> list:
 
 
 def recolor_hair_base(hair_arr: np.ndarray, target_rgb: tuple) -> np.ndarray:
-    """베이스 헤어 밝기를 기준으로 target_rgb를 곱셈 방식으로 적용.
-    어두운 색(검정 등)도 자연스럽게 재현됨."""
-    # 가장 밝은 픽셀의 V값을 기준으로 정규화
-    max_v = 0.0
-    for y in range(64):
-        for x in range(64):
-            r, g, b, a = hair_arr[y, x]
-            if a < 10:
-                continue
-            _, _, v = rgb_to_hsv(r/255, g/255, b/255)
-            if v > max_v:
-                max_v = v
+    """numpy 벡터화: 헤어 베이스 V값으로 타겟 색상 밝기 스케일"""
+    valid = hair_arr[:, :, 3] > 10
+    v_map = _np_rgb2v(hair_arr[:, :, :3])
+    max_v = float(v_map[valid].max()) if valid.any() else 1.0
     if max_v < 0.01:
         max_v = 1.0
 
+    brightness = np.clip(v_map / max_v, 0.0, 1.0)       # (64,64)
     result = hair_arr.copy()
-    for y in range(64):
-        for x in range(64):
-            r, g, b, a = hair_arr[y, x]
-            if a < 10:
-                continue
-            _, _, v = rgb_to_hsv(r/255, g/255, b/255)
-            brightness = v / max_v  # 0.0 ~ 1.0
-            result[y, x] = [
-                max(0, min(255, int(target_rgb[0] * brightness))),
-                max(0, min(255, int(target_rgb[1] * brightness))),
-                max(0, min(255, int(target_rgb[2] * brightness))),
-                int(a),
-            ]
+    for c, col_val in enumerate(target_rgb):
+        channel = np.clip(col_val * brightness, 0, 255).astype(np.uint8)
+        result[:, :, c] = np.where(valid, channel, hair_arr[:, :, c])
     return result
 
 
 def _composite_layer(arr: np.ndarray, colored: np.ndarray):
-    """colored 레이어를 arr 위에 알파 블렌딩으로 합성"""
-    for y in range(64):
-        for x in range(64):
-            a = int(colored[y, x, 3])
-            if a < 10:
-                continue
-            if a >= 255:
-                arr[y, x] = colored[y, x]
-            else:
-                src = colored[y, x, :3].astype(float)
-                dst = arr[y, x, :3].astype(float)
-                fa = a / 255
-                arr[y, x, :3] = (src * fa + dst * (1 - fa)).astype(np.uint8)
-                arr[y, x, 3] = 255
+    """numpy 벡터화 알파 블렌딩"""
+    a = colored[:, :, 3].astype(np.float32)
+    opaque  = a >= 255
+    partial = (a >= 10) & ~opaque
+
+    # 완전 불투명 픽셀
+    arr[opaque] = colored[opaque]
+
+    # 반투명 픽셀
+    if partial.any():
+        fa = (a[partial] / 255.0)[:, np.newaxis]
+        src = colored[partial, :3].astype(np.float32)
+        dst = arr[partial, :3].astype(np.float32)
+        arr[partial, :3] = np.clip(src * fa + dst * (1 - fa), 0, 255).astype(np.uint8)
+        arr[partial, 3] = 255
 
 
 def draw_hair_body_only(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
