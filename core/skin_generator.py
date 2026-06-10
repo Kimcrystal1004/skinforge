@@ -271,7 +271,6 @@ def apply_mask_clothing(arr: np.ndarray, features: dict):
             _paint_mask(arr, tmp_mask, ref_arr, zone_colors, base_maxv)
 
     _paint_mask(arr, mask_arr, ref_arr, zone_colors, zone_maxv)
-    _mirror_clothing_to_layer2(arr)
 
 
 def _mirror_clothing_to_layer2(arr: np.ndarray):
@@ -504,6 +503,7 @@ def generate_skin(features: dict) -> Image.Image:
     apply_mask_clothing(arr, features)               # 1. 의상
     draw_hair_body_only(arr, hair_rgb, hair_style)   # 2. 몸통 머리카락
     draw_hair_bangs_only(arr, hair_rgb, hair_bangs)  # 3. 앞머리 (최상단)
+    _mirror_clothing_to_layer2(arr)                  # 4. 최종 레이어1 → 레이어2 복사
 
     if features.get("glasses", False):
         draw_glasses(arr)
