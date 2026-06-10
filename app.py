@@ -179,11 +179,10 @@ PREVIEW_EMPTY = None   # gr.Image(value=None) 로 빈 상태 표시
 
 
 def make_2d_preview(skin_img: Image.Image) -> Image.Image:
-    """64×64 스킨 → 앞/뒤/좌/우 4방향 2D 미리보기 이미지"""
+    """64×64 스킨 → 앞/뒤/좌/우 4방향 2D 미리보기"""
     import numpy as np
-    SCALE = 10
-    S = SCALE
-    BG = (14, 14, 14, 255)
+    S = 10  # scale factor
+    BG = (14, 14, 14)
 
     arr = np.array(skin_img.convert("RGBA"), dtype=np.uint8)
 
@@ -193,87 +192,56 @@ def make_2d_preview(skin_img: Image.Image) -> Image.Image:
     def up(img):
         return img.resize((img.width * S, img.height * S), Image.NEAREST)
 
-    def alpha_over(base, overlay):
-        r = base.copy().convert("RGBA")
-        r.alpha_composite(overlay.convert("RGBA"))
-        return r
+    def alpha_over(base, over):
+        b = base.copy().convert("RGBA")
+        b.alpha_composite(over.convert("RGBA"))
+        return b
 
-    # ── UV 영역 정의 ───────────────────────────────────────────────
-    faces = dict(
-        # HEAD
-        hf=crop(8,8,8,8),   hb=crop(24,8,8,8),
-        hr=crop(0,8,8,8),   hl=crop(16,8,8,8),
-        # HAT overlay
-        hatf=crop(40,8,8,8), hatb=crop(56,8,8,8),
-        hatr=crop(32,8,8,8), hatl=crop(48,8,8,8),
-        # BODY
-        bf=crop(20,20,8,12), bb=crop(32,20,8,12),
-        br=crop(16,20,4,12), bl=crop(28,20,4,12),
-        # RIGHT ARM
-        raf=crop(44,20,4,12), rab=crop(52,20,4,12),
-        rar=crop(40,20,4,12), ral=crop(48,20,4,12),
-        # LEFT ARM
-        laf=crop(36,52,4,12), lab=crop(44,52,4,12),
-        lar=crop(32,52,4,12), lal=crop(40,52,4,12),
-        # RIGHT LEG
-        rlf=crop(4,20,4,12),  rlb=crop(12,20,4,12),
-        rlr=crop(0,20,4,12),  rll=crop(8,20,4,12),
-        # LEFT LEG
-        llf=crop(20,52,4,12), llb=crop(28,52,4,12),
-        llr=crop(16,52,4,12), lll=crop(24,52,4,12),
-    )
-
-    def compose(head, hat, body, ra, la, rl, ll, body_w=8):
-        """body_w: 8 for front/back, 4 for side views"""
-        cw = (4 + body_w + 4) * S
+    def compose(hd, hat, bd, ra, la, rl, ll, bw=8):
+        cw = (4 + bw + 4) * S
         ch = 32 * S
-        canvas = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
-        head_x = ((cw - 8 * S) // 2)
-        body_x = ((cw - body_w * S) // 2)
-        ra_x   = body_x - 4 * S
-        la_x   = body_x + body_w * S
-        rl_x   = body_x
-        ll_x   = body_x + 4 * S
-
-        h_comp = alpha_over(up(head), up(hat))
-        canvas.paste(h_comp,    (head_x, 0),      h_comp)
-        canvas.paste(up(body),  (body_x, 8*S),    up(body))
-        canvas.paste(up(ra),    (ra_x,   8*S),    up(ra))
-        canvas.paste(up(la),    (la_x,   8*S),    up(la))
-        canvas.paste(up(rl),    (rl_x,   20*S),   up(rl))
-        canvas.paste(up(ll),    (ll_x,   20*S),   up(ll))
-        return canvas
+        cv = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+        hx = (cw - 8*S) // 2
+        bx = (cw - bw*S) // 2
+        rax = bx - 4*S
+        lax = bx + bw*S
+        rlx = bx
+        llx = bx + 4*S
+        hcomp = alpha_over(up(hd), up(hat))
+        cv.paste(hcomp,  (hx,  0),    hcomp)
+        cv.paste(up(bd), (bx,  8*S),  up(bd))
+        cv.paste(up(ra), (rax, 8*S),  up(ra))
+        cv.paste(up(la), (lax, 8*S),  up(la))
+        cv.paste(up(rl), (rlx, 20*S), up(rl))
+        cv.paste(up(ll), (llx, 20*S), up(ll))
+        return cv
 
     views = [
-        ("앞",  compose(faces["hf"], faces["hatf"], faces["bf"],  faces["raf"], faces["laf"], faces["rlf"], faces["llf"])),
-        ("뒤",  compose(faces["hb"], faces["hatb"], faces["bb"],  faces["rab"], faces["lab"], faces["rlb"], faces["llb"])),
-        ("오른쪽", compose(faces["hr"], faces["hatr"], faces["br"],  faces["rar"], faces["lar"], faces["rlr"], faces["llr"], body_w=4)),
-        ("왼쪽",  compose(faces["hl"], faces["hatl"], faces["bl"],  faces["ral"], faces["lal"], faces["rll"], faces["lll"], body_w=4)),
+        compose(crop(8,8,8,8),  crop(40,8,8,8), crop(20,20,8,12),
+                crop(44,20,4,12), crop(36,52,4,12),
+                crop(4,20,4,12),  crop(20,52,4,12)),          # 앞
+        compose(crop(24,8,8,8), crop(56,8,8,8), crop(32,20,8,12),
+                crop(52,20,4,12), crop(44,52,4,12),
+                crop(12,20,4,12), crop(28,52,4,12)),          # 뒤
+        compose(crop(0,8,8,8),  crop(32,8,8,8), crop(16,20,4,12),
+                crop(40,20,4,12), crop(32,52,4,12),
+                crop(0,20,4,12),  crop(16,52,4,12), bw=4),   # 오른쪽
+        compose(crop(16,8,8,8), crop(48,8,8,8), crop(28,20,4,12),
+                crop(48,20,4,12), crop(40,52,4,12),
+                crop(8,20,4,12),  crop(24,52,4,12), bw=4),   # 왼쪽
     ]
 
-    # ── 레이블 영역 ──────────────────────────────────────────────
-    try:
-        from PIL import ImageDraw, ImageFont
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 13)
-    except Exception:
-        font = None
-
-    LABEL_H = 22
-    PAD = 12
-    total_w = sum(v[1].width for v in views) + PAD * (len(views) + 1)
-    max_h = max(v[1].height for v in views)
-    result = Image.new("RGBA", (total_w, max_h + LABEL_H + PAD), BG)
+    PAD = 10
+    total_w = sum(v.width for v in views) + PAD * (len(views) + 1)
+    total_h = max(v.height for v in views) + PAD * 2
+    result = Image.new("RGB", (total_w, total_h), BG)
 
     x = PAD
-    for label, img in views:
-        result.paste(img, (x, LABEL_H), img)
-        if font:
-            draw = ImageDraw.Draw(result)
-            tw = draw.textlength(label, font=font)
-            draw.text((x + (img.width - tw) / 2, 4), label, fill=(160, 160, 160, 255), font=font)
-        x += img.width + PAD
+    for v in views:
+        result.paste(v.convert("RGB"), (x, PAD), v)
+        x += v.width + PAD
 
-    return result.convert("RGB")
+    return result
 
 
 def make_dl_html(skin_b64: str) -> str:
@@ -314,7 +282,8 @@ def process(photo: Image.Image):
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return PREVIEW_EMPTY, "", f"❌ 오류: {e}"
+        dl_placeholder = '<div id="dl-btn-disabled"><span>⬇️ PNG 다운로드</span></div>'
+        return PREVIEW_EMPTY, dl_placeholder, f"❌ 오류: {e}"
 
 
 with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
@@ -340,7 +309,10 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
                 show_label=True, interactive=False,
                 elem_id="preview-img",
             )
-            dl_btn = gr.HTML(value="", elem_id="dl-btn")
+            dl_btn = gr.HTML(
+                value='<div id="dl-btn-disabled"><span>⬇️ PNG 다운로드</span></div>',
+                elem_id="dl-btn",
+            )
 
     generate_btn.click(
         fn=process,
