@@ -99,4 +99,4 @@ with gr.Blocks(title="📸 사진 → 마인크래프트 스킨 변환기") as d
     )
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(server_name="0.0.0.0", server_port=7860)

@@ -1,0 +1,37 @@
+name: Deploy to Oracle
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Oracle 서버에 SSH로 배포
+        uses: appleboy/ssh-action@v1
+        env:
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          envs: REPO_URL
+          script: |
+            set -e
+            cd /home/ubuntu/skinforge
+
+            if [ ! -d .git ]; then
+              git init
+              git remote add origin "$REPO_URL"
+            fi
+
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
+
+            docker compose up -d --build
