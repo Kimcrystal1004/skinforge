@@ -76,37 +76,49 @@ footer, .built-with { display: none !important; }
 
 /* ── 스킨 생성하기 버튼 ── */
 #gen-btn button {
-    background: transparent !important;
-    color: #00C9A7 !important;
-    border: 2px solid #00C9A7 !important;
+    background: #00C9A7 !important;
+    color: #000 !important;
+    border: none !important;
     font-size: 16px !important;
     font-weight: 700 !important;
     padding: 15px !important;
     border-radius: 12px !important;
-    box-shadow: 0 0 20px rgba(0,201,167,.2) !important;
+    width: 100% !important;
+    box-shadow: 0 4px 20px rgba(0,201,167,.35) !important;
     transition: all .2s !important;
 }
 #gen-btn button:hover {
-    background: rgba(0,201,167,.08) !important;
-    box-shadow: 0 0 30px rgba(0,201,167,.4) !important;
+    background: #00ddb8 !important;
+    box-shadow: 0 6px 28px rgba(0,201,167,.55) !important;
+    transform: translateY(-1px) !important;
 }
 
 /* ── 상태 박스 완전 숨김 ── */
 #status-box { display: none !important; }
 
-/* ── 하단 버튼 ── */
-#uv-btn button, #dl-btn button, #dl-btn a {
-    background: transparent !important;
-    color: #00C9A7 !important;
-    border: 1.5px solid #00C9A7 !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
+/* ── PNG 다운로드 버튼 ── */
+#dl-btn button, #dl-btn a {
+    background: #00C9A7 !important;
+    color: #000 !important;
+    border: none !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
     padding: 13px !important;
     border-radius: 10px !important;
+    width: 100% !important;
+    box-shadow: 0 4px 16px rgba(0,201,167,.3) !important;
     transition: all .2s !important;
+    text-decoration: none !important;
+    display: block !important;
+    text-align: center !important;
 }
-#uv-btn button:hover, #dl-btn button:hover, #dl-btn a:hover {
-    background: rgba(0,201,167,.08) !important;
+#dl-btn button:hover, #dl-btn a:hover {
+    background: #00ddb8 !important;
+}
+
+/* ── 업로드 영역 너비 = 버튼과 동일 ── */
+#upload-wrap .wrap {
+    width: 100% !important;
 }
 
 /* ── 뷰어 ── */
@@ -272,7 +284,7 @@ def process(photo: Image.Image):
 with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
     gr.HTML(HEADER_HTML)
 
-    with gr.Row(equal_height=False):
+    with gr.Row(equal_height=True):
         with gr.Column(scale=1, min_width=300):
             photo_input = gr.Image(
                 type="pil", label="사진 업로드",
@@ -283,24 +295,20 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
             )
             status_output = gr.Textbox(
                 label="상태", interactive=False, elem_id="status-box",
-                show_label=False,
-                placeholder="사진을 업로드하고 스킨 생성하기를 누르세요",
+                show_label=False, visible=False,
             )
 
         with gr.Column(scale=1, min_width=300):
             viewer_output = gr.HTML(value=VIEWER_EMPTY, elem_id="viewer-html")
-            with gr.Row():
-                uv_btn = gr.Button(
-                    "📐 UV 맵 보기", variant="secondary", elem_id="uv-btn",
-                )
-                dl_btn = gr.DownloadButton(
-                    "⬇️ PNG 다운로드", elem_id="dl-btn", variant="secondary",
-                )
+            dl_btn = gr.DownloadButton(
+                "⬇️ PNG 다운로드", elem_id="dl-btn", variant="primary",
+            )
 
     generate_btn.click(
         fn=process,
         inputs=[photo_input],
         outputs=[viewer_output, dl_btn, status_output],
+        show_progress="minimal",
     )
 
 if __name__ == "__main__":
