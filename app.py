@@ -190,7 +190,8 @@ def make_2d_preview(skin_img: Image.Image) -> list:
                 cv.paste(up(ra), (bx-4*S,   8*S),  up(ra))
                 cv.paste(up(la), (bx+bw*S,  8*S),  up(la))
             cv.paste(up(rl), (bx,       20*S), up(rl))
-            cv.paste(up(ll), (bx+4*S,   20*S), up(ll))
+            if not side:
+                cv.paste(up(ll), (bx+4*S, 20*S), up(ll))
             bg = Image.new("RGB", cv.size, BG[:3])
             bg.paste(cv.convert("RGB"), mask=cv.split()[3])
             return bg
