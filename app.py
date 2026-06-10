@@ -128,8 +128,9 @@ footer, .built-with { display: none !important; }
 /* ── 상태 박스 완전 숨김 ── */
 #status-box { display: none !important; }
 
-/* ── 뷰어 ── */
-#viewer-html { background: transparent !important; padding: 0 !important; }
+/* ── 2D 미리보기 ── */
+#preview-img { background: transparent !important; border: none !important; }
+#preview-img img { border-radius: 12px !important; image-rendering: pixelated !important; }
 
 /* ── 전체 블록 배경 투명 ── */
 .gradio-container > .main > .wrap > .gap > div > .block {
@@ -174,117 +175,112 @@ HEADER_HTML = """
 </div>
 """
 
-VIEWER_EMPTY = """
-<div style="background:#111;border-radius:16px;padding:20px;border:1px solid #1a1a1a;
-    height:420px;display:flex;flex-direction:column;box-sizing:border-box;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-    <span style="color:#aaa;font-size:14px;font-weight:600;">3D 미리보기</span>
-    <span style="color:#444;font-size:12px;">🎮 Minecraft Java Edition</span>
-  </div>
-  <div style="flex:1;display:flex;justify-content:center;align-items:center;
-      background:#0a0a0a;border-radius:12px;border:1px solid #181818;min-height:280px;">
-    <div style="text-align:center;">
-      <div style="font-size:36px;margin-bottom:10px;opacity:.25;">🧱</div>
-      <span style="color:#444;font-size:13px;">스킨을 생성하면<br>3D 미리보기가 표시됩니다</span>
-    </div>
-  </div>
-  <div style="display:flex;justify-content:center;gap:8px;margin-top:14px;">
-    <button disabled style="background:#0f0f0f;border:1px solid #1e1e1e;color:#333;
-        padding:9px 28px;border-radius:8px;font-size:15px;">←</button>
-    <button disabled style="background:#0f0f0f;border:1px solid #1e1e1e;color:#333;
-        padding:9px 28px;border-radius:8px;font-size:15px;">⏸</button>
-    <button disabled style="background:#0f0f0f;border:1px solid #1e1e1e;color:#333;
-        padding:9px 28px;border-radius:8px;font-size:15px;">→</button>
-  </div>
-</div>
-"""
-
-def make_viewer_html(skin_b64: str) -> str:
-    uid = "sv" + skin_b64[:8].replace("+","x").replace("/","y")
-    return f"""
-<div style="background:#111;border-radius:16px;padding:20px;border:1px solid #1a1a1a;
-    height:420px;display:flex;flex-direction:column;box-sizing:border-box;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-    <span style="color:#aaa;font-size:14px;font-weight:600;">3D 미리보기</span>
-    <span style="color:#444;font-size:12px;">🎮 Minecraft Java Edition</span>
-  </div>
-  <div id="{uid}" style="height:270px;background:#0a0a0a;border-radius:12px;
-      border:1px solid #181818;overflow:hidden;"></div>
-  <div style="display:flex;justify-content:center;gap:8px;margin-top:12px;">
-    <button onclick="if(window._{uid})window._{uid}.playerObject.rotation.y-=0.4"
-      style="background:#131313;border:1px solid #252525;color:#ccc;
-      padding:9px 28px;border-radius:8px;font-size:15px;cursor:pointer;">←</button>
-    <button onclick="if(window._{uid})window._{uid}.autoRotate=!window._{uid}.autoRotate"
-      style="background:#131313;border:1px solid #252525;color:#ccc;
-      padding:9px 28px;border-radius:8px;font-size:15px;cursor:pointer;">⏸</button>
-    <button onclick="if(window._{uid})window._{uid}.playerObject.rotation.y+=0.4"
-      style="background:#131313;border:1px solid #252525;color:#ccc;
-      padding:9px 28px;border-radius:8px;font-size:15px;cursor:pointer;">→</button>
-  </div>
-</div>
-<script>
-(function() {{
-  var ID = "{uid}";
-  var SKIN = "data:image/png;base64,{skin_b64}";
-  function initViewer() {{
-    if (typeof skinview3d === "undefined") {{ setTimeout(initViewer, 100); return; }}
-    var wrap = document.getElementById(ID);
-    if (!wrap) {{ setTimeout(initViewer, 100); return; }}
-    var w = wrap.clientWidth || wrap.offsetWidth || 340;
-    var h = wrap.clientHeight || wrap.offsetHeight || 270;
-    if (h < 10) h = 270;
-    if (window["_"+ID]) {{
-      try {{ window["_"+ID].dispose(); }} catch(e) {{}}
-    }}
-    try {{
-      var canvas = document.createElement("canvas");
-      wrap.innerHTML = "";
-      wrap.appendChild(canvas);
-      var v = new skinview3d.SkinViewer({{ canvas: canvas, width: w, height: h }});
-      v.loadSkin(SKIN);
-      v.renderer.setClearColor(0x0a0a0a, 1);
-      v.autoRotate = true;
-      v.autoRotateSpeed = 0.8;
-      v.zoom = 0.9;
-      window["_"+ID] = v;
-    }} catch(e) {{ console.error("skinview3d:", e); }}
-  }}
-  // 이미 로드됐으면 바로, 아니면 스크립트 추가
-  if (typeof skinview3d !== "undefined") {{
-    setTimeout(initViewer, 100);
-  }} else if (!document.getElementById("sv3d-script")) {{
-    var s = document.createElement("script");
-    s.id = "sv3d-script";
-    s.src = "https://cdn.jsdelivr.net/npm/skinview3d@2.1.1/bundles/skinview3d.bundle.js";
-    s.onload = function() {{ setTimeout(initViewer, 100); }};
-    s.onerror = function() {{
-      s.remove(); delete s.id;
-      // fallback CDN
-      var s2 = document.createElement("script");
-      s2.id = "sv3d-script";
-      s2.src = "https://unpkg.com/skinview3d@2.1.1/bundles/skinview3d.bundle.js";
-      s2.onload = function() {{ setTimeout(initViewer, 100); }};
-      document.head.appendChild(s2);
-    }};
-    document.head.appendChild(s);
-  }} else {{
-    // 스크립트 태그는 있지만 아직 로딩 중
-    var wait = setInterval(function() {{
-      if (typeof skinview3d !== "undefined") {{ clearInterval(wait); initViewer(); }}
-    }}, 100);
-  }}
-}})();
-</script>
-"""
+PREVIEW_EMPTY = None   # gr.Image(value=None) 로 빈 상태 표시
 
 
-DL_EMPTY = """<div id="dl-btn-disabled"><span>⬇️ PNG 다운로드</span></div>"""
+def make_2d_preview(skin_img: Image.Image) -> Image.Image:
+    """64×64 스킨 → 앞/뒤/좌/우 4방향 2D 미리보기 이미지"""
+    import numpy as np
+    SCALE = 10
+    S = SCALE
+    BG = (14, 14, 14, 255)
+
+    arr = np.array(skin_img.convert("RGBA"), dtype=np.uint8)
+
+    def crop(x, y, w, h):
+        return Image.fromarray(arr[y:y+h, x:x+w], "RGBA")
+
+    def up(img):
+        return img.resize((img.width * S, img.height * S), Image.NEAREST)
+
+    def alpha_over(base, overlay):
+        r = base.copy().convert("RGBA")
+        r.alpha_composite(overlay.convert("RGBA"))
+        return r
+
+    # ── UV 영역 정의 ───────────────────────────────────────────────
+    faces = dict(
+        # HEAD
+        hf=crop(8,8,8,8),   hb=crop(24,8,8,8),
+        hr=crop(0,8,8,8),   hl=crop(16,8,8,8),
+        # HAT overlay
+        hatf=crop(40,8,8,8), hatb=crop(56,8,8,8),
+        hatr=crop(32,8,8,8), hatl=crop(48,8,8,8),
+        # BODY
+        bf=crop(20,20,8,12), bb=crop(32,20,8,12),
+        br=crop(16,20,4,12), bl=crop(28,20,4,12),
+        # RIGHT ARM
+        raf=crop(44,20,4,12), rab=crop(52,20,4,12),
+        rar=crop(40,20,4,12), ral=crop(48,20,4,12),
+        # LEFT ARM
+        laf=crop(36,52,4,12), lab=crop(44,52,4,12),
+        lar=crop(32,52,4,12), lal=crop(40,52,4,12),
+        # RIGHT LEG
+        rlf=crop(4,20,4,12),  rlb=crop(12,20,4,12),
+        rlr=crop(0,20,4,12),  rll=crop(8,20,4,12),
+        # LEFT LEG
+        llf=crop(20,52,4,12), llb=crop(28,52,4,12),
+        llr=crop(16,52,4,12), lll=crop(24,52,4,12),
+    )
+
+    def compose(head, hat, body, ra, la, rl, ll, body_w=8):
+        """body_w: 8 for front/back, 4 for side views"""
+        cw = (4 + body_w + 4) * S
+        ch = 32 * S
+        canvas = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+        head_x = ((cw - 8 * S) // 2)
+        body_x = ((cw - body_w * S) // 2)
+        ra_x   = body_x - 4 * S
+        la_x   = body_x + body_w * S
+        rl_x   = body_x
+        ll_x   = body_x + 4 * S
+
+        h_comp = alpha_over(up(head), up(hat))
+        canvas.paste(h_comp,    (head_x, 0),      h_comp)
+        canvas.paste(up(body),  (body_x, 8*S),    up(body))
+        canvas.paste(up(ra),    (ra_x,   8*S),    up(ra))
+        canvas.paste(up(la),    (la_x,   8*S),    up(la))
+        canvas.paste(up(rl),    (rl_x,   20*S),   up(rl))
+        canvas.paste(up(ll),    (ll_x,   20*S),   up(ll))
+        return canvas
+
+    views = [
+        ("앞",  compose(faces["hf"], faces["hatf"], faces["bf"],  faces["raf"], faces["laf"], faces["rlf"], faces["llf"])),
+        ("뒤",  compose(faces["hb"], faces["hatb"], faces["bb"],  faces["rab"], faces["lab"], faces["rlb"], faces["llb"])),
+        ("오른쪽", compose(faces["hr"], faces["hatr"], faces["br"],  faces["rar"], faces["lar"], faces["rlr"], faces["llr"], body_w=4)),
+        ("왼쪽",  compose(faces["hl"], faces["hatl"], faces["bl"],  faces["ral"], faces["lal"], faces["rll"], faces["lll"], body_w=4)),
+    ]
+
+    # ── 레이블 영역 ──────────────────────────────────────────────
+    try:
+        from PIL import ImageDraw, ImageFont
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 13)
+    except Exception:
+        font = None
+
+    LABEL_H = 22
+    PAD = 12
+    total_w = sum(v[1].width for v in views) + PAD * (len(views) + 1)
+    max_h = max(v[1].height for v in views)
+    result = Image.new("RGBA", (total_w, max_h + LABEL_H + PAD), BG)
+
+    x = PAD
+    for label, img in views:
+        result.paste(img, (x, LABEL_H), img)
+        if font:
+            draw = ImageDraw.Draw(result)
+            tw = draw.textlength(label, font=font)
+            draw.text((x + (img.width - tw) / 2, 4), label, fill=(160, 160, 160, 255), font=font)
+        x += img.width + PAD
+
+    return result.convert("RGB")
+
 
 def make_dl_html(skin_b64: str) -> str:
     return f"""
 <a href="data:image/png;base64,{skin_b64}" download="skinforge_skin.png"
    style="display:block;background:#00C9A7;color:#000;border:none;font-size:15px;
-   font-weight:700;padding:13px;border-radius:10px;width:100%;
+   font-weight:700;height:48px;line-height:48px;padding:0;border-radius:10px;width:100%;
    box-shadow:0 4px 16px rgba(0,201,167,.3);text-decoration:none;
    text-align:center;box-sizing:border-box;transition:all .2s;"
    onmouseover="this.style.background='#00ddb8'"
@@ -295,7 +291,7 @@ def make_dl_html(skin_b64: str) -> str:
 
 def process(photo: Image.Image):
     if photo is None:
-        return VIEWER_EMPTY, DL_EMPTY, "⚠️ 사진을 업로드해 주세요."
+        return PREVIEW_EMPTY, "", "⚠️ 사진을 업로드해 주세요."
     try:
         features = extract_features(photo)
         tone = features.get("skin_tone", "warm_bright")
@@ -306,23 +302,25 @@ def process(photo: Image.Image):
         if not is_valid:
             status += f" | ⚠️ {errors}"
 
+        preview_img = make_2d_preview(skin_img)
+
         b = io.BytesIO()
         skin_img.save(b, format="PNG")
         buf = base64.b64encode(b.getvalue()).decode()
 
         print(f"[skinforge] 생성 완료 | {status}")
-        return make_viewer_html(buf), make_dl_html(buf), status
+        return preview_img, make_dl_html(buf), status
 
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return VIEWER_EMPTY, DL_EMPTY, f"❌ 오류: {e}"
+        return PREVIEW_EMPTY, "", f"❌ 오류: {e}"
 
 
 with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
     gr.HTML(HEADER_HTML)
 
-    with gr.Row(equal_height=True):
+    with gr.Row(equal_height=False):
         with gr.Column(scale=1, min_width=300):
             photo_input = gr.Image(
                 type="pil", label="사진 업로드",
@@ -337,13 +335,17 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
             )
 
         with gr.Column(scale=1, min_width=300):
-            viewer_output = gr.HTML(value=VIEWER_EMPTY, elem_id="viewer-html")
-            dl_btn = gr.HTML(value=DL_EMPTY, elem_id="dl-btn")
+            preview_output = gr.Image(
+                value=None, label="미리보기 (앞 / 뒤 / 오른쪽 / 왼쪽)",
+                show_label=True, interactive=False,
+                elem_id="preview-img",
+            )
+            dl_btn = gr.HTML(value="", elem_id="dl-btn")
 
     generate_btn.click(
         fn=process,
         inputs=[photo_input],
-        outputs=[viewer_output, dl_btn, status_output],
+        outputs=[preview_output, dl_btn, status_output],
         show_progress="minimal",
     )
 

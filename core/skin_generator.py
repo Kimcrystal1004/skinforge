@@ -151,14 +151,15 @@ def _paint_mask(arr, mask_arr, ref_arr, zone_colors, zone_maxv):
 
             # 레퍼런스 스킨의 해당 픽셀 밝기를 텍스처로 사용
             rr, rg, rb, ra = ref_arr[y, x]
-            face_shade = float(_SHADE_MAP[y, x])   # 면별 명암 (front=1.0, back=0.65 등)
             if ra > 10:
                 _, _, v = rgb_to_hsv(rr/255, rg/255, rb/255)
                 mv = zone_maxv.get(zone, 1.0)
-                tex_brightness = v / max(mv, 0.01)  # 레퍼런스 텍스처 밝기
-                brightness = tex_brightness * face_shade
+                # 레퍼런스 밝기 그대로 사용 (면별 명암이 이미 포함돼 있음)
+                # shade_map은 아주 부드럽게만 적용 (0~15% 영향)
+                soft_shade = 0.85 + 0.15 * float(_SHADE_MAP[y, x])
+                brightness = (v / max(mv, 0.01)) * soft_shade
             else:
-                brightness = face_shade
+                brightness = 0.75 + 0.25 * float(_SHADE_MAP[y, x])
 
             arr[y, x] = [
                 max(0, min(255, int(base_rgb[0] * brightness))),
