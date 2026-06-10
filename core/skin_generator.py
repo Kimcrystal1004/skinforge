@@ -204,51 +204,53 @@ def apply_mask_clothing(arr: np.ndarray, features: dict):
 
 
 # ── 머리카락 ──────────────────────────────────────────────────────
-# (키워드 목록, 파일명 or [파일명 리스트])  — 위에 있을수록 우선
-# 리스트인 경우 순서대로 겹쳐 합성 (뒤 레이어 → 앞 레이어)
-HAIR_STYLE_MAP = [
-    # 양갈래
-    (["짧은양갈래_웨이브"],  ["base_hair_twin_wave_short_back.png",     "base_hair_twin_wave_front.png"]),
-    (["짧은양갈래_생머리"],  ["base_hair_twin_straight_short_back.png", "base_hair_twin_straight_short_front.png"]),
-    (["양갈래_웨이브"],      ["base_hair_twin_wave_back.png",           "base_hair_twin_wave_front.png"]),
-    (["양갈래_생머리", "양갈래"],  ["base_hair_twin_straight_back.png", "base_hair_twin_straight_front.png"]),
-    # 묶음
-    (["짧은꽁지"],   "base_hair_short_ponytail.png"),
-    (["꽁지머리"],   "base_hair_ponytail.png"),
-    (["사이드테일"], "base_hair_sidetail.png"),
-    # 장발
-    (["장발_웨이브"],   "base_hair_long_wave.png"),
-    (["장발_생머리"],   "base_hair_long_straight.png"),
-    # 중장발
-    (["중장발_웨이브"], "base_hair_mid_wave.png"),
-    (["중장발_생머리"], "base_hair_mid_straight.png"),
-    # 단발 (앞머리 스타일)
-    (["단발_사이드뱅"], "base_hair_bangs_side.png"),
-    (["단발_노뱅"],     "base_hair_bangs_none.png"),
-    (["단발_가르마"],   "base_hair_bangs_curtain.png"),
-    (["단발_일자뱅"],   "base_hair_bangs_full.png"),
-]
-HAIR_BASE_FALLBACK = "base_hair_bangs_full.png"
+# 뱅(앞머리/머리 전체) 파일 — 항상 먼저 합성
+HAIR_BANGS_MAP = {
+    "일자뱅": "base_hair_bangs_full.png",
+    "사이드뱅": "base_hair_bangs_side.png",
+    "노뱅":    "base_hair_bangs_none.png",
+    "가르마":  "base_hair_bangs_curtain.png",
+}
+HAIR_BANGS_FALLBACK = "base_hair_bangs_full.png"
+
+# 몸통 연장 파일 — 뱅 위에 추가 합성 (단발은 None)
+HAIR_BODY_MAP: dict = {
+    "장발_생머리":      ["base_hair_long_straight.png"],
+    "장발_웨이브":      ["base_hair_long_wave.png"],
+    "중장발_생머리":    ["base_hair_mid_straight.png"],
+    "중장발_웨이브":    ["base_hair_mid_wave.png"],
+    "꽁지머리":         ["base_hair_ponytail.png"],
+    "짧은꽁지":         ["base_hair_short_ponytail.png"],
+    "사이드테일":       ["base_hair_sidetail.png"],
+    "양갈래_생머리":    ["base_hair_twin_straight_back.png", "base_hair_twin_straight_front.png"],
+    "양갈래_웨이브":    ["base_hair_twin_wave_back.png",     "base_hair_twin_wave_front.png"],
+    "짧은양갈래_생머리":["base_hair_twin_straight_short_back.png", "base_hair_twin_straight_short_front.png"],
+    "짧은양갈래_웨이브":["base_hair_twin_wave_short_back.png",     "base_hair_twin_wave_front.png"],
+    "단발": None,
+}
 
 
-def pick_hair_files(hair_style: str) -> list:
-    """헤어 스타일 → 파일 경로 리스트 반환 (순서대로 합성)"""
-    s = (hair_style or "").strip()
-    for keywords, files in HAIR_STYLE_MAP:
-        if any(k in s for k in keywords):
-            if isinstance(files, str):
-                files = [files]
-            paths = [BASESKIN_DIR / f for f in files if (BASESKIN_DIR / f).exists()]
-            if paths:
-                return paths
-    return [BASESKIN_DIR / HAIR_BASE_FALLBACK]
+def pick_hair_files(hair_style: str, hair_bangs: str = "") -> list:
+    """뱅 파일 + 몸통 연장 파일 리스트 반환"""
+    # 1) 뱅/머리 레이어
+    bangs_name = HAIR_BANGS_MAP.get((hair_bangs or "").strip(), HAIR_BANGS_FALLBACK)
+    files = [BASESKIN_DIR / bangs_name]
+
+    # 2) 몸통 연장 레이어 (단발 or 미지정이면 None)
+    body = HAIR_BODY_MAP.get((hair_style or "").strip())
+    if body:
+        for fname in body:
+            p = BASESKIN_DIR / fname
+            if p.exists():
+                files.append(p)
+
+    return [p for p in files if p.exists()]
 
 
-def load_hair_base(hair_style: str = "") -> list:
-    """파일 경로 리스트 → numpy 배열 리스트"""
+def load_hair_base(hair_style: str = "", hair_bangs: str = "") -> list:
     return [
         np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
-        for p in pick_hair_files(hair_style)
+        for p in pick_hair_files(hair_style, hair_bangs)
     ]
 
 
@@ -302,9 +304,9 @@ def _composite_layer(arr: np.ndarray, colored: np.ndarray):
                 arr[y, x, 3] = 255
 
 
-def draw_hair(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
-    """헤어 베이스 파일들을 순서대로 재채색 후 합성"""
-    for base_arr in load_hair_base(hair_style):
+def draw_hair(arr: np.ndarray, hair_rgb: tuple, hair_style: str, hair_bangs: str = ""):
+    """뱅(머리) + 몸통 연장 레이어 순서대로 재채색 후 합성"""
+    for base_arr in load_hair_base(hair_style, hair_bangs):
         colored = recolor_hair_base(base_arr, hair_rgb)
         _composite_layer(arr, colored)
 
@@ -402,8 +404,9 @@ def generate_skin(features: dict) -> Image.Image:
 
     hair_rgb   = parse_color(features.get("hair_color", "검정"))
     hair_style = features.get("hair_style", "")
+    hair_bangs = features.get("hair_bangs", "")
 
-    draw_hair(arr, hair_rgb, hair_style)
+    draw_hair(arr, hair_rgb, hair_style, hair_bangs)
     apply_mask_clothing(arr, features)
     draw_long_hair_body(arr, hair_rgb, hair_style)  # 의상 위에 긴 머리 덮기
 

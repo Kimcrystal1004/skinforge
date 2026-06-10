@@ -55,7 +55,8 @@ footer, .built-with { display: none !important; }
     border: 2px dashed #00C9A7 !important;
     border-radius: 16px !important;
     background: #0d0d0d !important;
-    min-height: 380px !important;
+    min-height: 340px !important;
+    height: 340px !important;
 }
 #upload-wrap .wrap:hover { background: #111 !important; }
 #upload-wrap svg { color: #00C9A7 !important; }
@@ -113,22 +114,26 @@ footer, .built-with { display: none !important; }
 }
 
 /* ── 업로드 영역 고정 높이 + 이미지 맞춤 ── */
-#upload-wrap .wrap {
-    width: 100% !important;
-    height: 380px !important;
-    max-height: 380px !important;
-}
 #upload-wrap img {
     width: 100% !important;
     height: 100% !important;
     object-fit: contain !important;
-    max-height: 380px !important;
+    max-height: 340px !important;
 }
 #upload-wrap .preview-image,
 #upload-wrap [data-testid="image"] {
-    height: 380px !important;
-    max-height: 380px !important;
+    height: 340px !important;
+    max-height: 340px !important;
     overflow: hidden !important;
+}
+
+/* ── 버튼 높이 통일 (스킨 생성 & 다운로드 동일 크기) ── */
+#gen-btn button,
+#dl-btn a {
+    height: 52px !important;
+    padding: 0 !important;
+    line-height: 52px !important;
+    font-size: 15px !important;
 }
 
 /* ── 뷰어 ── */
@@ -179,7 +184,7 @@ HEADER_HTML = """
 
 VIEWER_EMPTY = """
 <div style="background:#111;border-radius:16px;padding:20px;border:1px solid #1a1a1a;
-    min-height:380px;display:flex;flex-direction:column;">
+    height:420px;display:flex;flex-direction:column;box-sizing:border-box;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
     <span style="color:#aaa;font-size:14px;font-weight:600;">3D 미리보기</span>
     <span style="color:#444;font-size:12px;">🎮 Minecraft Java Edition</span>
@@ -203,59 +208,53 @@ VIEWER_EMPTY = """
 """
 
 def make_viewer_html(skin_b64: str) -> str:
+    uid = "sv" + skin_b64[:8].replace("+","x").replace("/","y")
     return f"""
 <div style="background:#111;border-radius:16px;padding:20px;border:1px solid #1a1a1a;
-    min-height:380px;display:flex;flex-direction:column;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    height:420px;display:flex;flex-direction:column;box-sizing:border-box;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
     <span style="color:#aaa;font-size:14px;font-weight:600;">3D 미리보기</span>
     <span style="color:#444;font-size:12px;">🎮 Minecraft Java Edition</span>
   </div>
-  <div id="sv-wrap" style="flex:1;background:#0a0a0a;border-radius:12px;
-      border:1px solid #181818;overflow:hidden;min-height:280px;position:relative;">
-    <canvas id="skinCanvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
-  </div>
-  <div style="display:flex;justify-content:center;gap:8px;margin-top:14px;">
-    <button onclick="if(window._sv)window._sv.playerObject.rotation.y-=0.4"
+  <div id="{uid}" style="flex:1;background:#0a0a0a;border-radius:12px;
+      border:1px solid #181818;overflow:hidden;min-height:0;"></div>
+  <div style="display:flex;justify-content:center;gap:8px;margin-top:12px;">
+    <button onclick="if(window._{uid})window._{uid}.playerObject.rotation.y-=0.4"
       style="background:#131313;border:1px solid #252525;color:#ccc;
       padding:9px 28px;border-radius:8px;font-size:15px;cursor:pointer;">←</button>
-    <button onclick="if(window._sv)window._sv.autoRotate=!window._sv.autoRotate"
+    <button onclick="if(window._{uid})window._{uid}.autoRotate=!window._{uid}.autoRotate"
       style="background:#131313;border:1px solid #252525;color:#ccc;
       padding:9px 28px;border-radius:8px;font-size:15px;cursor:pointer;">⏸</button>
-    <button onclick="if(window._sv)window._sv.playerObject.rotation.y+=0.4"
+    <button onclick="if(window._{uid})window._{uid}.playerObject.rotation.y+=0.4"
       style="background:#131313;border:1px solid #252525;color:#ccc;
       padding:9px 28px;border-radius:8px;font-size:15px;cursor:pointer;">→</button>
   </div>
 </div>
+<script src="https://unpkg.com/skinview3d@3.0.0-beta.1/bundles/skinview3d.bundle.js"></script>
 <script>
 (function() {{
+  var ID = "{uid}";
   var SKIN = "data:image/png;base64,{skin_b64}";
-  function tryLoad() {{
-    if (typeof skinview3d === 'undefined') {{
-      var s = document.createElement('script');
-      s.src = 'https://unpkg.com/skinview3d@2.1.1/bundles/skinview3d.bundle.js';
-      s.onload = initViewer;
-      document.head.appendChild(s);
-    }} else {{ initViewer(); }}
-  }}
-  function initViewer() {{
-    var wrap = document.getElementById('sv-wrap');
-    var canvas = document.getElementById('skinCanvas');
-    if (!wrap || !canvas) {{ setTimeout(initViewer, 300); return; }}
+  function init() {{
+    var wrap = document.getElementById(ID);
+    if (!wrap || wrap.offsetWidth === 0) {{ setTimeout(init, 200); return; }}
+    if (window["_"+ID]) {{ window["_"+ID].dispose(); }}
     try {{
       var v = new skinview3d.SkinViewer({{
-        canvas: canvas,
-        width: wrap.offsetWidth || 300,
-        height: wrap.offsetHeight || 280,
+        width: wrap.clientWidth,
+        height: wrap.clientHeight || 260,
         skin: SKIN
       }});
       v.renderer.setClearColor(0x0a0a0a, 1);
       v.autoRotate = true;
-      v.autoRotateSpeed = 0.6;
-      v.zoom = 0.85;
-      window._sv = v;
-    }} catch(e) {{ setTimeout(initViewer, 500); }}
+      v.autoRotateSpeed = 0.8;
+      v.zoom = 0.9;
+      wrap.appendChild(v.canvas);
+      window["_"+ID] = v;
+    }} catch(e) {{ console.error("skinview3d error:", e); }}
   }}
-  setTimeout(tryLoad, 200);
+  if (document.readyState === "complete") {{ setTimeout(init, 300); }}
+  else {{ window.addEventListener("load", function(){{ setTimeout(init, 300); }}); }}
 }})();
 </script>
 """
