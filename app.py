@@ -176,8 +176,9 @@ def make_2d_preview(skin_img: Image.Image) -> list:
             b.alpha_composite(over.convert("RGBA"))
             return b
 
-        def compose(hd, hat, bd, ra, la, rl, ll, bw=8):
-            cw = (4 + bw + 4) * S
+        def compose(hd, hat, bd, ra, la, rl, ll, bw=8, side=False):
+            # 옆면은 팔이 몸통에 겹쳐 보이는 시점 → 팔 표시 안 함
+            cw = (4 + bw + 4) * S if not side else (8 + bw) * S
             ch = 32 * S
             cv = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
             hx = (cw - 8*S) // 2
@@ -185,28 +186,32 @@ def make_2d_preview(skin_img: Image.Image) -> list:
             hcomp = alpha_over(up(hd), up(hat))
             cv.paste(hcomp,  (hx,       0),    hcomp)
             cv.paste(up(bd), (bx,       8*S),  up(bd))
-            cv.paste(up(ra), (bx-4*S,   8*S),  up(ra))
-            cv.paste(up(la), (bx+bw*S,  8*S),  up(la))
+            if not side:
+                cv.paste(up(ra), (bx-4*S,   8*S),  up(ra))
+                cv.paste(up(la), (bx+bw*S,  8*S),  up(la))
             cv.paste(up(rl), (bx,       20*S), up(rl))
             cv.paste(up(ll), (bx+4*S,   20*S), up(ll))
-            # 투명 배경 → 어두운 배경으로
             bg = Image.new("RGB", cv.size, BG[:3])
             bg.paste(cv.convert("RGB"), mask=cv.split()[3])
             return bg
 
         return [
+            # 앞
             compose(crop(8,8,8,8),  crop(40,8,8,8),  crop(20,20,8,12),
                     crop(44,20,4,12), crop(36,52,4,12),
                     crop(4,20,4,12),  crop(20,52,4,12)),
+            # 오른쪽 (side)
             compose(crop(16,8,8,8), crop(48,8,8,8),  crop(28,20,4,12),
                     crop(48,20,4,12), crop(40,52,4,12),
-                    crop(8,20,4,12),  crop(24,52,4,12), bw=4),
+                    crop(8,20,4,12),  crop(24,52,4,12), bw=4, side=True),
+            # 뒤
             compose(crop(24,8,8,8), crop(56,8,8,8),  crop(32,20,8,12),
                     crop(52,20,4,12), crop(44,52,4,12),
                     crop(12,20,4,12), crop(28,52,4,12)),
+            # 왼쪽 (side)
             compose(crop(0,8,8,8),  crop(32,8,8,8),  crop(16,20,4,12),
                     crop(40,20,4,12), crop(32,52,4,12),
-                    crop(0,20,4,12),  crop(16,52,4,12), bw=4),
+                    crop(0,20,4,12),  crop(16,52,4,12), bw=4, side=True),
         ]
 
     except Exception as e:
