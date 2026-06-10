@@ -109,9 +109,8 @@ footer, .built-with { display: none !important; }
 /* ── 상태 박스 완전 숨김 ── */
 #status-box { display: none !important; }
 
-/* ── 2D 미리보기 ── */
-#preview-img { background: transparent !important; border: none !important; }
-#preview-img img { border-radius: 12px !important; image-rendering: pixelated !important; }
+/* ── 결과 박스 ── */
+#result-box { background: transparent !important; padding: 0 !important; border: none !important; }
 
 /* ── 전체 블록 배경 투명 ── */
 .gradio-container > .main > .wrap > .gap > div > .block {
@@ -156,7 +155,6 @@ HEADER_HTML = """
 </div>
 """
 
-PREVIEW_EMPTY = None   # gr.Image(value=None) 로 빈 상태 표시
 
 
 def make_2d_preview(skin_img: Image.Image) -> Image.Image:
@@ -224,38 +222,71 @@ def make_2d_preview(skin_img: Image.Image) -> Image.Image:
         return skin_img.convert("RGB").resize((512, 512), Image.NEAREST)
 
 
-_DL_BTN_STYLE = (
-    "display:block;background:#00C9A7;color:#000 !important;border:none;"
-    "font-size:15px;font-weight:700;height:48px;line-height:48px;padding:0;"
-    "border-radius:10px;width:100%;box-shadow:0 4px 16px rgba(0,201,167,.3);"
-    "text-decoration:none !important;text-align:center;box-sizing:border-box;"
-    "cursor:pointer !important;transition:background .2s;"
-)
-_DL_DIS_STYLE = (
-    "display:block;background:#1e1e1e;color:#444;border:1px solid #2a2a2a;"
-    "font-size:15px;font-weight:700;height:48px;line-height:48px;padding:0;"
-    "border-radius:10px;width:100%;text-align:center;box-sizing:border-box;"
-    "cursor:not-allowed;"
-)
+_RESULT_EMPTY = """
+<div style="background:#111;border-radius:16px;border:1px solid #1a1a1a;
+    padding:20px;display:flex;flex-direction:column;gap:14px;">
+  <div style="background:#0a0a0a;border-radius:12px;border:1px solid #181818;
+      height:280px;display:flex;align-items:center;justify-content:center;">
+    <div style="text-align:center;">
+      <div style="font-size:36px;opacity:.2;">🧱</div>
+      <p style="color:#444;font-size:13px;margin:8px 0 0;">
+        스킨을 생성하면 미리보기가 표시됩니다
+      </p>
+    </div>
+  </div>
+  <span style="display:block;background:#1e1e1e;color:#444;border:1px solid #2a2a2a;
+      font-size:15px;font-weight:700;height:48px;line-height:48px;
+      border-radius:10px;text-align:center;box-sizing:border-box;cursor:not-allowed;">
+    ⬇️ PNG 다운로드
+  </span>
+</div>
+"""
 
-DL_EMPTY = f'<span style="{_DL_DIS_STYLE}">⬇️ PNG 다운로드</span>'
+def make_result_html(preview_img: Image.Image, skin_img: Image.Image) -> str:
+    """미리보기 + 다운로드를 하나의 base64 HTML 블록으로"""
+    # preview PNG → base64
+    pb = io.BytesIO()
+    preview_img.save(pb, format="PNG")
+    preview_b64 = base64.b64encode(pb.getvalue()).decode()
 
-def make_dl_html(skin_b64: str) -> str:
-    return (
-        f'<a href="data:image/png;base64,{skin_b64}" download="skinforge_skin.png"'
-        f' style="{_DL_BTN_STYLE}"'
-        f' onmouseover="this.style.background=\'#00ddb8\'"'
-        f' onmouseout="this.style.background=\'#00C9A7\'">⬇️ PNG 다운로드</a>'
-    )
+    # raw 64×64 skin PNG → base64 (다운로드용)
+    sb = io.BytesIO()
+    skin_img.save(sb, format="PNG")
+    skin_b64 = base64.b64encode(sb.getvalue()).decode()
+
+    return f"""
+<div style="background:#111;border-radius:16px;border:1px solid #1a1a1a;
+    padding:20px;display:flex;flex-direction:column;gap:14px;">
+  <div style="background:#0a0a0a;border-radius:12px;border:1px solid #181818;
+      overflow:hidden;line-height:0;">
+    <img src="data:image/png;base64,{preview_b64}"
+         style="width:100%;height:auto;image-rendering:pixelated;display:block;"
+         alt="skin preview">
+  </div>
+  <a href="data:image/png;base64,{skin_b64}"
+     download="skinforge_skin.png"
+     style="display:block;background:#00C9A7;color:#000;text-decoration:none;
+            font-size:15px;font-weight:700;height:48px;line-height:48px;
+            border-radius:10px;text-align:center;box-sizing:border-box;
+            cursor:pointer;transition:background .2s;
+            box-shadow:0 4px 16px rgba(0,201,167,.3);"
+     onmouseover="this.style.background='#00ddb8'"
+     onmouseout="this.style.background='#00C9A7'">
+    ⬇️ PNG 다운로드
+  </a>
+</div>
+"""
 
 
 def process(photo: Image.Image):
     if photo is None:
-        return PREVIEW_EMPTY, "", "⚠️ 사진을 업로드해 주세요."
+        return _RESULT_EMPTY, "⚠️ 사진을 업로드해 주세요."
     try:
         features = extract_features(photo)
-        tone = features.get("skin_tone", "warm_bright")
-        status = f"✅ 피부톤: {tone} | 헤어: {features.get('hair_color')} {features.get('hair_style')} | 상의: {features.get('top_style')}"
+        tone  = features.get("skin_tone", "warm_bright")
+        status = (f"✅ 피부톤: {tone} | "
+                  f"헤어: {features.get('hair_color')} {features.get('hair_style')} | "
+                  f"상의: {features.get('top_style')}")
 
         skin_img = generate_skin(features)
         skin_img, is_valid, errors = validate_and_fix(skin_img)
@@ -263,18 +294,18 @@ def process(photo: Image.Image):
             status += f" | ⚠️ {errors}"
 
         preview_img = make_2d_preview(skin_img)
-
-        b = io.BytesIO()
-        skin_img.save(b, format="PNG")
-        buf = base64.b64encode(b.getvalue()).decode()
-
         print(f"[skinforge] 생성 완료 | {status}")
-        return preview_img, make_dl_html(buf), status
+        return make_result_html(preview_img, skin_img), status
 
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return PREVIEW_EMPTY, DL_EMPTY, f"❌ 오류: {e}"
+        err_html = f"""
+<div style="background:#111;border-radius:16px;border:1px solid #2a1a1a;
+    padding:20px;color:#f66;font-size:13px;">
+  ❌ 오류: {e}
+</div>"""
+        return err_html, f"❌ 오류: {e}"
 
 
 with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
@@ -291,21 +322,16 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
             )
             status_output = gr.Textbox(
                 label="상태", interactive=False, elem_id="status-box",
-                show_label=False, visible=False,
+                show_label=False, visible=True,
             )
 
         with gr.Column(scale=1, min_width=300):
-            preview_output = gr.Image(
-                value=None, label="미리보기 (앞 / 뒤 / 오른쪽 / 왼쪽)",
-                show_label=True, interactive=False,
-                elem_id="preview-img",
-            )
-            dl_btn = gr.HTML(value=DL_EMPTY, elem_id="dl-btn")
+            result_html = gr.HTML(value=_RESULT_EMPTY, elem_id="result-box")
 
     generate_btn.click(
         fn=process,
         inputs=[photo_input],
-        outputs=[preview_output, dl_btn, status_output],
+        outputs=[result_html, status_output],
         show_progress="minimal",
     )
 
