@@ -137,8 +137,8 @@ _REF_SKIN_CACHE: dict = {}
 _STYLE_REF_MAP = [
     # (상의 키워드, 하의 키워드, 레퍼런스 파일)
     (["교복", "school uniform", "세일러"],  [],                     "reference (10).png"),
-    (["정장", "suit", "비즈니스", "포멀"],  ["슬랙스", "정장"],      "reference (50).png"),
-    (["자켓", "블레이저", "jacket"],        [],                     "reference (50).png"),
+    (["정장", "suit", "비즈니스", "포멀"],  ["슬랙스", "정장"],      "reference (22).png"),
+    (["자켓", "블레이저", "jacket"],        [],                     "reference (22).png"),
     (["한복"],                              [],                     "reference (62).png"),
     (["경찰", "police", "군복"],            [],                     "reference (5).png"),
     (["원피스", "드레스", "dress", "가운", "볼"],   [],                     "reference (62).png"),
