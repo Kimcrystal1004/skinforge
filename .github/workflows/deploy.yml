@@ -36,6 +36,10 @@ jobs:
             echo "APP_USER=${{ secrets.APP_USER }}" >> .env
             echo "APP_PW=${{ secrets.APP_PW }}" >> .env
 
+            # nginx 타임아웃 설정 업데이트
+            sudo cp nginx-skinforge.conf /etc/nginx/sites-available/skinforge 2>/dev/null || true
+            sudo nginx -t && sudo systemctl reload nginx || true
+
             docker compose down --remove-orphans 2>/dev/null || true
             docker rm -f skinforge 2>/dev/null || true
             docker compose up -d --build
