@@ -38,7 +38,7 @@ def extract_features(image: Image.Image) -> dict:
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-2.0-flash",
             contents=[
                 types.Part.from_bytes(data=buf.read(), mime_type="image/png"),
                 EXTRACT_PROMPT,
