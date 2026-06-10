@@ -43,4 +43,6 @@ jobs:
 
             docker compose down --remove-orphans 2>/dev/null || true
             docker rm -f skinforge 2>/dev/null || true
+            docker stop skinforge 2>/dev/null || true
+            docker network rm skinforge_default 2>/dev/null || true
             docker compose up -d --build
