@@ -15,17 +15,18 @@ client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 EXTRACT_PROMPT = """
 주어진 인물 사진을 분석해 다음 항목을 JSON으로만 반환하세요. 설명 없이 JSON만 출력.
 ⚠️ 배경(건물, 벽, 하늘, 바닥 등)은 완전히 무시하고, 사진 속 인물의 신체·의상·헤어만 분석하세요.
+⚠️ 색상 필드(hair_color, top_color, bottom_color, shoes_color)는 반드시 HTML hex 코드(예: #2b1a0e)로만 반환하세요.
 
 {
   "skin_tone": "warm_bright | warm_normal | warm_dark | cool_bright | cool_normal | cool_dark",
-  "hair_color": "색상 설명 (예: 검정, 갈색, 금발, 흰색)",
+  "hair_color": "#hex (머리카락의 대표 색상)",
   "hair_style": "아래 중 하나만 출력: 장발_생머리 | 장발_웨이브 | 중장발_생머리 | 중장발_웨이브 | 꽁지머리 | 짧은꽁지 | 사이드테일 | 양갈래_생머리 | 양갈래_웨이브 | 짧은양갈래_생머리 | 짧은양갈래_웨이브 | 단발",
   "hair_bangs": "아래 중 하나만 출력: 일자뱅 | 사이드뱅 | 노뱅 | 가르마",
-  "top_color": "상의 색상",
+  "top_color": "#hex (상의 대표 색상)",
   "top_style": "상의 스타일 (예: 흰 셔츠, 검정 후드, 교복)",
-  "bottom_color": "하의 색상",
+  "bottom_color": "#hex (하의 대표 색상)",
   "bottom_style": "하의 스타일 (예: 청바지, 검정 슬랙스)",
-  "shoes_color": "신발 색상",
+  "shoes_color": "#hex (신발 색상)",
   "accessories": "악세사리 설명 (없으면 없음)",
   "glasses": true,
   "gender_expression": "남성적 | 여성적 | 중성적"

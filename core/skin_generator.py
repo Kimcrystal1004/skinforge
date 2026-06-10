@@ -523,6 +523,17 @@ def parse_color(text: str) -> tuple:
     if not text:
         return DEFAULT_COLOR
     text = str(text).strip()
+    # hex 코드 우선 파싱 (#rrggbb 또는 #rgb)
+    import re
+    m = re.search(r'#([0-9a-fA-F]{6})', text)
+    if m:
+        h = m.group(1)
+        return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+    m3 = re.search(r'#([0-9a-fA-F]{3})\b', text)
+    if m3:
+        h = m3.group(1)
+        return (int(h[0]*2, 16), int(h[1]*2, 16), int(h[2]*2, 16))
+    # 폴백: 한국어 색상명 매핑
     for key, rgb in COLOR_MAP.items():
         if key in text:
             return rgb
