@@ -83,8 +83,8 @@ footer, .built-with { display: none !important; }
     height: 340px !important; max-height: 340px !important; overflow: hidden !important;
 }
 
-/* ── 버튼 공통 (생성 & 다운로드 동일 크기) ── */
-#gen-btn button, #dl-btn a, #dl-btn-disabled span {
+/* ── 스킨 생성하기 버튼 ── */
+#gen-btn button {
     display: block !important;
     width: 100% !important;
     height: 48px !important;
@@ -93,36 +93,17 @@ footer, .built-with { display: none !important; }
     border-radius: 10px !important;
     font-size: 15px !important;
     font-weight: 700 !important;
-    text-align: center !important;
-    box-sizing: border-box !important;
-    transition: all .2s !important;
-    cursor: pointer !important;
-}
-#gen-btn button {
     background: #00C9A7 !important;
     color: #000 !important;
     border: none !important;
     box-shadow: 0 4px 20px rgba(0,201,167,.35) !important;
+    cursor: pointer !important;
+    transition: all .2s !important;
 }
 #gen-btn button:hover {
     background: #00ddb8 !important;
     box-shadow: 0 6px 28px rgba(0,201,167,.55) !important;
     transform: translateY(-1px) !important;
-}
-#dl-btn a {
-    background: #00C9A7 !important;
-    color: #000 !important;
-    border: none !important;
-    text-decoration: none !important;
-    box-shadow: 0 4px 16px rgba(0,201,167,.3) !important;
-}
-#dl-btn a:hover { background: #00ddb8 !important; }
-#dl-btn-disabled span {
-    background: #1a1a1a !important;
-    color: #444 !important;
-    border: 1px solid #2a2a2a !important;
-    cursor: not-allowed !important;
-    box-shadow: none !important;
 }
 
 /* ── 상태 박스 완전 숨김 ── */
@@ -179,82 +160,93 @@ PREVIEW_EMPTY = None   # gr.Image(value=None) 로 빈 상태 표시
 
 
 def make_2d_preview(skin_img: Image.Image) -> Image.Image:
-    """64×64 스킨 → 앞/뒤/좌/우 4방향 2D 미리보기"""
-    import numpy as np
-    S = 10  # scale factor
-    BG = (14, 14, 14)
+    """64×64 스킨 → 앞/뒤/좌/우 4방향 2D 미리보기. 실패 시 raw 스킨 fallback."""
+    try:
+        import numpy as np
+        S = 10
+        BG = (14, 14, 14)
+        arr = np.array(skin_img.convert("RGBA"), dtype=np.uint8)
 
-    arr = np.array(skin_img.convert("RGBA"), dtype=np.uint8)
+        def crop(x, y, w, h):
+            return Image.fromarray(arr[y:y+h, x:x+w], "RGBA")
 
-    def crop(x, y, w, h):
-        return Image.fromarray(arr[y:y+h, x:x+w], "RGBA")
+        def up(img):
+            return img.resize((img.width * S, img.height * S), Image.NEAREST)
 
-    def up(img):
-        return img.resize((img.width * S, img.height * S), Image.NEAREST)
+        def alpha_over(base, over):
+            b = base.copy().convert("RGBA")
+            b.alpha_composite(over.convert("RGBA"))
+            return b
 
-    def alpha_over(base, over):
-        b = base.copy().convert("RGBA")
-        b.alpha_composite(over.convert("RGBA"))
-        return b
+        def compose(hd, hat, bd, ra, la, rl, ll, bw=8):
+            cw = (4 + bw + 4) * S
+            ch = 32 * S
+            cv = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+            hx = (cw - 8*S) // 2
+            bx = (cw - bw*S) // 2
+            hcomp = alpha_over(up(hd), up(hat))
+            cv.paste(hcomp,  (hx,       0),    hcomp)
+            cv.paste(up(bd), (bx,       8*S),  up(bd))
+            cv.paste(up(ra), (bx-4*S,   8*S),  up(ra))
+            cv.paste(up(la), (bx+bw*S,  8*S),  up(la))
+            cv.paste(up(rl), (bx,       20*S), up(rl))
+            cv.paste(up(ll), (bx+4*S,   20*S), up(ll))
+            return cv
 
-    def compose(hd, hat, bd, ra, la, rl, ll, bw=8):
-        cw = (4 + bw + 4) * S
-        ch = 32 * S
-        cv = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
-        hx = (cw - 8*S) // 2
-        bx = (cw - bw*S) // 2
-        rax = bx - 4*S
-        lax = bx + bw*S
-        rlx = bx
-        llx = bx + 4*S
-        hcomp = alpha_over(up(hd), up(hat))
-        cv.paste(hcomp,  (hx,  0),    hcomp)
-        cv.paste(up(bd), (bx,  8*S),  up(bd))
-        cv.paste(up(ra), (rax, 8*S),  up(ra))
-        cv.paste(up(la), (lax, 8*S),  up(la))
-        cv.paste(up(rl), (rlx, 20*S), up(rl))
-        cv.paste(up(ll), (llx, 20*S), up(ll))
-        return cv
+        views = [
+            compose(crop(8,8,8,8),  crop(40,8,8,8),  crop(20,20,8,12),
+                    crop(44,20,4,12), crop(36,52,4,12),
+                    crop(4,20,4,12),  crop(20,52,4,12)),
+            compose(crop(24,8,8,8), crop(56,8,8,8),  crop(32,20,8,12),
+                    crop(52,20,4,12), crop(44,52,4,12),
+                    crop(12,20,4,12), crop(28,52,4,12)),
+            compose(crop(0,8,8,8),  crop(32,8,8,8),  crop(16,20,4,12),
+                    crop(40,20,4,12), crop(32,52,4,12),
+                    crop(0,20,4,12),  crop(16,52,4,12), bw=4),
+            compose(crop(16,8,8,8), crop(48,8,8,8),  crop(28,20,4,12),
+                    crop(48,20,4,12), crop(40,52,4,12),
+                    crop(8,20,4,12),  crop(24,52,4,12), bw=4),
+        ]
 
-    views = [
-        compose(crop(8,8,8,8),  crop(40,8,8,8), crop(20,20,8,12),
-                crop(44,20,4,12), crop(36,52,4,12),
-                crop(4,20,4,12),  crop(20,52,4,12)),          # 앞
-        compose(crop(24,8,8,8), crop(56,8,8,8), crop(32,20,8,12),
-                crop(52,20,4,12), crop(44,52,4,12),
-                crop(12,20,4,12), crop(28,52,4,12)),          # 뒤
-        compose(crop(0,8,8,8),  crop(32,8,8,8), crop(16,20,4,12),
-                crop(40,20,4,12), crop(32,52,4,12),
-                crop(0,20,4,12),  crop(16,52,4,12), bw=4),   # 오른쪽
-        compose(crop(16,8,8,8), crop(48,8,8,8), crop(28,20,4,12),
-                crop(48,20,4,12), crop(40,52,4,12),
-                crop(8,20,4,12),  crop(24,52,4,12), bw=4),   # 왼쪽
-    ]
+        PAD = 10
+        total_w = sum(v.width for v in views) + PAD * (len(views) + 1)
+        total_h = max(v.height for v in views) + PAD * 2
+        result = Image.new("RGB", (total_w, total_h), BG)
+        x = PAD
+        for v in views:
+            result.paste(v.convert("RGB"), (x, PAD), v)
+            x += v.width + PAD
+        return result
 
-    PAD = 10
-    total_w = sum(v.width for v in views) + PAD * (len(views) + 1)
-    total_h = max(v.height for v in views) + PAD * 2
-    result = Image.new("RGB", (total_w, total_h), BG)
+    except Exception as e:
+        print(f"[preview] 미리보기 생성 실패, fallback 사용: {e}")
+        import traceback; traceback.print_exc()
+        return skin_img.convert("RGB").resize((512, 512), Image.NEAREST)
 
-    x = PAD
-    for v in views:
-        result.paste(v.convert("RGB"), (x, PAD), v)
-        x += v.width + PAD
 
-    return result
+_DL_BTN_STYLE = (
+    "display:block;background:#00C9A7;color:#000 !important;border:none;"
+    "font-size:15px;font-weight:700;height:48px;line-height:48px;padding:0;"
+    "border-radius:10px;width:100%;box-shadow:0 4px 16px rgba(0,201,167,.3);"
+    "text-decoration:none !important;text-align:center;box-sizing:border-box;"
+    "cursor:pointer !important;transition:background .2s;"
+)
+_DL_DIS_STYLE = (
+    "display:block;background:#1e1e1e;color:#444;border:1px solid #2a2a2a;"
+    "font-size:15px;font-weight:700;height:48px;line-height:48px;padding:0;"
+    "border-radius:10px;width:100%;text-align:center;box-sizing:border-box;"
+    "cursor:not-allowed;"
+)
 
+DL_EMPTY = f'<span style="{_DL_DIS_STYLE}">⬇️ PNG 다운로드</span>'
 
 def make_dl_html(skin_b64: str) -> str:
-    return f"""
-<a href="data:image/png;base64,{skin_b64}" download="skinforge_skin.png"
-   style="display:block;background:#00C9A7;color:#000;border:none;font-size:15px;
-   font-weight:700;height:48px;line-height:48px;padding:0;border-radius:10px;width:100%;
-   box-shadow:0 4px 16px rgba(0,201,167,.3);text-decoration:none;
-   text-align:center;box-sizing:border-box;transition:all .2s;"
-   onmouseover="this.style.background='#00ddb8'"
-   onmouseout="this.style.background='#00C9A7'">
-  ⬇️ PNG 다운로드
-</a>"""
+    return (
+        f'<a href="data:image/png;base64,{skin_b64}" download="skinforge_skin.png"'
+        f' style="{_DL_BTN_STYLE}"'
+        f' onmouseover="this.style.background=\'#00ddb8\'"'
+        f' onmouseout="this.style.background=\'#00C9A7\'">⬇️ PNG 다운로드</a>'
+    )
 
 
 def process(photo: Image.Image):
@@ -282,8 +274,7 @@ def process(photo: Image.Image):
     except Exception as e:
         import traceback
         traceback.print_exc()
-        dl_placeholder = '<div id="dl-btn-disabled"><span>⬇️ PNG 다운로드</span></div>'
-        return PREVIEW_EMPTY, dl_placeholder, f"❌ 오류: {e}"
+        return PREVIEW_EMPTY, DL_EMPTY, f"❌ 오류: {e}"
 
 
 with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
@@ -309,10 +300,7 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
                 show_label=True, interactive=False,
                 elem_id="preview-img",
             )
-            dl_btn = gr.HTML(
-                value='<div id="dl-btn-disabled"><span>⬇️ PNG 다운로드</span></div>',
-                elem_id="dl-btn",
-            )
+            dl_btn = gr.HTML(value=DL_EMPTY, elem_id="dl-btn")
 
     generate_btn.click(
         fn=process,
