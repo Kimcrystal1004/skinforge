@@ -14,13 +14,15 @@ def _np_rgb2v(rgb_u8: np.ndarray) -> np.ndarray:
     f = rgb_u8.astype(np.float32) / 255.0
     return f.max(axis=-1)
 
+BRIGHTNESS_BOOST = 1.30  # 의상·머리 밝기 배율 (1.0 = 원본, 높을수록 밝아짐)
+
 def _np_hsv_recolor(rgb_u8: np.ndarray, alpha: np.ndarray,
                     t_h: float, t_s: float,
                     ref_v: np.ndarray, max_v: float,
                     t_v: float) -> np.ndarray:
     """ref_v 밝기를 유지하며 HSV 색조를 (t_h, t_s)로 교체. (H,W,3) uint8 반환"""
     norm_v = np.clip(ref_v / max(max_v, 0.01), 0.0, 1.0)
-    final_v = np.clip(norm_v * max(t_v, 0.15), 0.0, 1.0)
+    final_v = np.clip(norm_v * max(t_v, 0.15) * BRIGHTNESS_BOOST, 0.0, 1.0)
 
     v = final_v
     s = t_s
@@ -264,7 +266,7 @@ def _paint_mask(arr, mask_arr, ref_arr, zone_colors, zone_maxv):
         if has_ref.any():
             rv = ref_v_map[has_ref]
             norm_v  = np.clip(rv / max(mv, 0.01), 0.0, 1.0)
-            final_v = np.clip(norm_v * max(t_v, 0.15), 0.0, 1.0)
+            final_v = np.clip(norm_v * max(t_v, 0.15) * BRIGHTNESS_BOOST, 0.0, 1.0)
             rgb_out = _np_hsv_recolor(arr[:, :, :3], arr[:, :, 3],
                                       t_h, t_s, ref_v_map, mv, t_v)
             ys, xs = np.where(has_ref)
@@ -396,7 +398,7 @@ def recolor_hair_base(hair_arr: np.ndarray, target_rgb: tuple) -> np.ndarray:
     if max_v < 0.01:
         max_v = 1.0
 
-    brightness = np.clip(v_map / max_v, 0.0, 1.0)       # (64,64)
+    brightness = np.clip(v_map / max_v * BRIGHTNESS_BOOST, 0.0, 1.0)  # (64,64)
     result = hair_arr.copy()
     for c, col_val in enumerate(target_rgb):
         channel = np.clip(col_val * brightness, 0, 255).astype(np.uint8)
