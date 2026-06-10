@@ -136,16 +136,15 @@ _REF_SKIN_CACHE: dict = {}
 # 우선순위 높은 것부터
 _STYLE_REF_MAP = [
     # (상의 키워드, 하의 키워드, 레퍼런스 파일)
-    (["교복", "school uniform", "세일러"],  [],                     "교복수소.png"),
-    (["정장", "suit", "비즈니스", "포멀"],  ["슬랙스", "정장"],      "정장수소.png"),
-    (["자켓", "블레이저", "jacket"],        [],                     "정장수소.png"),
-    (["한복"],                              [],                     "한복수소.png"),
-    (["경찰", "police", "군복"],            [],                     "경찰수소.png"),
-    (["멜빵"],                              [],                     "멜빵무나.png"),
-    (["원피스", "드레스", "dress"],          [],                     "기본수소.png"),
-    ([],                                   ["한복", "치마", "스커트"], "기본수소.png"),
+    (["교복", "school uniform", "세일러"],  [],                     "reference (10).png"),
+    (["정장", "suit", "비즈니스", "포멀"],  ["슬랙스", "정장"],      "reference (50).png"),
+    (["자켓", "블레이저", "jacket"],        [],                     "reference (50).png"),
+    (["한복"],                              [],                     "reference (62).png"),
+    (["경찰", "police", "군복"],            [],                     "reference (5).png"),
+    (["원피스", "드레스", "dress"],          [],                     "reference (14).png"),
+    ([],                                   ["한복", "치마", "스커트"], "reference (14).png"),
 ]
-_REF_FALLBACK = "기본수소.png"
+_REF_FALLBACK = "reference (14).png"
 
 
 def _select_ref_skin(features: dict) -> np.ndarray:
