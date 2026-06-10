@@ -15,9 +15,6 @@ from core.feature_extractor import extract_features
 from core.skin_generator import generate_skin
 from core.skin_validator import validate_and_fix
 
-OUTPUT_DIR = Path("output")
-OUTPUT_DIR.mkdir(exist_ok=True)
-
 TEAL = gr.themes.Color(
     c50="#e6fff9", c100="#ccfff3", c200="#99ffe7", c300="#66ffdb",
     c400="#33ffcf", c500="#00C9A7", c600="#00a888", c700="#008870",
