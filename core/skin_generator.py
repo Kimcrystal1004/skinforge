@@ -165,8 +165,10 @@ def _load_ref_tags():
 _load_ref_tags()
 
 
-def _hex_to_rgb(hex_str: str) -> np.ndarray:
-    h = hex_str.lstrip("#")
+def _hex_to_rgb(hex_str) -> np.ndarray:
+    if not hex_str:
+        return np.array([128, 128, 128], dtype=np.float32)
+    h = str(hex_str).lstrip("#")
     if len(h) == 6:
         return np.array([int(h[0:2],16), int(h[2:4],16), int(h[4:6],16)], dtype=np.float32)
     return np.array([128, 128, 128], dtype=np.float32)
@@ -209,8 +211,8 @@ def _score_ref(fname: str, features: dict) -> float:
     # 4) 색상 유사도 (보조)
     top_rgb = parse_color(features.get("top_color", "") or "#888888")
     bot_rgb = parse_color(features.get("bottom_color", "") or "#888888")
-    ref_top_rgb = _hex_to_rgb(tag.get("top_color", "#888888"))
-    ref_bot_rgb = _hex_to_rgb(tag.get("bottom_color", "#888888"))
+    ref_top_rgb = _hex_to_rgb(tag.get("top_color") or "#888888")
+    ref_bot_rgb = _hex_to_rgb(tag.get("bottom_color") or "#888888")
     t = np.array(top_rgb, dtype=np.float32)
     b = np.array(bot_rgb, dtype=np.float32)
     color_dist = float(np.sum((ref_top_rgb - t)**2) * 0.7 + np.sum((ref_bot_rgb - b)**2) * 0.3)
