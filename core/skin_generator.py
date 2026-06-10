@@ -149,43 +149,74 @@ _STYLE_REF_MAP = [
 ]
 _REF_FALLBACK = "reference (14).png"
 
-# ── 레퍼런스 색상 사전 (모듈 로드 시 1회 계산) ───────────────────────
-# key: 파일명, value: (top_avg_rgb, bot_avg_rgb) as np.ndarray
-_REF_COLOR_TABLE: dict = {}
+# ── 레퍼런스 태그 사전 (모듈 로드 시 1회 로드) ───────────────────────
+import json as _json
 
-def _build_ref_color_table():
-    for p in sorted(BASESKIN_DIR.glob("reference (*).png")):
-        fname = p.name
-        if not p.exists():
-            continue
+_REF_TAGS: dict = {}
+
+def _load_ref_tags():
+    tags_path = BASESKIN_DIR / "reference_tags.json"
+    if tags_path.exists():
         try:
-            arr = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
-            top_px = arr[20:32, 20:28]
-            bot_px = arr[20:32, 4:8]
-            tv = top_px[top_px[:,:,3] > 10][:, :3]
-            bv = bot_px[bot_px[:,:,3] > 10][:, :3]
-            _REF_COLOR_TABLE[fname] = (
-                tv.mean(axis=0) if len(tv) else np.array([128,128,128]),
-                bv.mean(axis=0) if len(bv) else np.array([80,80,80]),
-            )
+            _REF_TAGS.update(_json.loads(tags_path.read_text(encoding="utf-8")))
         except Exception:
             pass
 
-_build_ref_color_table()
+_load_ref_tags()
 
 
-def _select_ref_by_color(top_rgb: tuple, bot_rgb: tuple) -> str:
-    """상의/하의 색상과 가장 가까운 레퍼런스 파일명 반환"""
+def _hex_to_rgb(hex_str: str) -> np.ndarray:
+    h = hex_str.lstrip("#")
+    if len(h) == 6:
+        return np.array([int(h[0:2],16), int(h[2:4],16), int(h[4:6],16)], dtype=np.float32)
+    return np.array([128, 128, 128], dtype=np.float32)
+
+
+def _score_ref(fname: str, features: dict) -> float:
+    """features와 레퍼런스 태그 유사도 점수 (높을수록 유사)"""
+    tag = _REF_TAGS.get(fname, {})
+    if not tag:
+        return 0.0
+
+    score = 0.0
+    top_style  = (features.get("top_style",    "") or "").lower()
+    bot_style  = (features.get("bottom_style", "") or "").lower()
+    gender_exp = (features.get("gender_expression", "") or "").lower()
+    ref_tags   = [t.lower() for t in tag.get("style_tags", [])]
+    ref_top    = (tag.get("top_style",    "") or "").lower()
+    ref_bot    = (tag.get("bottom_style", "") or "").lower()
+    ref_gender = (tag.get("gender",       "") or "").lower()
+
+    # 1) 스타일 태그 키워드 매칭 (가장 중요)
+    combined_input = top_style + " " + bot_style
+    for rt in ref_tags:
+        if rt in combined_input:
+            score += 15.0
+
+    # 2) 상의/하의 스타일 텍스트 유사도
+    for word in top_style.split():
+        if len(word) > 1 and word in ref_top:
+            score += 8.0
+    for word in bot_style.split():
+        if len(word) > 1 and word in ref_bot:
+            score += 6.0
+
+    # 3) 성별 표현 매칭
+    gender_map = {"여성적": "여성", "남성적": "남성", "중성적": "중성"}
+    if gender_map.get(gender_exp) == ref_gender:
+        score += 5.0
+
+    # 4) 색상 유사도 (보조)
+    top_rgb = parse_color(features.get("top_color", "") or "#888888")
+    bot_rgb = parse_color(features.get("bottom_color", "") or "#888888")
+    ref_top_rgb = _hex_to_rgb(tag.get("top_color", "#888888"))
+    ref_bot_rgb = _hex_to_rgb(tag.get("bottom_color", "#888888"))
     t = np.array(top_rgb, dtype=np.float32)
     b = np.array(bot_rgb, dtype=np.float32)
-    best_fname = _REF_FALLBACK
-    best_dist  = float("inf")
-    for fname, (tc, bc) in _REF_COLOR_TABLE.items():
-        dist = float(np.sum((tc - t)**2) * 0.7 + np.sum((bc - b)**2) * 0.3)
-        if dist < best_dist:
-            best_dist  = dist
-            best_fname = fname
-    return best_fname
+    color_dist = float(np.sum((ref_top_rgb - t)**2) * 0.7 + np.sum((ref_bot_rgb - b)**2) * 0.3)
+    score += max(0.0, 10.0 - color_dist / 3000.0)
+
+    return score
 
 
 def _select_ref_skin(features: dict) -> np.ndarray:
@@ -193,7 +224,7 @@ def _select_ref_skin(features: dict) -> np.ndarray:
     top_style = (features.get("top_style",    "") or "").lower()
     bot_style = (features.get("bottom_style", "") or "").lower()
 
-    # 1) 특수 스타일 키워드 우선 매칭
+    # 1) 특수 스타일 키워드 우선 매칭 (한복, 웨딩, 수영복 등 명확한 경우)
     chosen = None
     for top_kws, bot_kws, fname in _STYLE_REF_MAP:
         top_ok = (not top_kws) or any(k in top_style for k in top_kws)
@@ -204,11 +235,18 @@ def _select_ref_skin(features: dict) -> np.ndarray:
                 chosen = fname
                 break
 
-    # 2) 키워드 미매칭 → 색상 유사도 자동 선택
+    # 2) 태그 기반 유사도 점수로 최적 레퍼런스 선택
     if chosen is None:
-        top_rgb = parse_color(features.get("top_color",    "흰색"))
-        bot_rgb = parse_color(features.get("bottom_color", "네이비"))
-        chosen  = _select_ref_by_color(top_rgb, bot_rgb)
+        all_refs = sorted(BASESKIN_DIR.glob("reference (*).png"))
+        best_fname = _REF_FALLBACK
+        best_score = -1.0
+        for p in all_refs:
+            s = _score_ref(p.name, features)
+            if s > best_score:
+                best_score = s
+                best_fname = p.name
+        chosen = best_fname
+        print(f"[ref_select] {chosen} (score={best_score:.1f})")
 
     if chosen not in _REF_SKIN_CACHE:
         path = BASESKIN_DIR / chosen

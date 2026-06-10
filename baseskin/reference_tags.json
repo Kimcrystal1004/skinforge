@@ -1,0 +1,1237 @@
+{
+  "reference (1).png": {
+    "top_style": "실험복 가운",
+    "bottom_style": "검정 슬랙스",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "실험복",
+      "유니폼",
+      "전문직",
+      "넥타이",
+      "긴 소매"
+    ],
+    "gender": "중성",
+    "formality": "유니폼"
+  },
+  "reference (2).png": {
+    "top_style": "교복 재킷과 블라우스",
+    "bottom_style": "흰 반바지",
+    "top_color": "#000000",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "반바지",
+      "재킷",
+      "블라우스",
+      "스트라이프"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (3).png": {
+    "top_style": "교복 블라우스",
+    "bottom_style": "슬랙스",
+    "top_color": "#1a1a1a",
+    "bottom_color": "#e0e0e0",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "긴팔",
+      "바지",
+      "스트라이프",
+      "세미포멀"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (4).png": {
+    "top_style": "후드티",
+    "bottom_style": "카고 바지",
+    "top_color": "#6bcb9b",
+    "bottom_color": "#343c28",
+    "style_tags": [
+      "후드",
+      "바지",
+      "캐주얼",
+      "밀리터리",
+      "택티컬"
+    ],
+    "gender": "중성",
+    "formality": "유니폼"
+  },
+  "reference (5).png": {
+    "top_style": "제복 재킷",
+    "bottom_style": "네이비 치마",
+    "top_color": "#42576B",
+    "bottom_color": "#42576B",
+    "style_tags": [
+      "제복",
+      "교복",
+      "여성적",
+      "치마",
+      "네이비"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (6).png": {
+    "top_style": "정장 재킷",
+    "bottom_style": "검정 슬랙스",
+    "top_color": "#732F34",
+    "bottom_color": "#262626",
+    "style_tags": [
+      "정장",
+      "슬랙스",
+      "여성적",
+      "코트",
+      "다크"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (7).png": {
+    "top_style": "정장 재킷",
+    "bottom_style": "검정 슬랙스",
+    "top_color": "#341C0E",
+    "bottom_color": "#1A1E2B",
+    "style_tags": [
+      "유니폼",
+      "정장",
+      "재킷",
+      "슬랙스",
+      "어두운"
+    ],
+    "gender": "중성",
+    "formality": "유니폼"
+  },
+  "reference (8).png": {
+    "top_style": "교복 블라우스와 조끼",
+    "bottom_style": "교복 치마",
+    "top_color": "#A9A9A9",
+    "bottom_color": "#664433",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "캐주얼",
+      "치마",
+      "블라우스",
+      "조끼"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (9).png": {
+    "top_style": "메이드복 상의",
+    "bottom_style": "메이드복 치마",
+    "top_color": "#2c2121",
+    "bottom_color": "#f2cccc",
+    "style_tags": [
+      "메이드",
+      "유니폼",
+      "여성적",
+      "치마"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (10).png": {
+    "top_style": "후드티",
+    "bottom_style": "바지",
+    "top_color": "#8FBCE8",
+    "bottom_color": "#6F6F6F",
+    "style_tags": [
+      "캐주얼",
+      "후드",
+      "상어"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (11).png": {
+    "top_style": "교복 재킷",
+    "bottom_style": "교복 치마",
+    "top_color": "#283040",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "치마",
+      "블레이저"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (12).png": {
+    "top_style": "긴팔 드레스 상의",
+    "bottom_style": "롱스커트",
+    "top_color": "#00AA00",
+    "bottom_color": "#663300",
+    "style_tags": [
+      "여성적",
+      "캐주얼",
+      "드레스",
+      "롱스커트",
+      "긴팔"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (13).png": {
+    "top_style": "흰색 블라우스",
+    "bottom_style": "흰색 치마",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "드레스",
+      "여성적",
+      "캐주얼",
+      "치마"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (14).png": {
+    "top_style": "흰색 실험복 및 하늘색 셔츠",
+    "bottom_style": "반바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#FDD4BF",
+    "style_tags": [
+      "의사",
+      "연구원",
+      "유니폼",
+      "코트",
+      "여성적",
+      "캐주얼",
+      "반바지"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (15).png": {
+    "top_style": "스웨터",
+    "bottom_style": "치마",
+    "top_color": "#6A899C",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "캐주얼",
+      "여성적",
+      "스웨터",
+      "치마",
+      "긴팔",
+      "레이어드"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (16).png": {
+    "top_style": "흰 셔츠와 검정 베스트",
+    "bottom_style": "검정 치마",
+    "top_color": "#000000",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "유니폼",
+      "치마",
+      "정장"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (17).png": {
+    "top_style": "오픈 재킷",
+    "bottom_style": "멜빵바지",
+    "top_color": "#70D13C",
+    "bottom_color": "#89AAC4",
+    "style_tags": [
+      "캐주얼",
+      "여성적",
+      "오버롤",
+      "재킷"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (18).png": {
+    "top_style": "교복 블라우스",
+    "bottom_style": "검정 치마",
+    "top_color": "#181818",
+    "bottom_color": "#181818",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "치마",
+      "블라우스",
+      "긴팔",
+      "카라"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (19).png": {
+    "top_style": "노란 셔츠",
+    "bottom_style": "슬랙스",
+    "top_color": "#FFE65E",
+    "bottom_color": "#4A5C74",
+    "style_tags": [
+      "멜빵바지",
+      "캐주얼",
+      "농부",
+      "정원사"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (20).png": {
+    "top_style": "멜빵바지 상의 (노란색 긴팔티)",
+    "bottom_style": "멜빵바지 하의 (갈색 긴 바지)",
+    "top_color": "#5B6471",
+    "bottom_color": "#835B47",
+    "style_tags": [
+      "캐주얼",
+      "멜빵바지"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (21).png": {
+    "top_style": "긴팔 드레스 상의",
+    "bottom_style": "롱스커트",
+    "top_color": "#B2DFD2",
+    "bottom_color": "#B2DFD2",
+    "style_tags": [
+      "드레스",
+      "여성적",
+      "캐주얼",
+      "긴팔",
+      "원피스",
+      "파스텔",
+      "민트색"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (22).png": {
+    "top_style": "교복 블라우스",
+    "bottom_style": "네이비 치마",
+    "top_color": "#2E3A60",
+    "bottom_color": "#2E3A60",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "치마"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (23).png": {
+    "top_style": "공주풍 원피스 상의",
+    "bottom_style": "프릴 미니 스커트",
+    "top_color": "#F57BAB",
+    "bottom_color": "#F57BAB",
+    "style_tags": [
+      "여성적",
+      "공주풍",
+      "드레스",
+      "미니",
+      "프릴",
+      "티아라",
+      "큐트"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (24).png": {
+    "top_style": "재킷",
+    "bottom_style": "치마",
+    "top_color": "#6B4727",
+    "bottom_color": "#F0CECF",
+    "style_tags": [
+      "재킷",
+      "블라우스",
+      "치마",
+      "여성적",
+      "체크"
+    ],
+    "gender": "여성",
+    "formality": "세미포멀"
+  },
+  "reference (25).png": {
+    "style_tags": [],
+    "error": "[WinError 10053] 현재 연결은 사용자의 호스트 시스템의 소프트웨어의 의해 중단되었습니다"
+  },
+  "reference (26).png": {
+    "top_style": "간호사 제복",
+    "bottom_style": "롱스커트",
+    "top_color": "#D43333",
+    "bottom_color": "#D43333",
+    "style_tags": [
+      "유니폼",
+      "간호사",
+      "여성적",
+      "드레스",
+      "긴팔"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (27).png": {
+    "top_style": "체크무늬 셔츠",
+    "bottom_style": "체크무늬 치마",
+    "top_color": "#c28546",
+    "bottom_color": "#c28546",
+    "style_tags": [
+      "캐주얼",
+      "여성적",
+      "체크무늬",
+      "셔츠",
+      "치마",
+      "덩굴무늬"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (28).png": {
+    "top_style": "후드티",
+    "bottom_style": "반바지",
+    "top_color": "#ffb3d9",
+    "bottom_color": "#ffb3d9",
+    "style_tags": [
+      "후드",
+      "캐주얼",
+      "여성적",
+      "반바지"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (29).png": {
+    "top_style": "파란색 카라 반팔 셔츠 (스트라이프 이너)",
+    "bottom_style": "흰색 반바지",
+    "top_color": "#3b5a9b",
+    "bottom_color": "#ffffff",
+    "style_tags": [
+      "캐주얼",
+      "반팔",
+      "스트라이프",
+      "반바지"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (30).png": {
+    "top_style": "블라우스",
+    "bottom_style": "치마",
+    "top_color": "#5A7BB5",
+    "bottom_color": "#E1E1E1",
+    "style_tags": [
+      "여성적",
+      "캐주얼",
+      "치마",
+      "귀여운"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (31).png": {
+    "top_style": "세일러복 상의",
+    "bottom_style": "네이비 치마",
+    "top_color": "#222D65",
+    "bottom_color": "#222D65",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "치마",
+      "네이비",
+      "세일러복"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (32).png": {
+    "top_style": "회색 후드티",
+    "bottom_style": "흰 바지",
+    "top_color": "#E8E8E8",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "후드",
+      "캐주얼",
+      "여성적",
+      "체크",
+      "바지"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (33).png": {
+    "top_style": "흰색 긴팔 셔츠",
+    "bottom_style": "흰색 바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "캐주얼",
+      "심플",
+      "단색"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (34).png": {
+    "top_style": "자켓",
+    "bottom_style": "슬랙스",
+    "top_color": "#A1927D",
+    "bottom_color": "#2F2E28",
+    "style_tags": [
+      "캐주얼",
+      "목폴라",
+      "자켓",
+      "슬랙스",
+      "긴머리",
+      "심플"
+    ],
+    "gender": "여성",
+    "formality": "세미포멀"
+  },
+  "reference (35).png": {
+    "top_style": "교복 블라우스",
+    "bottom_style": "검정 치마",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "치마",
+      "블라우스"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (36).png": {
+    "top_style": "검정 셔츠",
+    "bottom_style": "베이지 슬랙스",
+    "top_color": "#222222",
+    "bottom_color": "#B4A9A9",
+    "style_tags": [
+      "셔츠",
+      "슬랙스",
+      "유니폼",
+      "세미포멀",
+      "중성"
+    ],
+    "gender": "중성",
+    "formality": "유니폼"
+  },
+  "reference (37).png": {
+    "top_style": "크롭탑",
+    "bottom_style": "치마",
+    "top_color": "#D04040",
+    "bottom_color": "#F8F8F8",
+    "style_tags": [
+      "여성적",
+      "캐주얼",
+      "크롭",
+      "치마"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (38).png": {
+    "top_style": "체크 셔츠와 크롭탑",
+    "bottom_style": "흰색 반바지",
+    "top_color": "#A43F3F",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "캐주얼",
+      "여성적",
+      "크롭",
+      "반바지",
+      "체크",
+      "셔츠"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (39).png": {
+    "top_style": "검정 스웨터",
+    "bottom_style": "체크 치마",
+    "top_color": "#000000",
+    "bottom_color": "#636363",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "긴팔",
+      "치마",
+      "체크",
+      "레이어드",
+      "어두운"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (40).png": {
+    "top_style": "크로스오버 롱슬리브 블라우스",
+    "bottom_style": "롱스커트",
+    "top_color": "#F8F6F1",
+    "bottom_color": "#F8F6F1",
+    "style_tags": [
+      "캐주얼",
+      "여성적",
+      "블라우스",
+      "롱스커트",
+      "크로스오버",
+      "크림색"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (41).png": {
+    "top_style": "세일러 블라우스",
+    "bottom_style": "치마",
+    "top_color": "#FDFBFB",
+    "bottom_color": "#FBC36D",
+    "style_tags": [
+      "교복",
+      "세일러복",
+      "여성적",
+      "치마"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (42).png": {
+    "top_style": "제복 블라우스",
+    "bottom_style": "미니 스커트",
+    "top_color": "#223388",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "경찰",
+      "제복",
+      "여성적",
+      "치마",
+      "미니",
+      "롱슬리브",
+      "스타킹"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (43).png": {
+    "top_style": "교복 블라우스",
+    "bottom_style": "미니스커트",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#323232",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "치마",
+      "블라우스",
+      "긴팔"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (44).png": {
+    "top_style": "랩코트",
+    "bottom_style": "바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#2E3238",
+    "style_tags": [
+      "유니폼",
+      "랩코트",
+      "전문직",
+      "바지",
+      "긴팔"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (45).png": {
+    "top_style": "흰 셔츠",
+    "bottom_style": "반바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "여성적",
+      "캐주얼",
+      "크롭",
+      "반바지"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (46).png": {
+    "top_style": "회색 긴팔 티셔츠",
+    "bottom_style": "검정 레깅스",
+    "top_color": "#505050",
+    "bottom_color": "#1A1A1A",
+    "style_tags": [
+      "캐주얼",
+      "긴팔",
+      "레깅스",
+      "모던"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (47).png": {
+    "top_style": "검정 긴 가디건",
+    "bottom_style": "검정 사이하이 삭스",
+    "top_color": "#2C2C2C",
+    "bottom_color": "#2C2C2C",
+    "style_tags": [
+      "캐주얼",
+      "여성적",
+      "다크",
+      "레이어드",
+      "가디건",
+      "사이하이 삭스"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (48).png": {
+    "top_style": "교복 블라우스",
+    "bottom_style": "검정 치마",
+    "top_color": "#000000",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "치마",
+      "유니폼"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (49).png": {
+    "top_style": "교복 블라우스",
+    "bottom_style": "검정 치마",
+    "top_color": "#000000",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "치마"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (50).png": {
+    "top_style": "교복 블레이저",
+    "bottom_style": "네이비 치마",
+    "top_color": "#2b334a",
+    "bottom_color": "#2b334a",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "치마",
+      "블레이저",
+      "넥타이"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (51).png": {
+    "top_style": "정장 재킷",
+    "bottom_style": "정장 바지",
+    "top_color": "#4A2613",
+    "bottom_color": "#4A2613",
+    "style_tags": [
+      "정장",
+      "유니폼",
+      "여성적"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (52).png": {
+    "top_style": "교복 블라우스",
+    "bottom_style": "반바지",
+    "top_color": "#C0B2D4",
+    "bottom_color": "#FAD4BD",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "캐주얼",
+      "반바지"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (53).png": {
+    "top_style": "교복 블라우스",
+    "bottom_style": "회색 치마",
+    "top_color": "#8D8D8D",
+    "bottom_color": "#8D8D8D",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "치마",
+      "블라우스"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (54).png": {
+    "top_style": "정장 재킷",
+    "bottom_style": "검정 슬랙스",
+    "top_color": "#000000",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "정장",
+      "여성적",
+      "슬랙스",
+      "셔츠"
+    ],
+    "gender": "여성",
+    "formality": "포멀"
+  },
+  "reference (55).png": {
+    "top_style": "드레스",
+    "bottom_style": "드레스 치마",
+    "top_color": "#FFD7DE",
+    "bottom_color": "#FFD7DE",
+    "style_tags": [
+      "드레스",
+      "여성적",
+      "캐주얼",
+      "프릴",
+      "리본",
+      "치마"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (56).png": {
+    "top_style": "후드티",
+    "bottom_style": "트레이닝 팬츠",
+    "top_color": "#EAEAEA",
+    "bottom_color": "#EAEAEA",
+    "style_tags": [
+      "캐주얼",
+      "후드",
+      "여성적"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (57).png": {
+    "top_style": "후드티",
+    "bottom_style": "반바지",
+    "top_color": "#1e47c0",
+    "bottom_color": "#ffffff",
+    "style_tags": [
+      "캐주얼",
+      "여성적",
+      "후드",
+      "반바지",
+      "스포츠",
+      "레이어드"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (58).png": {
+    "top_style": "오프숄더 크롭탑",
+    "bottom_style": "없음",
+    "top_color": "#B4D4EC",
+    "bottom_color": null,
+    "style_tags": [
+      "여성적",
+      "캐주얼",
+      "크롭"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (59).png": {
+    "top_style": "중국 전통 드레스 상의",
+    "bottom_style": "중국 전통 드레스 치마",
+    "top_color": "#ac3d3d",
+    "bottom_color": "#ac3d3d",
+    "style_tags": [
+      "전통의상",
+      "여성적",
+      "드레스",
+      "중국식",
+      "웨딩",
+      "축제",
+      "치파오"
+    ],
+    "gender": "여성",
+    "formality": "전통의상"
+  },
+  "reference (60).png": {
+    "top_style": "플로럴 드레스 상의",
+    "bottom_style": "플로럴 드레스 하의",
+    "top_color": "#98D288",
+    "bottom_color": "#B8E0B0",
+    "style_tags": [
+      "드레스",
+      "플로럴",
+      "여성적",
+      "캐주얼",
+      "덩굴",
+      "초록색",
+      "흰색"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (61).png": {
+    "top_style": "긴팔 블라우스",
+    "bottom_style": "반바지",
+    "top_color": "#FFFF66",
+    "bottom_color": "#FFB2B2",
+    "style_tags": [
+      "여성적",
+      "캐주얼",
+      "귀여운",
+      "반바지",
+      "긴팔"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (62).png": {
+    "top_style": "집업 재킷",
+    "bottom_style": "긴 바지",
+    "top_color": "#2c3a5e",
+    "bottom_color": "#2c3a5e",
+    "style_tags": [
+      "여성적",
+      "캐주얼",
+      "스포츠",
+      "세트",
+      "긴팔",
+      "긴바지"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (63).png": {
+    "top_style": "후드티",
+    "bottom_style": "반바지",
+    "top_color": "#CCEAF5",
+    "bottom_color": "#CCEAF5",
+    "style_tags": [
+      "여성적",
+      "캐주얼",
+      "후드",
+      "겨울",
+      "눈",
+      "반바지"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (64).png": {
+    "top_style": "집업 자켓",
+    "bottom_style": "바지",
+    "top_color": "#1F315E",
+    "bottom_color": "#1F315E",
+    "style_tags": [
+      "캐주얼",
+      "여성적",
+      "긴팔",
+      "바지",
+      "집업",
+      "하이넥",
+      "별무늬"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (65).png": {
+    "top_style": "테마 재킷과 V넥 이너 셔츠",
+    "bottom_style": "매칭 팬츠",
+    "top_color": "#DD5032",
+    "bottom_color": "#DD5032",
+    "style_tags": [
+      "테마",
+      "재킷",
+      "팬츠",
+      "판타지",
+      "캐릭터",
+      "아시안_스타일",
+      "귀여운"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (66).png": {
+    "top_style": "유카타",
+    "bottom_style": "유카타 하의",
+    "top_color": "#8FE4D3",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "전통의상",
+      "유카타",
+      "여성적",
+      "캐주얼",
+      "별무늬"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (67).png": {
+    "top_style": "도복 상의",
+    "bottom_style": "도복 바지",
+    "top_color": "#F0F0F0",
+    "bottom_color": "#F0F0F0",
+    "style_tags": [
+      "도복",
+      "제복",
+      "긴팔",
+      "바지",
+      "여성적"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (68).png": {
+    "top_style": "스트라이프 크롭탑",
+    "bottom_style": "흰색 반바지",
+    "top_color": "#6B8097",
+    "bottom_color": "#F0F0F0",
+    "style_tags": [
+      "여성적",
+      "캐주얼",
+      "크롭",
+      "반바지",
+      "카디건",
+      "스트라이프",
+      "레이어드"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (69).png": {
+    "top_style": "줄무늬 긴팔 상의",
+    "bottom_style": "검정 짧은 치마",
+    "top_color": "#424b5c",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "여성적",
+      "캐주얼",
+      "치마",
+      "줄무늬",
+      "교복"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (70).png": {
+    "top_style": "체크 셔츠와 베스트",
+    "bottom_style": "청바지",
+    "top_color": "#8F552C",
+    "bottom_color": "#394A57",
+    "style_tags": [
+      "캐주얼"
+    ],
+    "gender": "남성",
+    "formality": "캐주얼"
+  },
+  "reference (71).png": {
+    "top_style": "스트라이프 스웨터",
+    "bottom_style": "스트라이프 슬랙스",
+    "top_color": "#4a4e40",
+    "bottom_color": "#4d372e",
+    "style_tags": [
+      "캐주얼",
+      "여성적",
+      "스웨터",
+      "스트라이프",
+      "모자",
+      "롱 슬리브"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (72).png": {
+    "top_style": "레이어드 셔츠",
+    "bottom_style": "회색 슬랙스",
+    "top_color": "#DCDCDC",
+    "bottom_color": "#696969",
+    "style_tags": [
+      "캐주얼",
+      "체크",
+      "셔츠",
+      "슬랙스",
+      "긴팔"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (73).png": {
+    "top_style": "드레스 상의",
+    "bottom_style": "드레스 스커트",
+    "top_color": "#FFF5F8",
+    "bottom_color": "#FFF5F8",
+    "style_tags": [
+      "여성적",
+      "드레스",
+      "웨딩",
+      "로맨틱",
+      "긴 드레스"
+    ],
+    "gender": "여성",
+    "formality": "세미포멀"
+  },
+  "reference (74).png": {
+    "top_style": "교복 조끼와 셔츠",
+    "bottom_style": "체크 플리츠 치마",
+    "top_color": "#D3D8DD",
+    "bottom_color": "#C8CDD3",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "치마",
+      "플리츠",
+      "체크"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (75).png": {
+    "top_style": "캐주얼 원피스",
+    "bottom_style": "맨다리",
+    "top_color": "#CDE8F7",
+    "bottom_color": "#FFD4D4",
+    "style_tags": [
+      "여성적",
+      "캐주얼",
+      "원피스",
+      "귀여운"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (76).png": {
+    "top_style": "줄무늬 셔츠와 검정색 재킷",
+    "bottom_style": "검정색 미니 스커트",
+    "top_color": "#B5A9BC",
+    "bottom_color": "#2A2A2A",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "긴팔",
+      "줄무늬",
+      "재킷",
+      "치마",
+      "미니"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (77).png": {
+    "top_style": "검정 조끼 및 흰 셔츠",
+    "bottom_style": "검정 치마",
+    "top_color": "#1A1A1A",
+    "bottom_color": "#1A1A1A",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "치마",
+      "레이어드"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (78).png": {
+    "top_style": "정장 재킷",
+    "bottom_style": "검정 슬랙스",
+    "top_color": "#0A0A0A",
+    "bottom_color": "#0A0A0A",
+    "style_tags": [
+      "정장",
+      "유니폼",
+      "넥타이",
+      "블랙",
+      "포멀",
+      "슬랙스",
+      "골드디테일",
+      "퍼플"
+    ],
+    "gender": "남성",
+    "formality": "유니폼"
+  },
+  "reference (79).png": {
+    "top_style": "후드티",
+    "bottom_style": "검정 바지",
+    "top_color": "#D9D9D9",
+    "bottom_color": "#1A1A1A",
+    "style_tags": [
+      "후드",
+      "캐주얼",
+      "긴팔",
+      "바지"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (80).png": {
+    "top_style": "드레스 상의",
+    "bottom_style": "드레스 치마",
+    "top_color": "#B28886",
+    "bottom_color": "#B28886",
+    "style_tags": [
+      "여성적",
+      "드레스",
+      "캐주얼",
+      "꽃",
+      "소녀스러운"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (81).png": {
+    "top_style": "어두운 재킷",
+    "bottom_style": "줄무늬 바지",
+    "top_color": "#333333",
+    "bottom_color": "#7A665A",
+    "style_tags": [
+      "재킷",
+      "줄무늬",
+      "바지",
+      "캐주얼",
+      "하이넥",
+      "금색 장식",
+      "모던"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (82).png": {
+    "top_style": "검정 재킷과 칼라 셔츠",
+    "bottom_style": "밝은색 바지",
+    "top_color": "#2C2C2C",
+    "bottom_color": "#D0D0D0",
+    "style_tags": [
+      "캐주얼",
+      "고스",
+      "스트릿",
+      "모노크롬",
+      "안경",
+      "재킷"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (83).png": {
+    "top_style": "정장 재킷",
+    "bottom_style": "네이비 치마",
+    "top_color": "#2d3648",
+    "bottom_color": "#2d3648",
+    "style_tags": [
+      "교복",
+      "여성적",
+      "정장",
+      "치마"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  }
+}
