@@ -3,9 +3,8 @@ app.py — SkinForge AI
 """
 
 import os
+import io
 import base64
-import tempfile
-from pathlib import Path
 from dotenv import load_dotenv
 from PIL import Image
 import gradio as gr
@@ -265,9 +264,24 @@ def make_viewer_html(skin_b64: str) -> str:
 """
 
 
+DL_EMPTY = """<div style="height:54px;"></div>"""
+
+def make_dl_html(skin_b64: str) -> str:
+    return f"""
+<a href="data:image/png;base64,{skin_b64}" download="skinforge_skin.png"
+   style="display:block;background:#00C9A7;color:#000;border:none;font-size:15px;
+   font-weight:700;padding:13px;border-radius:10px;width:100%;
+   box-shadow:0 4px 16px rgba(0,201,167,.3);text-decoration:none;
+   text-align:center;box-sizing:border-box;transition:all .2s;"
+   onmouseover="this.style.background='#00ddb8'"
+   onmouseout="this.style.background='#00C9A7'">
+  ⬇️ PNG 다운로드
+</a>"""
+
+
 def process(photo: Image.Image):
     if photo is None:
-        return VIEWER_EMPTY, None, "⚠️ 사진을 업로드해 주세요."
+        return VIEWER_EMPTY, DL_EMPTY, "⚠️ 사진을 업로드해 주세요."
     try:
         features = extract_features(photo)
         tone = features.get("skin_tone", "warm_bright")
@@ -278,21 +292,17 @@ def process(photo: Image.Image):
         if not is_valid:
             status += f" | ⚠️ {errors}"
 
-        tmp = tempfile.NamedTemporaryFile(
-            suffix=".png", dir=OUTPUT_DIR, delete=False, prefix="skin_"
-        )
-        skin_img.save(tmp.name, format="PNG")
+        b = io.BytesIO()
+        skin_img.save(b, format="PNG")
+        buf = base64.b64encode(b.getvalue()).decode()
 
-        with open(tmp.name, "rb") as f:
-            skin_b64 = base64.b64encode(f.read()).decode()
-
-        print(f"[skinforge] 생성 완료: {tmp.name} | {status}")
-        return make_viewer_html(skin_b64), tmp.name, status
+        print(f"[skinforge] 생성 완료 | {status}")
+        return make_viewer_html(buf), make_dl_html(buf), status
 
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return VIEWER_EMPTY, None, f"❌ 오류: {e}"
+        return VIEWER_EMPTY, DL_EMPTY, f"❌ 오류: {e}"
 
 
 with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
@@ -314,9 +324,7 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
 
         with gr.Column(scale=1, min_width=300):
             viewer_output = gr.HTML(value=VIEWER_EMPTY, elem_id="viewer-html")
-            dl_btn = gr.DownloadButton(
-                "⬇️ PNG 다운로드", elem_id="dl-btn", variant="primary",
-            )
+            dl_btn = gr.HTML(value=DL_EMPTY, elem_id="dl-btn")
 
     generate_btn.click(
         fn=process,
