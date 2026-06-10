@@ -18,7 +18,7 @@ EXTRACT_PROMPT = """
 {
   "skin_tone": "warm_bright | warm_normal | warm_dark | cool_bright | cool_normal | cool_dark",
   "hair_color": "색상 설명 (예: 검정, 갈색, 금발, 흰색)",
-  "hair_style": "스타일 설명 (예: 짧은 직모, 긴 웨이브, 단발)",
+  "hair_style": "아래 중 하나만 출력: 장발_생머리 | 장발_웨이브 | 중장발_생머리 | 중장발_웨이브 | 꽁지머리 | 짧은꽁지 | 사이드테일 | 양갈래_생머리 | 양갈래_웨이브 | 짧은양갈래_생머리 | 짧은양갈래_웨이브 | 단발_일자뱅 | 단발_사이드뱅 | 단발_노뱅 | 단발_가르마",
   "top_color": "상의 색상",
   "top_style": "상의 스타일 (예: 흰 셔츠, 검정 후드, 교복)",
   "bottom_color": "하의 색상",
