@@ -10,11 +10,31 @@ from pathlib import Path
 from colorsys import rgb_to_hsv, hsv_to_rgb
 from .recolor_skin import load_base, apply_skin_tone
 
-HAIR_BASE_PATH = Path(__file__).parent.parent / "baseskin" / "base_hair.png"
+BASESKIN_DIR = Path(__file__).parent.parent / "baseskin"
+
+HAIR_STYLE_MAP = [
+    # (키워드 목록, 파일명)
+    (["일자", "단발", "풀뱅", "블런트"],              "base_hair_bangs_full.png"),
+    (["사이드", "옆가르마", "흘림", "레이어드"],       "base_hair_bangs_side.png"),
+    (["없음", "올림", "포니", "묶", "올린", "업"],    "base_hair_bangs_none.png"),
+    (["가르마", "투블럭", "댄디", "내추럴"],          "base_hair_bangs_curtain.png"),
+]
+HAIR_BASE_FALLBACK = "base_hair_bangs_full.png"
 
 
-def load_hair_base() -> np.ndarray:
-    img = Image.open(HAIR_BASE_PATH).convert("RGBA")
+def pick_hair_base(hair_style: str) -> Path:
+    s = (hair_style or "").strip()
+    for keywords, filename in HAIR_STYLE_MAP:
+        if any(k in s for k in keywords):
+            p = BASESKIN_DIR / filename
+            if p.exists():
+                return p
+    return BASESKIN_DIR / HAIR_BASE_FALLBACK
+
+
+def load_hair_base(hair_style: str = "") -> np.ndarray:
+    path = pick_hair_base(hair_style)
+    img = Image.open(path).convert("RGBA")
     return np.array(img, dtype=np.uint8)
 
 
@@ -99,7 +119,7 @@ def fill_region_overlay(arr: np.ndarray, x: int, y: int, w: int, h: int, rgb: tu
 
 def draw_hair(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
     """base_hair.png를 목표 색으로 재채색해 스킨에 합성"""
-    hair_base = load_hair_base()
+    hair_base = load_hair_base(hair_style)
     colored = recolor_hair_base(hair_base, hair_rgb)
 
     # 기본 합성: 헤어 베이스의 불투명 픽셀을 스킨 위에 덮음
