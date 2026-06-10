@@ -10,7 +10,30 @@ from google import genai
 from google.genai import types
 from PIL import Image
 
+try:
+    from rembg import remove as rembg_remove
+    _REMBG_AVAILABLE = True
+except ImportError:
+    _REMBG_AVAILABLE = False
+
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
+
+
+def _remove_bg(image: Image.Image) -> Image.Image:
+    """배경 제거 후 흰 배경 합성. rembg 미설치 시 원본 반환."""
+    if not _REMBG_AVAILABLE:
+        return image
+    try:
+        buf_in = io.BytesIO()
+        image.save(buf_in, format="PNG")
+        result_bytes = rembg_remove(buf_in.getvalue())
+        fg = Image.open(io.BytesIO(result_bytes)).convert("RGBA")
+        bg = Image.new("RGBA", fg.size, (255, 255, 255, 255))
+        bg.alpha_composite(fg)
+        return bg.convert("RGB")
+    except Exception as e:
+        print(f"[rembg] 배경 제거 실패, 원본 사용: {e}")
+        return image
 
 EXTRACT_PROMPT = """
 주어진 인물 사진을 분석해 다음 항목을 JSON으로만 반환하세요. 설명 없이 JSON만 출력.
@@ -33,6 +56,7 @@ EXTRACT_PROMPT = """
 
 
 def extract_features(image: Image.Image) -> dict:
+    image = _remove_bg(image)
     buf = io.BytesIO()
     image.save(buf, format="PNG")
     buf.seek(0)
