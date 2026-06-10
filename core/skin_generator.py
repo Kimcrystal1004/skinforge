@@ -154,9 +154,8 @@ _REF_FALLBACK = "reference (14).png"
 _REF_COLOR_TABLE: dict = {}
 
 def _build_ref_color_table():
-    for i in range(1, 70):
-        fname = f"reference ({i}).png"
-        p = BASESKIN_DIR / fname
+    for p in sorted(BASESKIN_DIR.glob("reference (*).png")):
+        fname = p.name
         if not p.exists():
             continue
         try:

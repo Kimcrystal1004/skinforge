@@ -5,6 +5,7 @@ app.py — SkinForge AI
 import os
 import io
 import base64
+from pathlib import Path
 from dotenv import load_dotenv
 from PIL import Image
 import gradio as gr
@@ -370,6 +371,16 @@ def process(photo: Image.Image):
         return err_html, f"❌ 오류: {e}"
 
 
+_SAMPLES_DIR = Path(__file__).parent / "samples"
+_SAMPLE_FILES = sorted(_SAMPLES_DIR.glob("*.jpg")) + sorted(_SAMPLES_DIR.glob("*.jpeg")) + sorted(_SAMPLES_DIR.glob("*.png"))
+
+CSS += """
+/* ── 샘플 이미지 ── */
+#sample-wrap .gallery-item img { border-radius: 10px !important; cursor: pointer !important; }
+#sample-wrap { margin-top: 10px !important; }
+#sample-wrap .label-wrap { display: none !important; }
+"""
+
 with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
     gr.HTML(HEADER_HTML)
 
@@ -386,6 +397,14 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
                 label="상태", interactive=False, elem_id="status-box",
                 show_label=False, visible=True,
             )
+            if _SAMPLE_FILES:
+                gr.HTML("<div style='color:#666;font-size:12px;margin:6px 0 4px;'>📷 샘플 사진으로 테스트해보세요</div>")
+                gr.Examples(
+                    examples=[[str(f)] for f in _SAMPLE_FILES],
+                    inputs=[photo_input],
+                    elem_id="sample-wrap",
+                    label="",
+                )
 
         with gr.Column(scale=1, min_width=300):
             result_html = gr.HTML(value=_RESULT_EMPTY, elem_id="result-box")
