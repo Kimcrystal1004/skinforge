@@ -133,34 +133,81 @@ def pick_mask(features: dict) -> Path:
 _REF_SKIN_CACHE: dict = {}
 
 # ── 스타일 키워드 → 레퍼런스 스킨 매핑 ──────────────────────────────
-# 우선순위 높은 것부터
+# 우선순위 높은 것부터 (특수 의상만 등록, 나머지는 색상 자동 매칭)
 _STYLE_REF_MAP = [
     # (상의 키워드, 하의 키워드, 레퍼런스 파일)
-    (["교복", "school uniform", "세일러"],  [],                     "reference (10).png"),
-    (["정장", "suit", "비즈니스", "포멀"],  ["슬랙스", "정장"],      "reference (22).png"),
-    (["자켓", "블레이저", "jacket"],        [],                     "reference (22).png"),
-    (["한복"],                              [],                     "reference (62).png"),
-    (["경찰", "police", "군복"],            [],                     "reference (5).png"),
-    (["원피스", "드레스", "dress", "가운", "볼"],   [],                     "reference (62).png"),
-    ([],                                         ["한복", "치마", "스커트", "롱스커트"], "reference (62).png"),
+    (["교복", "school uniform", "세일러", "교복치마"],      [],   "reference (10).png"),
+    (["정장", "suit", "비즈니스", "포멀", "자켓", "블레이저", "jacket"], ["슬랙스", "정장", ""], "reference (22).png"),
+    (["한복", "저고리", "치마저고리"],                      [],   "reference (62).png"),
+    (["경찰", "police", "군복", "유니폼", "제복"],          [],   "reference (5).png"),
+    (["웨딩", "웨딩드레스", "wedding"],                     [],   "reference (33).png"),
+    (["수영복", "비키니", "swimsuit"],                       [],   "reference (35).png"),
+    (["스포츠", "운동복", "트레이닝", "sport", "gym"],      [],   "reference (66).png"),
+    (["후드", "hoodie", "sweatshirt"],                      [],   "reference (56).png"),
 ]
-_REF_FALLBACK = "reference (62).png"
+_REF_FALLBACK = "reference (14).png"
+
+# ── 레퍼런스 색상 사전 (모듈 로드 시 1회 계산) ───────────────────────
+# key: 파일명, value: (top_avg_rgb, bot_avg_rgb) as np.ndarray
+_REF_COLOR_TABLE: dict = {}
+
+def _build_ref_color_table():
+    for i in range(1, 70):
+        fname = f"reference ({i}).png"
+        p = BASESKIN_DIR / fname
+        if not p.exists():
+            continue
+        try:
+            arr = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
+            top_px = arr[20:32, 20:28]
+            bot_px = arr[20:32, 4:8]
+            tv = top_px[top_px[:,:,3] > 10][:, :3]
+            bv = bot_px[bot_px[:,:,3] > 10][:, :3]
+            _REF_COLOR_TABLE[fname] = (
+                tv.mean(axis=0) if len(tv) else np.array([128,128,128]),
+                bv.mean(axis=0) if len(bv) else np.array([80,80,80]),
+            )
+        except Exception:
+            pass
+
+_build_ref_color_table()
+
+
+def _select_ref_by_color(top_rgb: tuple, bot_rgb: tuple) -> str:
+    """상의/하의 색상과 가장 가까운 레퍼런스 파일명 반환"""
+    t = np.array(top_rgb, dtype=np.float32)
+    b = np.array(bot_rgb, dtype=np.float32)
+    best_fname = _REF_FALLBACK
+    best_dist  = float("inf")
+    for fname, (tc, bc) in _REF_COLOR_TABLE.items():
+        dist = float(np.sum((tc - t)**2) * 0.7 + np.sum((bc - b)**2) * 0.3)
+        if dist < best_dist:
+            best_dist  = dist
+            best_fname = fname
+    return best_fname
 
 
 def _select_ref_skin(features: dict) -> np.ndarray:
     """의상 특징에 맞는 레퍼런스 스킨 선택 (캐시)"""
-    top  = (features.get("top_style",    "") or "").lower()
-    bot  = (features.get("bottom_style", "") or "").lower()
+    top_style = (features.get("top_style",    "") or "").lower()
+    bot_style = (features.get("bottom_style", "") or "").lower()
 
-    chosen = _REF_FALLBACK
+    # 1) 특수 스타일 키워드 우선 매칭
+    chosen = None
     for top_kws, bot_kws, fname in _STYLE_REF_MAP:
-        top_ok = (not top_kws) or any(k in top for k in top_kws)
-        bot_ok = (not bot_kws) or any(k in bot for k in bot_kws)
+        top_ok = (not top_kws) or any(k in top_style for k in top_kws)
+        bot_ok = (not bot_kws) or any(k in bot_style for k in bot_kws)
         if top_ok and bot_ok:
             p = BASESKIN_DIR / fname
             if p.exists():
                 chosen = fname
                 break
+
+    # 2) 키워드 미매칭 → 색상 유사도 자동 선택
+    if chosen is None:
+        top_rgb = parse_color(features.get("top_color",    "흰색"))
+        bot_rgb = parse_color(features.get("bottom_color", "네이비"))
+        chosen  = _select_ref_by_color(top_rgb, bot_rgb)
 
     if chosen not in _REF_SKIN_CACHE:
         path = BASESKIN_DIR / chosen
