@@ -7,7 +7,30 @@ Gemini 이미지 생성 없이 베이스 스킨에 직접 색상을 입힌다.
 import numpy as np
 from PIL import Image
 from pathlib import Path
+from colorsys import rgb_to_hsv, hsv_to_rgb
 from .recolor_skin import load_base, apply_skin_tone
+
+HAIR_BASE_PATH = Path(__file__).parent.parent / "baseskin" / "base_hair.png"
+
+
+def load_hair_base() -> np.ndarray:
+    img = Image.open(HAIR_BASE_PATH).convert("RGBA")
+    return np.array(img, dtype=np.uint8)
+
+
+def recolor_hair_base(hair_arr: np.ndarray, target_rgb: tuple) -> np.ndarray:
+    """베이스 헤어의 H·S를 target_rgb 톤으로 교체하고 V(명암)는 유지"""
+    th, ts, _ = rgb_to_hsv(target_rgb[0]/255, target_rgb[1]/255, target_rgb[2]/255)
+    result = hair_arr.copy()
+    for y in range(64):
+        for x in range(64):
+            r, g, b, a = hair_arr[y, x]
+            if a < 10:
+                continue
+            _, _, v = rgb_to_hsv(r/255, g/255, b/255)
+            nr, ng, nb = hsv_to_rgb(th, ts, v)
+            result[y, x] = [int(nr*255), int(ng*255), int(nb*255), a]
+    return result
 
 # ── 색상 사전 (한국어 → RGB) ──────────────────────────────────────
 COLOR_MAP = {
@@ -75,28 +98,33 @@ def fill_region_overlay(arr: np.ndarray, x: int, y: int, w: int, h: int, rgb: tu
 
 
 def draw_hair(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
-    """머리카락 UV 영역에 색상 적용"""
-    # 머리 윗면
-    fill_region(arr, 8, 0, 8, 8, shade(hair_rgb, 0.9))
-    # 머리 뒷면
-    fill_region(arr, 24, 8, 8, 8, shade(hair_rgb, 0.65))
-    # 머리 옆면 (앞 2픽셀은 얼굴이므로 뒤 픽셀만)
-    fill_region(arr, 0, 8, 8, 8, shade(hair_rgb, 0.8))   # 오른쪽
-    fill_region(arr, 16, 8, 8, 8, shade(hair_rgb, 0.8))  # 왼쪽
+    """base_hair.png를 목표 색으로 재채색해 스킨에 합성"""
+    hair_base = load_hair_base()
+    colored = recolor_hair_base(hair_base, hair_rgb)
 
-    # 앞머리 (모자 오버레이 front 위쪽 2줄)
-    front_rgb = shade(hair_rgb, 1.0)
-    for py in range(8, 10):
-        for px in range(40, 48):
-            arr[py, px] = [*front_rgb, 255]
+    # 기본 합성: 헤어 베이스의 불투명 픽셀을 스킨 위에 덮음
+    for y in range(64):
+        for x in range(64):
+            a = int(colored[y, x, 3])
+            if a < 10:
+                continue
+            if a >= 255:
+                arr[y, x] = colored[y, x]
+            else:
+                # 알파 블렌딩 (오버레이 반투명 영역)
+                src = colored[y, x, :3].astype(float)
+                dst = arr[y, x, :3].astype(float)
+                fa = a / 255
+                arr[y, x, :3] = (src * fa + dst * (1 - fa)).astype(np.uint8)
+                arr[y, x, 3] = 255
 
-    # 긴 머리 스타일이면 목 뒤까지
+    # 긴 머리 — 재킷 뒷면 위쪽 2줄에 머리카락 연장
     style_lower = hair_style.lower() if hair_style else ""
     if any(k in style_lower for k in ["긴", "롱", "웨이브", "컬"]):
-        # jacket back 위쪽 2줄을 머리카락으로
+        ext_rgb = shade(hair_rgb, 0.60)
         for py in range(36, 38):
             for px in range(32, 40):
-                arr[py, px] = [*shade(hair_rgb, 0.6), 255]
+                arr[py, px] = [*ext_rgb, 255]
 
 
 def draw_clothing(arr: np.ndarray, top_rgb: tuple, bottom_rgb: tuple,
