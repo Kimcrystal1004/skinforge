@@ -57,6 +57,8 @@ footer, .built-with { display: none !important; }
     background: #0d0d0d !important;
     min-height: 340px !important;
     height: 340px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 #upload-wrap .wrap:hover { background: #111 !important; }
 #upload-wrap svg { color: #00C9A7 !important; }
@@ -71,70 +73,60 @@ footer, .built-with { display: none !important; }
 #upload-wrap .source-selection,
 #upload-wrap [data-testid="source-select"] { display: none !important; }
 
-/* ── 스킨 생성하기 버튼 ── */
+/* ── 업로드 영역 이미지 맞춤 ── */
+#upload-wrap img {
+    width: 100% !important; height: 100% !important;
+    object-fit: contain !important; max-height: 340px !important;
+}
+#upload-wrap .preview-image,
+#upload-wrap [data-testid="image"] {
+    height: 340px !important; max-height: 340px !important; overflow: hidden !important;
+}
+
+/* ── 버튼 공통 (생성 & 다운로드 동일 크기) ── */
+#gen-btn button, #dl-btn a, #dl-btn-disabled span {
+    display: block !important;
+    width: 100% !important;
+    height: 48px !important;
+    line-height: 48px !important;
+    padding: 0 !important;
+    border-radius: 10px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    transition: all .2s !important;
+    cursor: pointer !important;
+}
 #gen-btn button {
     background: #00C9A7 !important;
     color: #000 !important;
     border: none !important;
-    font-size: 16px !important;
-    font-weight: 700 !important;
-    padding: 15px !important;
-    border-radius: 12px !important;
-    width: 100% !important;
     box-shadow: 0 4px 20px rgba(0,201,167,.35) !important;
-    transition: all .2s !important;
 }
 #gen-btn button:hover {
     background: #00ddb8 !important;
     box-shadow: 0 6px 28px rgba(0,201,167,.55) !important;
     transform: translateY(-1px) !important;
 }
-
-/* ── 상태 박스 완전 숨김 ── */
-#status-box { display: none !important; }
-
-/* ── PNG 다운로드 버튼 ── */
-#dl-btn button, #dl-btn a {
+#dl-btn a {
     background: #00C9A7 !important;
     color: #000 !important;
     border: none !important;
-    font-size: 15px !important;
-    font-weight: 700 !important;
-    padding: 13px !important;
-    border-radius: 10px !important;
-    width: 100% !important;
-    box-shadow: 0 4px 16px rgba(0,201,167,.3) !important;
-    transition: all .2s !important;
     text-decoration: none !important;
-    display: block !important;
-    text-align: center !important;
+    box-shadow: 0 4px 16px rgba(0,201,167,.3) !important;
 }
-#dl-btn button:hover, #dl-btn a:hover {
-    background: #00ddb8 !important;
-}
-
-/* ── 업로드 영역 고정 높이 + 이미지 맞춤 ── */
-#upload-wrap img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: contain !important;
-    max-height: 340px !important;
-}
-#upload-wrap .preview-image,
-#upload-wrap [data-testid="image"] {
-    height: 340px !important;
-    max-height: 340px !important;
-    overflow: hidden !important;
+#dl-btn a:hover { background: #00ddb8 !important; }
+#dl-btn-disabled span {
+    background: #1a1a1a !important;
+    color: #444 !important;
+    border: 1px solid #2a2a2a !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
 }
 
-/* ── 버튼 높이 통일 (스킨 생성 & 다운로드 동일 크기) ── */
-#gen-btn button,
-#dl-btn a {
-    height: 52px !important;
-    padding: 0 !important;
-    line-height: 52px !important;
-    font-size: 15px !important;
-}
+/* ── 상태 박스 완전 숨김 ── */
+#status-box { display: none !important; }
 
 /* ── 뷰어 ── */
 #viewer-html { background: transparent !important; padding: 0 !important; }
@@ -230,37 +222,43 @@ def make_viewer_html(skin_b64: str) -> str:
       padding:9px 28px;border-radius:8px;font-size:15px;cursor:pointer;">→</button>
   </div>
 </div>
-<script src="https://unpkg.com/skinview3d@3.0.0-beta.1/bundles/skinview3d.bundle.js"></script>
 <script>
 (function() {{
   var ID = "{uid}";
   var SKIN = "data:image/png;base64,{skin_b64}";
-  function init() {{
+  function initViewer() {{
+    if (typeof skinview3d === "undefined") {{ setTimeout(initViewer, 100); return; }}
     var wrap = document.getElementById(ID);
-    if (!wrap || wrap.offsetWidth === 0) {{ setTimeout(init, 200); return; }}
-    if (window["_"+ID]) {{ window["_"+ID].dispose(); }}
+    if (!wrap) {{ setTimeout(initViewer, 100); return; }}
+    var w = wrap.clientWidth || 340;
+    var h = wrap.clientHeight || 260;
+    if (w < 10) {{ setTimeout(initViewer, 150); return; }}
+    if (window["_"+ID]) {{
+      try {{ window["_"+ID].dispose(); }} catch(e) {{}}
+    }}
     try {{
-      var v = new skinview3d.SkinViewer({{
-        width: wrap.clientWidth,
-        height: wrap.clientHeight || 260,
-        skin: SKIN
-      }});
+      var canvas = document.createElement("canvas");
+      wrap.innerHTML = "";
+      wrap.appendChild(canvas);
+      var v = new skinview3d.SkinViewer({{ canvas: canvas, width: w, height: h }});
+      v.loadSkin(SKIN);
       v.renderer.setClearColor(0x0a0a0a, 1);
       v.autoRotate = true;
       v.autoRotateSpeed = 0.8;
       v.zoom = 0.9;
-      wrap.appendChild(v.canvas);
       window["_"+ID] = v;
-    }} catch(e) {{ console.error("skinview3d error:", e); }}
+    }} catch(e) {{ console.error("skinview3d:", e); }}
   }}
-  if (document.readyState === "complete") {{ setTimeout(init, 300); }}
-  else {{ window.addEventListener("load", function(){{ setTimeout(init, 300); }}); }}
+  var s = document.createElement("script");
+  s.src = "https://cdn.jsdelivr.net/npm/skinview3d@2.1.1/bundles/skinview3d.bundle.js";
+  s.onload = function() {{ setTimeout(initViewer, 200); }};
+  document.head.appendChild(s);
 }})();
 </script>
 """
 
 
-DL_EMPTY = """<div style="height:54px;"></div>"""
+DL_EMPTY = """<div id="dl-btn-disabled"><span>⬇️ PNG 다운로드</span></div>"""
 
 def make_dl_html(skin_b64: str) -> str:
     return f"""

@@ -304,6 +304,29 @@ def _composite_layer(arr: np.ndarray, colored: np.ndarray):
                 arr[y, x, 3] = 255
 
 
+def draw_hair_body_only(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
+    """몸통 연장 레이어만 합성 (의상 위에 덮기)"""
+    body = HAIR_BODY_MAP.get((hair_style or "").strip())
+    if not body:
+        return
+    for fname in body:
+        p = BASESKIN_DIR / fname
+        if p.exists():
+            base_arr = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
+            colored = recolor_hair_base(base_arr, hair_rgb)
+            _composite_layer(arr, colored)
+
+
+def draw_hair_bangs_only(arr: np.ndarray, hair_rgb: tuple, hair_bangs: str):
+    """앞머리(뱅) 레이어만 합성 (머리카락 최상단)"""
+    bangs_name = HAIR_BANGS_MAP.get((hair_bangs or "").strip(), HAIR_BANGS_FALLBACK)
+    p = BASESKIN_DIR / bangs_name
+    if p.exists():
+        base_arr = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
+        colored = recolor_hair_base(base_arr, hair_rgb)
+        _composite_layer(arr, colored)
+
+
 def draw_hair(arr: np.ndarray, hair_rgb: tuple, hair_style: str, hair_bangs: str = ""):
     """뱅(머리) + 몸통 연장 레이어 순서대로 재채색 후 합성"""
     for base_arr in load_hair_base(hair_style, hair_bangs):
@@ -406,9 +429,9 @@ def generate_skin(features: dict) -> Image.Image:
     hair_style = features.get("hair_style", "")
     hair_bangs = features.get("hair_bangs", "")
 
-    draw_hair(arr, hair_rgb, hair_style, hair_bangs)
-    apply_mask_clothing(arr, features)
-    draw_long_hair_body(arr, hair_rgb, hair_style)  # 의상 위에 긴 머리 덮기
+    apply_mask_clothing(arr, features)               # 1. 의상
+    draw_hair_body_only(arr, hair_rgb, hair_style)   # 2. 몸통 머리카락
+    draw_hair_bangs_only(arr, hair_rgb, hair_bangs)  # 3. 앞머리 (최상단)
 
     if features.get("glasses", False):
         draw_glasses(arr)
