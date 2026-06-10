@@ -208,8 +208,8 @@ def make_viewer_html(skin_b64: str) -> str:
     <span style="color:#aaa;font-size:14px;font-weight:600;">3D 미리보기</span>
     <span style="color:#444;font-size:12px;">🎮 Minecraft Java Edition</span>
   </div>
-  <div id="{uid}" style="flex:1;background:#0a0a0a;border-radius:12px;
-      border:1px solid #181818;overflow:hidden;min-height:0;"></div>
+  <div id="{uid}" style="height:270px;background:#0a0a0a;border-radius:12px;
+      border:1px solid #181818;overflow:hidden;"></div>
   <div style="display:flex;justify-content:center;gap:8px;margin-top:12px;">
     <button onclick="if(window._{uid})window._{uid}.playerObject.rotation.y-=0.4"
       style="background:#131313;border:1px solid #252525;color:#ccc;
@@ -230,9 +230,9 @@ def make_viewer_html(skin_b64: str) -> str:
     if (typeof skinview3d === "undefined") {{ setTimeout(initViewer, 100); return; }}
     var wrap = document.getElementById(ID);
     if (!wrap) {{ setTimeout(initViewer, 100); return; }}
-    var w = wrap.clientWidth || 340;
-    var h = wrap.clientHeight || 260;
-    if (w < 10) {{ setTimeout(initViewer, 150); return; }}
+    var w = wrap.clientWidth || wrap.offsetWidth || 340;
+    var h = wrap.clientHeight || wrap.offsetHeight || 270;
+    if (h < 10) h = 270;
     if (window["_"+ID]) {{
       try {{ window["_"+ID].dispose(); }} catch(e) {{}}
     }}
@@ -249,10 +249,30 @@ def make_viewer_html(skin_b64: str) -> str:
       window["_"+ID] = v;
     }} catch(e) {{ console.error("skinview3d:", e); }}
   }}
-  var s = document.createElement("script");
-  s.src = "https://cdn.jsdelivr.net/npm/skinview3d@2.1.1/bundles/skinview3d.bundle.js";
-  s.onload = function() {{ setTimeout(initViewer, 200); }};
-  document.head.appendChild(s);
+  // 이미 로드됐으면 바로, 아니면 스크립트 추가
+  if (typeof skinview3d !== "undefined") {{
+    setTimeout(initViewer, 100);
+  }} else if (!document.getElementById("sv3d-script")) {{
+    var s = document.createElement("script");
+    s.id = "sv3d-script";
+    s.src = "https://cdn.jsdelivr.net/npm/skinview3d@2.1.1/bundles/skinview3d.bundle.js";
+    s.onload = function() {{ setTimeout(initViewer, 100); }};
+    s.onerror = function() {{
+      s.remove(); delete s.id;
+      // fallback CDN
+      var s2 = document.createElement("script");
+      s2.id = "sv3d-script";
+      s2.src = "https://unpkg.com/skinview3d@2.1.1/bundles/skinview3d.bundle.js";
+      s2.onload = function() {{ setTimeout(initViewer, 100); }};
+      document.head.appendChild(s2);
+    }};
+    document.head.appendChild(s);
+  }} else {{
+    // 스크립트 태그는 있지만 아직 로딩 중
+    var wait = setInterval(function() {{
+      if (typeof skinview3d !== "undefined") {{ clearInterval(wait); initViewer(); }}
+    }}, 100);
+  }}
 }})();
 </script>
 """
