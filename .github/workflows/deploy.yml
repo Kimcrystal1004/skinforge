@@ -34,4 +34,6 @@ jobs:
 
             echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
 
+            docker compose down --remove-orphans 2>/dev/null || true
+            docker rm -f skinforge 2>/dev/null || true
             docker compose up -d --build
