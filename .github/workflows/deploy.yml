@@ -33,6 +33,8 @@ jobs:
             git reset --hard origin/main
 
             echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
+            echo "APP_USER=${{ secrets.APP_USER }}" >> .env
+            echo "APP_PW=${{ secrets.APP_PW }}" >> .env
 
             docker compose down --remove-orphans 2>/dev/null || true
             docker rm -f skinforge 2>/dev/null || true

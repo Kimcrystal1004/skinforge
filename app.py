@@ -326,5 +326,8 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
     )
 
 if __name__ == "__main__":
+    user = os.environ.get("APP_USER", "admin")
+    pw   = os.environ.get("APP_PW",   "skinforge")
     demo.queue()
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    demo.launch(server_name="0.0.0.0", server_port=7860,
+                auth=(user, pw), auth_message="SkinForge AI — 접근 권한이 필요합니다")
