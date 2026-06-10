@@ -1,117 +1,195 @@
 """
 skin_generator.py
-recolor된 베이스 스킨 + 레퍼런스 스킨 + 특징 JSON → Gemini API → 64×64 PNG
+특징 JSON → Pillow 픽셀 조작 → 64×64 마인크래프트 스킨 PNG
+Gemini 이미지 생성 없이 베이스 스킨에 직접 색상을 입힌다.
 """
 
-import os
-import io
-from pathlib import Path
+import numpy as np
 from PIL import Image
-from google import genai
-from google.genai import types
-
+from pathlib import Path
 from .recolor_skin import load_base, apply_skin_tone
 
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
+# ── 색상 사전 (한국어 → RGB) ──────────────────────────────────────
+COLOR_MAP = {
+    "검정": (28, 28, 28), "블랙": (28, 28, 28),
+    "흰색": (238, 238, 238), "흰": (238, 238, 238), "화이트": (238, 238, 238),
+    "회색": (130, 130, 130), "그레이": (130, 130, 130), "밝은 회색": (180, 180, 180),
+    "빨강": (190, 45, 45), "레드": (190, 45, 45),
+    "파랑": (50, 90, 190), "블루": (50, 90, 190),
+    "네이비": (25, 35, 95), "남색": (25, 35, 95),
+    "하늘": (90, 155, 215), "하늘색": (90, 155, 215),
+    "초록": (50, 130, 60), "그린": (50, 130, 60),
+    "카키": (90, 100, 60),
+    "갈색": (110, 65, 35), "브라운": (110, 65, 35),
+    "금발": (205, 165, 75), "금색": (205, 165, 75),
+    "노랑": (215, 195, 55), "옐로우": (215, 195, 55),
+    "주황": (210, 110, 40), "오렌지": (210, 110, 40),
+    "분홍": (215, 120, 145), "핑크": (215, 120, 145),
+    "보라": (115, 55, 155), "퍼플": (115, 55, 155),
+    "베이지": (210, 185, 155),
+    "아이보리": (230, 220, 195),
+    "민트": (100, 200, 170),
+    "연두": (140, 195, 90),
+    "자주": (140, 35, 70), "버건디": (115, 25, 45),
+    "카멜": (185, 135, 75),
+    "청바지": (70, 100, 150), "데님": (70, 100, 150),
+    "교복": (30, 40, 100),
+}
 
-REFERENCE_DIR = Path(__file__).parent.parent / "reference"
-
-SKIN_GEN_PROMPT = """
-You are a Minecraft skin pixel artist. Generate a EXACTLY 64×64 pixel Minecraft Java Edition skin texture (UV map).
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔴 CRITICAL FORMAT REQUIREMENTS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Exactly 64×64 pixels, PNG with RGBA
-- Hard pixel art edges — NO anti-aliasing, NO blur, NO gradients
-- Every pixel is solid color
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📐 UV MAP LAYOUT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Head layer1: top(8,0,8,8) right(0,8,8,8) front(8,8,8,8) left(16,8,8,8) back(24,8,8,8)
-Hat overlay: top(40,0,8,8) right(32,8,8,8) front(40,8,8,8) left(48,8,8,8) back(56,8,8,8)
-Body: top(20,16,8,4) right(16,20,4,12) front(20,20,8,12) left(28,20,4,12) back(32,20,8,12)
-Jacket: right(16,36,4,12) front(20,36,8,12) left(28,36,4,12) back(32,36,8,12)
-Right arm: top(44,16,4,4) right(40,20,4,12) front(44,20,4,12) left(48,20,4,12) back(52,20,4,12)
-Left arm: top(36,48,4,4) right(32,52,4,12) front(36,52,4,12) left(40,52,4,12) back(44,52,4,12)
-Right leg: top(4,16,4,4) right(0,20,4,12) front(4,20,4,12) left(8,20,4,12) back(12,20,4,12)
-Left leg: top(20,48,4,4) right(16,52,4,12) front(20,52,4,12) left(24,52,4,12) back(28,52,4,12)
-Unused areas: fully transparent (alpha=0)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎨 SHADING RULES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Front=100%, Top=90%, Sides=80%, Back=65%, Bottom=60%
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-👤 CHARACTER TO GENERATE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{character_description}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ RULES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. Output EXACTLY 64×64 pixels
-2. NO anti-aliasing
-3. All UV regions must be filled
-4. Unused areas must be transparent
-5. Layer 2 (hat/jacket/arm overlays) must have meaningful content
-6. Match the reference skin images provided in pixel art style
-"""
+DEFAULT_COLOR = (100, 100, 100)
 
 
-def _build_character_description(features: dict) -> str:
-    return f"""
-Skin tone: {features.get('skin_tone', 'warm_bright')} — use the provided base skin as the skin color reference
-Hair: {features.get('hair_color', '검정')} / {features.get('hair_style', '짧은 직모')}
-Top: {features.get('top_color', '흰색')} {features.get('top_style', '셔츠')}
-Bottom: {features.get('bottom_color', '네이비')} {features.get('bottom_style', '슬랙스')}
-Shoes: {features.get('shoes_color', '검정')}
-Accessories: {features.get('accessories', '없음')}
-Glasses: {features.get('glasses', False)}
-Gender expression: {features.get('gender_expression', '중성적')}
-
-Keep the base skin's face structure (eyes, blush, shading) as-is.
-Add ONLY: hair, clothing, shoes, accessories on top.
-""".strip()
+def parse_color(text: str) -> tuple:
+    """색상 텍스트에서 RGB 추출"""
+    if not text:
+        return DEFAULT_COLOR
+    text = str(text).strip()
+    for key, rgb in COLOR_MAP.items():
+        if key in text:
+            return rgb
+    return DEFAULT_COLOR
 
 
-def _load_references() -> list:
-    parts = []
-    for p in sorted(REFERENCE_DIR.glob("*.png"))[:4]:
-        with open(p, "rb") as f:
-            parts.append(types.Part.from_bytes(data=f.read(), mime_type="image/png"))
-    return parts
+def shade(rgb: tuple, factor: float) -> tuple:
+    """명암 적용"""
+    return tuple(max(0, min(255, int(c * factor))) for c in rgb)
+
+
+def fill_region(arr: np.ndarray, x: int, y: int, w: int, h: int,
+                rgb: tuple, alpha_mask: bool = True,
+                skip_rows_top: int = 0, skip_rows_bottom: int = 0):
+    """UV 영역에 색상 채우기. alpha_mask=True면 투명 픽셀은 건너뜀."""
+    r, g, b = rgb
+    for py in range(y + skip_rows_top, y + h - skip_rows_bottom):
+        for px in range(x, x + w):
+            if alpha_mask and arr[py, px, 3] < 10:
+                continue
+            arr[py, px] = [r, g, b, 255]
+
+
+def fill_region_overlay(arr: np.ndarray, x: int, y: int, w: int, h: int, rgb: tuple):
+    """오버레이 레이어 영역을 투명으로 초기화 후 색상 채우기"""
+    for py in range(y, y + h):
+        for px in range(x, x + w):
+            arr[py, px] = [0, 0, 0, 0]
+
+
+def draw_hair(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
+    """머리카락 UV 영역에 색상 적용"""
+    # 머리 윗면
+    fill_region(arr, 8, 0, 8, 8, shade(hair_rgb, 0.9))
+    # 머리 뒷면
+    fill_region(arr, 24, 8, 8, 8, shade(hair_rgb, 0.65))
+    # 머리 옆면 (앞 2픽셀은 얼굴이므로 뒤 픽셀만)
+    fill_region(arr, 0, 8, 8, 8, shade(hair_rgb, 0.8))   # 오른쪽
+    fill_region(arr, 16, 8, 8, 8, shade(hair_rgb, 0.8))  # 왼쪽
+
+    # 앞머리 (모자 오버레이 front 위쪽 2줄)
+    front_rgb = shade(hair_rgb, 1.0)
+    for py in range(8, 10):
+        for px in range(40, 48):
+            arr[py, px] = [*front_rgb, 255]
+
+    # 긴 머리 스타일이면 목 뒤까지
+    style_lower = hair_style.lower() if hair_style else ""
+    if any(k in style_lower for k in ["긴", "롱", "웨이브", "컬"]):
+        # jacket back 위쪽 2줄을 머리카락으로
+        for py in range(36, 38):
+            for px in range(32, 40):
+                arr[py, px] = [*shade(hair_rgb, 0.6), 255]
+
+
+def draw_clothing(arr: np.ndarray, top_rgb: tuple, bottom_rgb: tuple,
+                  shoes_rgb: tuple):
+    """의상 UV 영역에 색상 적용"""
+    # ── 상의 (몸통) ──
+    fill_region(arr, 20, 20, 8, 12, shade(top_rgb, 1.0))   # 앞
+    fill_region(arr, 32, 20, 8, 12, shade(top_rgb, 0.65))  # 뒤
+    fill_region(arr, 16, 20, 4, 12, shade(top_rgb, 0.8))   # 오른쪽
+    fill_region(arr, 28, 20, 4, 12, shade(top_rgb, 0.8))   # 왼쪽
+    fill_region(arr, 20, 16, 8, 4,  shade(top_rgb, 0.9))   # 위
+
+    # ── 상의 재킷 오버레이 ──
+    fill_region(arr, 20, 36, 8, 12, shade(top_rgb, 1.0))
+    fill_region(arr, 32, 36, 8, 12, shade(top_rgb, 0.65))
+    fill_region(arr, 16, 36, 4, 12, shade(top_rgb, 0.8))
+    fill_region(arr, 28, 36, 4, 12, shade(top_rgb, 0.8))
+
+    # ── 오른팔 ──
+    fill_region(arr, 44, 20, 4, 12, shade(top_rgb, 1.0))   # 앞
+    fill_region(arr, 40, 20, 4, 12, shade(top_rgb, 0.8))   # 오른쪽
+    fill_region(arr, 48, 20, 4, 12, shade(top_rgb, 0.8))   # 왼쪽
+    fill_region(arr, 52, 20, 4, 12, shade(top_rgb, 0.65))  # 뒤
+    fill_region(arr, 44, 16, 4, 4,  shade(top_rgb, 0.9))   # 위
+
+    # ── 왼팔 ──
+    fill_region(arr, 36, 52, 4, 12, shade(top_rgb, 1.0))
+    fill_region(arr, 32, 52, 4, 12, shade(top_rgb, 0.8))
+    fill_region(arr, 40, 52, 4, 12, shade(top_rgb, 0.8))
+    fill_region(arr, 44, 52, 4, 12, shade(top_rgb, 0.65))
+    fill_region(arr, 36, 48, 4, 4,  shade(top_rgb, 0.9))
+
+    # ── 하의 (바지) — 신발 영역 제외 ──
+    shoe_rows = 3
+    fill_region(arr, 4,  20, 4, 12, shade(bottom_rgb, 1.0), skip_rows_bottom=shoe_rows)
+    fill_region(arr, 0,  20, 4, 12, shade(bottom_rgb, 0.8), skip_rows_bottom=shoe_rows)
+    fill_region(arr, 8,  20, 4, 12, shade(bottom_rgb, 0.8), skip_rows_bottom=shoe_rows)
+    fill_region(arr, 12, 20, 4, 12, shade(bottom_rgb, 0.65), skip_rows_bottom=shoe_rows)
+    fill_region(arr, 4,  16, 4, 4,  shade(bottom_rgb, 0.9))
+
+    fill_region(arr, 20, 52, 4, 12, shade(bottom_rgb, 1.0), skip_rows_bottom=shoe_rows)
+    fill_region(arr, 16, 52, 4, 12, shade(bottom_rgb, 0.8), skip_rows_bottom=shoe_rows)
+    fill_region(arr, 24, 52, 4, 12, shade(bottom_rgb, 0.8), skip_rows_bottom=shoe_rows)
+    fill_region(arr, 28, 52, 4, 12, shade(bottom_rgb, 0.65), skip_rows_bottom=shoe_rows)
+    fill_region(arr, 20, 48, 4, 4,  shade(bottom_rgb, 0.9))
+
+    # ── 신발 (다리 하단 3줄) ──
+    for leg_x, leg_w in [(0, 16), (16, 16)]:
+        for py in range(29, 32):  # 오른 다리
+            for px in range(leg_x, leg_x + leg_w):
+                if arr[py, px, 3] > 10:
+                    arr[py, px] = [*shade(shoes_rgb, 0.85 if px % 4 < 2 else 0.7), 255]
+        for py in range(61, 64):  # 왼 다리
+            for px in range(leg_x, leg_x + leg_w):
+                if arr[py, px, 3] > 10:
+                    arr[py, px] = [*shade(shoes_rgb, 0.85 if px % 4 < 2 else 0.7), 255]
+
+
+def draw_glasses(arr: np.ndarray):
+    """안경 픽셀 추가 (얼굴 front 영역 기준)"""
+    # 얼굴 앞면: x=8~15, y=8~15
+    # 눈 줄(y=10): 안경테 표시
+    glass_color = [40, 40, 40, 255]
+    for px in [8, 9, 12, 13, 14, 15]:
+        arr[10, px] = glass_color
+    arr[11, 8] = glass_color
+    arr[11, 11] = glass_color
+    arr[11, 15] = glass_color
+
+
+VALID_TONES = {"warm_bright", "warm_normal", "warm_dark", "cool_bright", "cool_normal", "cool_dark"}
 
 
 def generate_skin(features: dict) -> Image.Image:
+    """특징 딕셔너리 → 64×64 마인크래프트 스킨 PNG"""
     tone_key = features.get("skin_tone", "warm_bright")
+    if tone_key not in VALID_TONES:
+        tone_key = "warm_bright"
     base_img = load_base(tone_key)
-    recolored_base = apply_skin_tone(base_img, tone_key)
+    skin_img = apply_skin_tone(base_img, tone_key)
 
-    buf = io.BytesIO()
-    recolored_base.save(buf, format="PNG")
-    buf.seek(0)
-    base_part = types.Part.from_bytes(data=buf.read(), mime_type="image/png")
+    arr = np.array(skin_img, dtype=np.uint8).copy()
 
-    ref_parts = _load_references()
+    hair_rgb   = parse_color(features.get("hair_color", "검정"))
+    top_rgb    = parse_color(features.get("top_color", "흰색"))
+    bottom_rgb = parse_color(features.get("bottom_color", "네이비"))
+    shoes_rgb  = parse_color(features.get("shoes_color", "검정"))
+    hair_style = features.get("hair_style", "")
 
-    char_desc = _build_character_description(features)
-    prompt = SKIN_GEN_PROMPT.format(character_description=char_desc)
+    draw_hair(arr, hair_rgb, hair_style)
+    draw_clothing(arr, top_rgb, bottom_rgb, shoes_rgb)
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash-image",
-        contents=[*ref_parts, base_part, prompt],
-        config=types.GenerateContentConfig(
-            response_modalities=["IMAGE", "TEXT"],
-            temperature=0.2,
-        ),
-    )
+    if features.get("glasses", False):
+        draw_glasses(arr)
 
-    for part in response.candidates[0].content.parts:
-        if part.inline_data and part.inline_data.mime_type.startswith("image"):
-            img = Image.open(io.BytesIO(part.inline_data.data)).convert("RGBA")
-            return img
-
-    raise ValueError("Gemini가 이미지를 반환하지 않았습니다.")
+    return Image.fromarray(arr, "RGBA")
