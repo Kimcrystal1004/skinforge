@@ -42,9 +42,10 @@ jobs:
             sudo nginx -t && sudo systemctl reload nginx || true
 
             set +e
-            docker stop skinforge
-            docker rm -f skinforge
-            docker compose down --remove-orphans
-            docker network rm skinforge_default
+            docker compose down --remove-orphans 2>/dev/null
+            docker stop skinforge 2>/dev/null
+            docker rm -f skinforge 2>/dev/null
+            docker ps -aq --filter name=skinforge | xargs -r docker rm -f 2>/dev/null
+            docker network rm skinforge_default 2>/dev/null
             set -e
-            docker compose up -d --build
+            docker compose up -d --build --force-recreate
