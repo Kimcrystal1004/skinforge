@@ -1,1 +1,9 @@
 .env
+__pycache__/
+*.pyc
+*.pyo
+output/*
+!output/.gitkeep
+*.jpg
+*.jpeg
+.DS_Store
