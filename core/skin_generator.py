@@ -141,10 +141,10 @@ _STYLE_REF_MAP = [
     (["자켓", "블레이저", "jacket"],        [],                     "reference (50).png"),
     (["한복"],                              [],                     "reference (62).png"),
     (["경찰", "police", "군복"],            [],                     "reference (5).png"),
-    (["원피스", "드레스", "dress"],          [],                     "reference (14).png"),
-    ([],                                   ["한복", "치마", "스커트"], "reference (14).png"),
+    (["원피스", "드레스", "dress", "가운", "볼"],   [],                     "reference (62).png"),
+    ([],                                         ["한복", "치마", "스커트", "롱스커트"], "reference (62).png"),
 ]
-_REF_FALLBACK = "reference (14).png"
+_REF_FALLBACK = "reference (62).png"
 
 
 def _select_ref_skin(features: dict) -> np.ndarray:

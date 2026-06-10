@@ -157,12 +157,12 @@ HEADER_HTML = """
 
 
 
-def make_2d_preview(skin_img: Image.Image) -> Image.Image:
-    """64×64 스킨 → 앞/뒤/좌/우 4방향 2D 미리보기. 실패 시 raw 스킨 fallback."""
+def make_2d_preview(skin_img: Image.Image) -> list:
+    """64×64 스킨 → [앞, 오른쪽, 뒤, 왼쪽] 4방향 PIL Image 리스트. 실패 시 fallback 1장."""
     try:
         import numpy as np
         S = 10
-        BG = (14, 14, 14)
+        BG = (14, 14, 14, 255)
         arr = np.array(skin_img.convert("RGBA"), dtype=np.uint8)
 
         def crop(x, y, w, h):
@@ -189,37 +189,30 @@ def make_2d_preview(skin_img: Image.Image) -> Image.Image:
             cv.paste(up(la), (bx+bw*S,  8*S),  up(la))
             cv.paste(up(rl), (bx,       20*S), up(rl))
             cv.paste(up(ll), (bx+4*S,   20*S), up(ll))
-            return cv
+            # 투명 배경 → 어두운 배경으로
+            bg = Image.new("RGB", cv.size, BG[:3])
+            bg.paste(cv.convert("RGB"), mask=cv.split()[3])
+            return bg
 
-        views = [
+        return [
             compose(crop(8,8,8,8),  crop(40,8,8,8),  crop(20,20,8,12),
                     crop(44,20,4,12), crop(36,52,4,12),
                     crop(4,20,4,12),  crop(20,52,4,12)),
+            compose(crop(16,8,8,8), crop(48,8,8,8),  crop(28,20,4,12),
+                    crop(48,20,4,12), crop(40,52,4,12),
+                    crop(8,20,4,12),  crop(24,52,4,12), bw=4),
             compose(crop(24,8,8,8), crop(56,8,8,8),  crop(32,20,8,12),
                     crop(52,20,4,12), crop(44,52,4,12),
                     crop(12,20,4,12), crop(28,52,4,12)),
             compose(crop(0,8,8,8),  crop(32,8,8,8),  crop(16,20,4,12),
                     crop(40,20,4,12), crop(32,52,4,12),
                     crop(0,20,4,12),  crop(16,52,4,12), bw=4),
-            compose(crop(16,8,8,8), crop(48,8,8,8),  crop(28,20,4,12),
-                    crop(48,20,4,12), crop(40,52,4,12),
-                    crop(8,20,4,12),  crop(24,52,4,12), bw=4),
         ]
-
-        PAD = 10
-        total_w = sum(v.width for v in views) + PAD * (len(views) + 1)
-        total_h = max(v.height for v in views) + PAD * 2
-        result = Image.new("RGB", (total_w, total_h), BG)
-        x = PAD
-        for v in views:
-            result.paste(v.convert("RGB"), (x, PAD), v)
-            x += v.width + PAD
-        return result
 
     except Exception as e:
         print(f"[preview] 미리보기 생성 실패, fallback 사용: {e}")
         import traceback; traceback.print_exc()
-        return skin_img.convert("RGB").resize((512, 512), Image.NEAREST)
+        return [skin_img.convert("RGB").resize((320, 320), Image.NEAREST)]
 
 
 _RESULT_EMPTY = """
@@ -242,14 +235,19 @@ _RESULT_EMPTY = """
 </div>
 """
 
-def make_result_html(preview_img: Image.Image, skin_img: Image.Image) -> str:
-    """미리보기 + 다운로드를 하나의 base64 HTML 블록으로"""
-    # preview PNG → base64
-    pb = io.BytesIO()
-    preview_img.save(pb, format="PNG")
-    preview_b64 = base64.b64encode(pb.getvalue()).decode()
+def make_result_html(view_imgs: list, skin_img: Image.Image) -> str:
+    """캐러셀 미리보기(앞→오른→뒤→왼) + 다운로드 버튼"""
+    labels = ["앞", "오른쪽", "뒤", "왼쪽"]
 
-    # raw 64×64 skin PNG → base64 (다운로드용)
+    imgs_js = []
+    for img in view_imgs:
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        imgs_js.append(base64.b64encode(buf.getvalue()).decode())
+
+    imgs_json = "[" + ",".join(f'"{b}"' for b in imgs_js) + "]"
+    labels_json = "[" + ",".join(f'"{l}"' for l in labels[:len(view_imgs)]) + "]"
+
     sb = io.BytesIO()
     skin_img.save(sb, format="PNG")
     skin_b64 = base64.b64encode(sb.getvalue()).decode()
@@ -257,24 +255,91 @@ def make_result_html(preview_img: Image.Image, skin_img: Image.Image) -> str:
     return f"""
 <div style="background:#111;border-radius:16px;border:1px solid #1a1a1a;
     padding:20px;display:flex;flex-direction:column;gap:14px;">
-  <div style="background:#0a0a0a;border-radius:12px;border:1px solid #181818;
-      overflow:hidden;line-height:0;">
-    <img src="data:image/png;base64,{preview_b64}"
+
+  <!-- 캐러셀 -->
+  <div style="position:relative;background:#0a0a0a;border-radius:12px;
+      border:1px solid #181818;overflow:hidden;user-select:none;">
+
+    <!-- 방향 라벨 -->
+    <div id="sf-label"
+         style="position:absolute;top:10px;left:50%;transform:translateX(-50%);
+                background:rgba(0,0,0,.55);color:#00C9A7;font-size:12px;
+                font-weight:700;padding:3px 12px;border-radius:20px;z-index:2;
+                font-family:sans-serif;">앞</div>
+
+    <!-- 이미지 -->
+    <img id="sf-img"
+         src="data:image/png;base64,{imgs_js[0]}"
          style="width:100%;height:auto;image-rendering:pixelated;display:block;"
          alt="skin preview">
+
+    <!-- 왼쪽 화살표 -->
+    <button onclick="sfNav(-1)"
+      style="position:absolute;left:8px;top:50%;transform:translateY(-50%);
+             background:rgba(0,0,0,.5);border:1px solid #333;color:#ccc;
+             width:36px;height:36px;border-radius:50%;font-size:18px;
+             cursor:pointer;z-index:2;display:flex;align-items:center;
+             justify-content:center;padding:0;">&#8592;</button>
+
+    <!-- 오른쪽 화살표 -->
+    <button onclick="sfNav(1)"
+      style="position:absolute;right:8px;top:50%;transform:translateY(-50%);
+             background:rgba(0,0,0,.5);border:1px solid #333;color:#ccc;
+             width:36px;height:36px;border-radius:50%;font-size:18px;
+             cursor:pointer;z-index:2;display:flex;align-items:center;
+             justify-content:center;padding:0;">&#8594;</button>
+
+    <!-- 인디케이터 -->
+    <div id="sf-dots"
+         style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+                display:flex;gap:6px;z-index:2;"></div>
   </div>
+
+  <!-- 다운로드 버튼 -->
   <a href="data:image/png;base64,{skin_b64}"
      download="skinforge_skin.png"
      style="display:block;background:#00C9A7;color:#000;text-decoration:none;
             font-size:15px;font-weight:700;height:48px;line-height:48px;
             border-radius:10px;text-align:center;box-sizing:border-box;
-            cursor:pointer;transition:background .2s;
-            box-shadow:0 4px 16px rgba(0,201,167,.3);"
+            cursor:pointer;box-shadow:0 4px 16px rgba(0,201,167,.3);"
      onmouseover="this.style.background='#00ddb8'"
      onmouseout="this.style.background='#00C9A7'">
     ⬇️ PNG 다운로드
   </a>
 </div>
+
+<script>
+(function(){{
+  var imgs   = {imgs_json};
+  var labels = {labels_json};
+  var idx    = 0;
+
+  var imgEl   = document.getElementById('sf-img');
+  var lblEl   = document.getElementById('sf-label');
+  var dotsEl  = document.getElementById('sf-dots');
+
+  // 인디케이터 점 생성
+  labels.forEach(function(_, i) {{
+    var d = document.createElement('div');
+    d.style.cssText = 'width:7px;height:7px;border-radius:50%;background:' +
+                      (i===0 ? '#00C9A7' : 'rgba(255,255,255,.3)') + ';transition:background .2s;';
+    dotsEl.appendChild(d);
+  }});
+
+  function update() {{
+    imgEl.src   = 'data:image/png;base64,' + imgs[idx];
+    lblEl.textContent = labels[idx];
+    Array.from(dotsEl.children).forEach(function(d, i) {{
+      d.style.background = i === idx ? '#00C9A7' : 'rgba(255,255,255,.3)';
+    }});
+  }}
+
+  window.sfNav = function(dir) {{
+    idx = (idx + dir + imgs.length) % imgs.length;
+    update();
+  }};
+}})();
+</script>
 """
 
 
@@ -293,9 +358,9 @@ def process(photo: Image.Image):
         if not is_valid:
             status += f" | ⚠️ {errors}"
 
-        preview_img = make_2d_preview(skin_img)
+        view_imgs = make_2d_preview(skin_img)
         print(f"[skinforge] 생성 완료 | {status}")
-        return make_result_html(preview_img, skin_img), status
+        return make_result_html(view_imgs, skin_img), status
 
     except Exception as e:
         import traceback
