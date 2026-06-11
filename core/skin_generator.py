@@ -965,27 +965,26 @@ def draw_hair_body_only(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
             _composite_layer(arr, colored)
 
 
-def _move_eyes_over_hair(arr: np.ndarray) -> None:
-    """layer1 얼굴(y=8..16, x=8..16)의 눈 픽셀을 layer2 얼굴(y=8..16, x=40..48)에 복사.
-    Minecraft는 layer2가 항상 layer1 위에 렌더링 → 앞머리가 어떤 스타일이든 눈이 보임."""
-    l1 = arr[8:16, 8:16, :]   # layer1 얼굴 (8×8)
+def _punch_bangs_for_eyes(arr: np.ndarray) -> None:
+    """layer2 앞머리 중 layer1 눈 위치 픽셀 투명화 → 눈이 앞머리 사이로 자연스럽게 보임."""
+    l1 = arr[8:16, 8:16, :]
+    l2 = arr[8:16, 40:48, :]
 
-    # 피부색 추정: 얼굴 하단 밝은 픽셀 평균
     face_rgb = l1[:, :, :3].astype(float)
     lower    = face_rgb[4:8, 1:7].reshape(-1, 3)
     brt      = lower.mean(axis=1)
     bright   = lower[brt > brt.mean()] if (brt > brt.mean()).any() else lower
     skin_avg = bright.mean(axis=0)
 
-    # 눈/눈썹 픽셀: 피부색과 유클리드 거리 > 35
     diff     = np.sqrt(((face_rgb - skin_avg) ** 2).sum(axis=-1))
     eye_mask = (diff > 35) & (l1[:, :, 3] > 10)
 
     if not eye_mask.any():
         return
 
-    # 눈 픽셀을 layer2 face에 복사 (기존 뱅 픽셀 덮어씀)
-    arr[8:16, 40:48][eye_mask] = l1[eye_mask]
+    # layer2에서 눈 위치에 앞머리 픽셀이 있으면 투명화
+    to_punch = eye_mask & (l2[:, :, 3] > 10)
+    arr[8:16, 40:48][to_punch] = 0
 
 
 def draw_hair_bangs_only(arr: np.ndarray, hair_rgb: tuple, hair_bangs: str):
@@ -997,7 +996,7 @@ def draw_hair_bangs_only(arr: np.ndarray, hair_rgb: tuple, hair_bangs: str):
         colored = recolor_hair_base(base_arr, hair_rgb)
         _composite_layer(arr, colored)
     # 앞머리 적용 후 layer1 눈 픽셀을 layer2에 복사 → 항상 눈이 앞머리 위에 표시
-    _move_eyes_over_hair(arr)
+    _punch_bangs_for_eyes(arr)
 
 
 def draw_hair(arr: np.ndarray, hair_rgb: tuple, hair_style: str, hair_bangs: str = ""):
