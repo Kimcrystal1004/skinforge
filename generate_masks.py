@@ -114,9 +114,11 @@ def draw_shorts(m):
     draw_shoes(m)
 
 def draw_miniskirt(m):
-    """짧은 치마: 몸통 하단만(다리 노출), 신발"""
+    """짧은 치마: 몸통 하단 + 다리 최상단 2px, 신발"""
     fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=27)
     fill_part(m, BODY, ["bottom"],  BOT)               # 몸통 하단면(접합부) → 하의 색
+    fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=22) # 2px
+    fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=54)
     draw_shoes(m)
 
 def draw_longskirt(m):
