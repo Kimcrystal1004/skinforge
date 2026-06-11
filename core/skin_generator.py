@@ -520,6 +520,12 @@ _ARM_UV_MASK = np.zeros((64, 64), dtype=bool)
 _ARM_UV_MASK[16:32, 40:56] = True   # 오른팔 레이어1
 _ARM_UV_MASK[48:64, 32:48] = True   # 왼팔 레이어1
 
+# 다리 UV 영역 — BOT 존 중 실제 다리에 속하는 픽셀 구분용
+# (몸통 하단 픽셀은 body_ref V, 다리 픽셀은 leg_ref V 사용 → 색 연결 일관성)
+_LEG_UV_MASK = np.zeros((64, 64), dtype=bool)
+_LEG_UV_MASK[16:32, 0:16]  = True   # 오른다리 레이어1
+_LEG_UV_MASK[48:64, 16:32] = True   # 왼다리 레이어1
+
 
 def _zone_stats_split(body_ref: np.ndarray, bot_ref: np.ndarray,
                       mask_arr: np.ndarray,
@@ -536,8 +542,17 @@ def _zone_stats_split(body_ref: np.ndarray, bot_ref: np.ndarray,
     maxv: dict = {}
     for zone, zmask in _build_zone_masks(mask_arr).items():
         if zone in _BOT_ZONES:
-            combined = zmask & bot_valid
-            rv = bot_v
+            # 다리 UV는 bot_ref, 몸통 하단 UV는 body_ref → 통합 maxV로 일관 정규화
+            leg_part  = zmask & _LEG_UV_MASK & bot_valid
+            body_part = zmask & ~_LEG_UV_MASK & body_valid
+            combined  = leg_part | body_part
+            if combined.any():
+                parts = []
+                if leg_part.any():  parts.append(bot_v[leg_part])
+                if body_part.any(): parts.append(body_v[body_part])
+                all_v = np.concatenate(parts)
+                maxv[zone] = float(all_v.max()) if len(all_v) > 0 else 1.0
+            continue
         elif zone in _TOP_ZONES:
             arm_part  = zmask & _ARM_UV_MASK & arm_valid
             body_part = zmask & ~_ARM_UV_MASK & body_valid
@@ -607,7 +622,9 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
         mv = zone_maxv.get(zone, 1.0)
 
         if zone in _BOT_ZONES:
-            _paint_zone_pixels(zmask, bot_v, bot_valid, target_rgb, mv)
+            # 다리 UV는 leg_ref V, 몸통 하단 UV는 body_ref V → 같은 maxV로 정규화
+            _paint_zone_pixels(zmask & _LEG_UV_MASK,  bot_v,  bot_valid,  target_rgb, mv)
+            _paint_zone_pixels(zmask & ~_LEG_UV_MASK, body_v, body_valid, target_rgb, mv)
         elif zone in _TOP_ZONES:
             # 팔 UV: sleeve 색이 별도로 있으면 그것 사용, 없으면 target_rgb
             sleeve_rgb = zone_colors.get("sleeve", target_rgb)

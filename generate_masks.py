@@ -120,9 +120,11 @@ def draw_longskirt(m):
     draw_shoes(m)
 
 def draw_shoes(m):
-    """신발: 다리 하단 2줄"""
+    """신발: 다리 하단 2줄 + 발바닥(밑창)"""
     fill_part(m, RLEG, SIDE_FACES, SHOE, y_clip_min=30)
     fill_part(m, LLEG, SIDE_FACES, SHOE, y_clip_min=62)
+    fill(m,  8, 16, 4, 4, SHOE)   # 오른발 밑창 (RLEG bottom face)
+    fill(m, 24, 48, 4, 4, SHOE)   # 왼발 밑창 (LLEG bottom face)
 
 def draw_boots(m):
     """부츠: 다리 하단 6줄 (발목까지)"""
