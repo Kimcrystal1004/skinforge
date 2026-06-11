@@ -329,10 +329,10 @@ def _score_ref_top(fname: str, features: dict) -> float:
 
 
 _SHORTS_SYNONYMS = {
-    "반바지","쇼츠","shorts","핫팬츠","bermuda","짧은바지","short pants",
+    "반바지","쇼츠","shorts","핫팬츠","bermuda","짧은바지","짧은 바지","short pants",
     "hot pants","cutoff","denim shorts","데님 쇼츠","cargo short",
     "5부 바지","7부 바지","5부","반팬츠","체크 쇼츠","짧은 팬츠",
-    "short","ショーツ",
+    "short","ショーツ","쇼트 팬츠","short pants","반 바지",
 }
 _SKIRT_SYNONYMS  = {"치마","스커트","skirt","미니스커트","롱스커트"}
 _PANTS_SYNONYMS  = {"바지","슬랙스","청바지","pants","slacks","trousers","leggings"}
