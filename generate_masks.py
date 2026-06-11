@@ -99,14 +99,14 @@ def draw_jacket(m):
 # ── 하의 그리기 함수 ──────────────────────────────────────────────
 def draw_longpants(m):
     """긴바지: 몸통 하단 + 전체 다리(신발 바로 위까지), 신발"""
-    fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=27)  # y=27부터: 크롭탑 미드리프 틈 제거
+    fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=28)
     fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=30)  # 30 = 신발(30..32) 시작점
     fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=62)  # 62 = 신발(62..64) 시작점
     draw_shoes(m)
 
 def draw_shorts(m):
     """반바지: 몸통 하단 + 다리 상단 2줄(허벅지 최상부만), 신발"""
-    fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=27)  # y=27부터: 크롭탑 미드리프 틈 제거
+    fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=28)
     fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=22)  # 2/12px
     fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=54)
     draw_shoes(m)
