@@ -114,22 +114,22 @@ MASK_STYLE_MAP = [
     # 크롭탑
     (["크롭","crop"], ["롱스커트","긴 스커트","맥시","원피스","드레스"],              "mask_crop_skirt.png"),
     (["크롭","crop"], ["스커트","치마","미니"],                                        "mask_crop_skirt.png"),
-    (["크롭","crop"], ["반바지","shorts","미니"],                                      "mask_crop_shorts.png"),
+    (["크롭","crop"], ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지","short pants"], "mask_crop_shorts.png"),
     (["크롭","crop"], [],                                                              "mask_crop_long.png"),
     # 민소매
     (["민소매","나시","sleeveless","탱크"], ["롱스커트","긴 스커트","맥시","원피스","드레스"], "mask_sleeveless_longskirt.png"),
     (["민소매","나시","sleeveless","탱크"], ["스커트","치마","미니"],                        "mask_sleeveless_skirt.png"),
-    (["민소매","나시","sleeveless","탱크"], ["반바지","shorts","미니"],                      "mask_sleeveless_shorts.png"),
+    (["민소매","나시","sleeveless","탱크"], ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지","short pants"], "mask_sleeveless_shorts.png"),
     (["민소매","나시","sleeveless","탱크"], [],                                             "mask_sleeveless.png"),
     # 반팔
-    (["반팔","short sleeve","반소매"], ["롱스커트","긴 스커트","맥시","원피스","드레스"],    "mask_shortsleeve_longskirt.png"),
-    (["반팔","short sleeve","반소매"], ["스커트","치마","미니스커트"],                       "mask_shortsleeve_skirt.png"),
-    (["반팔","short sleeve","반소매"], ["반바지","shorts","미니"],                           "mask_shortsleeve_shorts.png"),
-    (["반팔","short sleeve","반소매"], [],                                                   "mask_shortsleeve.png"),
+    (["반팔","short sleeve","반소매","반팔티","t-shirt","tshirt"], ["롱스커트","긴 스커트","맥시","원피스","드레스"],    "mask_shortsleeve_longskirt.png"),
+    (["반팔","short sleeve","반소매","반팔티","t-shirt","tshirt"], ["스커트","치마","미니스커트"],                       "mask_shortsleeve_skirt.png"),
+    (["반팔","short sleeve","반소매","반팔티","t-shirt","tshirt"], ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지","short pants"], "mask_shortsleeve_shorts.png"),
+    (["반팔","short sleeve","반소매","반팔티","t-shirt","tshirt"], [],                                                   "mask_shortsleeve.png"),
     # 긴팔 (나머지)
     ([], ["롱스커트","긴 스커트","맥시","원피스","드레스"],                                  "mask_longsleeve_longskirt.png"),
     ([], ["스커트","치마","미니스커트"],                                                     "mask_longsleeve_skirt.png"),
-    ([], ["반바지","shorts","미니"],                                                         "mask_longsleeve_shorts.png"),
+    ([], ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지","short pants"], "mask_longsleeve_shorts.png"),
 ]
 MASK_FALLBACK = "mask_longsleeve.png"
 
@@ -249,6 +249,17 @@ def _score_ref_top(fname: str, features: dict) -> float:
     return score
 
 
+_SHORTS_SYNONYMS = {"반바지","쇼츠","shorts","핫팬츠","bermuda","짧은바지","short pants"}
+_SKIRT_SYNONYMS  = {"치마","스커트","skirt","미니스커트","롱스커트"}
+_PANTS_SYNONYMS  = {"바지","슬랙스","청바지","pants","slacks","trousers","leggings"}
+
+def _bottom_category(style: str) -> str:
+    s = style.lower()
+    if any(k in s for k in _SHORTS_SYNONYMS): return "shorts"
+    if any(k in s for k in _SKIRT_SYNONYMS):  return "skirt"
+    if any(k in s for k in _PANTS_SYNONYMS):  return "pants"
+    return "unknown"
+
 def _score_ref_bot(fname: str, features: dict) -> float:
     """하의 기준 유사도 점수"""
     tag = _REF_TAGS.get(fname, {})
@@ -260,6 +271,14 @@ def _score_ref_bot(fname: str, features: dict) -> float:
     ref_tags   = [t.lower() for t in tag.get("style_tags", [])]
     ref_bot    = (tag.get("bottom_style", "") or "").lower()
     ref_gender = (tag.get("gender", "") or "").lower()
+
+    # 하의 카테고리(반바지/치마/바지) 일치 여부 (가장 중요)
+    input_cat = _bottom_category(bot_style)
+    ref_cat   = _bottom_category(ref_bot)
+    if input_cat != "unknown" and input_cat == ref_cat:
+        score += 25.0
+    elif input_cat != "unknown" and ref_cat != "unknown" and input_cat != ref_cat:
+        score -= 10.0  # 카테고리 불일치 페널티
 
     for rt in ref_tags:
         if rt in bot_style:
