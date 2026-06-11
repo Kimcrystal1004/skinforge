@@ -1191,7 +1191,7 @@ EYE_FALLBACK = "base_eyes (3).png"
 
 
 _EYE_BOOST_FILE = "base_eyes (4).png"
-_EYE_BOOST_PROB = 0.55  # 다른 눈 형태가 감지돼도 base_eyes(4) 사용 확률
+_EYE_BOOST_PROB = 0.75  # 다른 눈 형태가 감지돼도 base_eyes(4) 사용 확률
 
 def draw_eyes(arr: np.ndarray, eye_shape: str, eye_rgb: tuple):
     """눈 형태 적용 + 홍채 색상 재채색"""
