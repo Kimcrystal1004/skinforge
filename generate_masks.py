@@ -89,6 +89,13 @@ def draw_crop_sleeveless(m):
     """오프숄더 크롭: 몸통 위 절반만"""
     fill_part(m, BODY, ALL_FACES, TOP, y_clip_max=27)
 
+def draw_jacket(m):
+    """재킷/코트/카디건: 몸통 y=16..28(허리선 위까지) + 전체 팔.
+    body y=28..32는 비워 두어 하의(반바지/치마) BOT 존이 칠해지게 함."""
+    fill_part(m, BODY, ALL_FACES, TOP, y_clip_max=28)
+    fill_part(m, RARM, ALL_FACES, TOP)
+    fill_part(m, LARM, ALL_FACES, TOP)
+
 # ── 하의 그리기 함수 ──────────────────────────────────────────────
 def draw_longpants(m):
     """긴바지: 몸통 하단 + 전체 다리, 신발"""
@@ -157,6 +164,11 @@ def acc_belt(m):
 # ── 마스크 생성 정의 ─────────────────────────────────────────────
 MASKS = [
     # (파일명, 상의함수, 하의함수)
+    # 재킷/카디건 — body y=28..32는 하의 BOT 존으로 비워 둠
+    ("mask_jacket.png",              draw_jacket,           draw_longpants),
+    ("mask_jacket_shorts.png",       draw_jacket,           draw_shorts),
+    ("mask_jacket_skirt.png",        draw_jacket,           draw_miniskirt),
+    ("mask_jacket_longskirt.png",    draw_jacket,           draw_longskirt),
     ("mask_longsleeve.png",          draw_longsleeve,       draw_longpants),
     ("mask_longsleeve_shorts.png",   draw_longsleeve,       draw_shorts),
     ("mask_longsleeve_skirt.png",    draw_longsleeve,       draw_miniskirt),

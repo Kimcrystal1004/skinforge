@@ -27,7 +27,11 @@ TAGS_FILE = BASESKIN / "reference_tags.json"
 # (top_kws, bot_kws, 파일명) 형식 — skin_generator.MASK_STYLE_MAP과 동기화
 _MASK_STYLE_MAP = [
     (["자켓","jacket","코트","블레이저","카디건","가디건","cardigan","니트","스웨터","집업","점퍼","후드집업"],
-     ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지","short pants"], "mask_jacket.png"),
+     ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지","short pants"], "mask_jacket_shorts.png"),
+    (["자켓","jacket","코트","블레이저","카디건","가디건","cardigan","니트","스웨터","집업","점퍼","후드집업"],
+     ["롱스커트","긴 스커트","맥시","원피스","드레스"],                                  "mask_jacket_longskirt.png"),
+    (["자켓","jacket","코트","블레이저","카디건","가디건","cardigan","니트","스웨터","집업","점퍼","후드집업"],
+     ["스커트","치마","미니"],                                                          "mask_jacket_skirt.png"),
     (["자켓","jacket","코트","블레이저","카디건","가디건","cardigan","니트","스웨터","집업","점퍼","후드집업"],
      [], "mask_jacket.png"),
     (["오프숄더","off-shoulder"], ["롱스커트","긴 스커트","맥시","원피스","드레스"], "mask_crop_long_shorderless.png"),

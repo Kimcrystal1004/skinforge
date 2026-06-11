@@ -145,9 +145,13 @@ _LLEG_UV[48:64, 16:32] = True
 # (top 키워드, bottom 키워드, 파일명) — 위에 있을수록 우선
 # top/bot 키워드 모두 비어있으면 무조건 매칭 (폴백 역할)
 MASK_STYLE_MAP = [
-    # 자켓/코트/카디건/아우터 (반바지 조합 먼저)
+    # 자켓/코트/카디건/아우터 — 하의별 전용 마스크
     (["자켓","jacket","코트","블레이저","카디건","가디건","cardigan","니트","스웨터","집업","점퍼","후드집업"],
-     ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지","short pants"],  "mask_jacket.png"),
+     ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지","short pants"],  "mask_jacket_shorts.png"),
+    (["자켓","jacket","코트","블레이저","카디건","가디건","cardigan","니트","스웨터","집업","점퍼","후드집업"],
+     ["롱스커트","긴 스커트","맥시","원피스","드레스"],                                   "mask_jacket_longskirt.png"),
+    (["자켓","jacket","코트","블레이저","카디건","가디건","cardigan","니트","스웨터","집업","점퍼","후드집업"],
+     ["스커트","치마","미니"],                                                           "mask_jacket_skirt.png"),
     (["자켓","jacket","코트","블레이저","카디건","가디건","cardigan","니트","스웨터","집업","점퍼","후드집업"],
      [],                                                                               "mask_jacket.png"),
     # 오프숄더 / 크롭 (숄더리스) — 반바지 먼저, 치마, 롱스커트, 폴백 순
@@ -753,29 +757,25 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
 
     zone_maxv = _zone_stats_split(body_ref, leg_ref, mask_arr, arm_ref)
 
-    # 자켓 스타일: 하의에 맞는 베이스 마스크를 먼저 깔고 jacket 오버레이 덮기
+    # 자켓 마스크(mask_jacket*.png)는 TOP(재킷)+BOT(하의)+SHOE 모두 포함.
+    # 재킷 안 셔츠가 보이는 body y=28..32 영역은 BOT 존으로 처리되므로 별도 베이스 불필요.
+    # 단, shirt_color가 top_color와 다른 경우 shirt 레이어를 jacket 아래에 깔아 줌.
     if "jacket" in mask_path.name:
-        bot = (features.get("bottom_style", "") or "").lower()
-        if any(k in bot for k in _SHORTS_SYNONYMS | {"짧은 바지","short pant"}):
-            base_mask_name = "mask_longsleeve_shorts.png"
-        elif any(k in bot for k in ["롱스커트","긴 스커트","맥시","원피스","드레스"]):
-            base_mask_name = "mask_longsleeve_longskirt.png"
-        elif any(k in bot for k in ["스커트","치마","미니스커트"]):
-            base_mask_name = "mask_longsleeve_skirt.png"
-        else:
-            base_mask_name = "mask_longsleeve.png"
-
-        base_mask_path = BASESKIN_DIR / base_mask_name
-        if not base_mask_path.exists():
-            base_mask_path = BASESKIN_DIR / "mask_longsleeve.png"
-        if base_mask_path.exists():
-            shirt_rgb = parse_color(features.get("shirt_color") or "#f0f0f0")
-            shirt_zone_colors = {**zone_colors, "top": shirt_rgb, "jacket": shirt_rgb}
-            base_mask = np.array(Image.open(base_mask_path).convert("RGBA"), dtype=np.uint8)
-            base_maxv = _zone_stats_split(body_ref, leg_ref, base_mask, arm_ref)
-            tmp_mask  = base_mask.copy()
-            tmp_mask[mask_arr[:, :, 3] > 10, 3] = 0
-            _paint_mask(arr, tmp_mask, body_ref, leg_ref, shirt_zone_colors, base_maxv, arm_ref)
+        shirt_color_raw = (features.get("shirt_color") or "").strip()
+        top_color_raw   = (features.get("top_color")   or "").strip()
+        if shirt_color_raw.startswith("#") and shirt_color_raw.lower() != top_color_raw.lower():
+            shirt_rgb = parse_color(shirt_color_raw)
+            # 셔츠가 별도 색이면 jacket이 안 덮는 y=28..32 몸통 앞면에 셔츠색 선도포
+            shirt_zone_colors = {**zone_colors, "top": shirt_rgb, "jacket": shirt_rgb,
+                                 "sleeve": shirt_rgb}
+            # 긴팔 기본 마스크로 셔츠 색 깔기 (재킷 픽셀은 곧 덮힘)
+            base_path = BASESKIN_DIR / "mask_longsleeve.png"
+            if base_path.exists():
+                base_m = np.array(Image.open(base_path).convert("RGBA"), dtype=np.uint8)
+                base_maxv = _zone_stats_split(body_ref, leg_ref, base_m, arm_ref)
+                tmp = base_m.copy()
+                tmp[mask_arr[:, :, 3] > 10, 3] = 0   # 재킷이 덮는 부분 제거
+                _paint_mask(arr, tmp, body_ref, leg_ref, shirt_zone_colors, base_maxv, arm_ref)
 
     _paint_mask(arr, mask_arr, body_ref, leg_ref, zone_colors, zone_maxv, arm_ref)
 
