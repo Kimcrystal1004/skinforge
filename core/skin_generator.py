@@ -965,10 +965,11 @@ def draw_hair_body_only(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
             _composite_layer(arr, colored)
 
 
-def _stamp_eyes_over_hair(arr: np.ndarray) -> None:
-    """앞머리 포함 모든 레이어 적용 후 layer1 눈/눈썹 픽셀을 layer2 face에 마지막으로 덮어씌움.
-    Minecraft layer2는 항상 layer1 위에 렌더링되므로 눈이 앞머리를 뚫고 보임."""
-    l1 = arr[8:16, 8:16, :]
+def _stamp_eyes_last(arr: np.ndarray, skin_base: np.ndarray) -> None:
+    """모든 헤어 적용 완료 후, 헤어 이전 백업(skin_base)의 눈/눈썹 픽셀을
+    layer2 face(y=8..16, x=40..48)에 마지막으로 덮어씌움.
+    layer2는 항상 layer1 위에 렌더링 → 어떤 앞머리든 눈이 보임."""
+    l1 = skin_base[8:16, 8:16, :]   # 헤어가 적용되기 전 눈 픽셀 (가장 신뢰할 수 있는 source)
 
     face_rgb = l1[:, :, :3].astype(float)
     lower    = face_rgb[4:8, 1:7].reshape(-1, 3)
@@ -977,12 +978,12 @@ def _stamp_eyes_over_hair(arr: np.ndarray) -> None:
     skin_avg = bright.mean(axis=0)
 
     diff     = np.sqrt(((face_rgb - skin_avg) ** 2).sum(axis=-1))
-    eye_mask = (diff > 35) & (l1[:, :, 3] > 10)
+    eye_mask = (diff > 25) & (l1[:, :, 3] > 10)   # 임계값 완화 (35→25)
 
     if not eye_mask.any():
         return
 
-    # 눈/눈썹 픽셀을 layer2 face에 덮어씌워서 항상 최상위로 렌더링
+    # layer2 face에 덮어씌워 최상위 렌더링 보장
     arr[8:16, 40:48][eye_mask] = l1[eye_mask]
 
 
@@ -994,8 +995,6 @@ def draw_hair_bangs_only(arr: np.ndarray, hair_rgb: tuple, hair_bangs: str):
         base_arr = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
         colored = recolor_hair_base(base_arr, hair_rgb)
         _composite_layer(arr, colored)
-    # 앞머리 적용 후 layer1 눈 픽셀을 layer2에 복사 → 항상 눈이 앞머리 위에 표시
-    _stamp_eyes_over_hair(arr)
 
 
 def draw_hair(arr: np.ndarray, hair_rgb: tuple, hair_style: str, hair_bangs: str = ""):
@@ -1284,6 +1283,8 @@ def generate_skin(features: dict) -> Image.Image:
     draw_hair_body_only(arr, hair_rgb, hair_style)
     # 앞머리 레이어는 항상 최상단 (대머리 방지)
     draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
+    # 눈/눈썹: 모든 헤어 완료 후 마지막으로 layer2 face에 stamp (항상 최상위 렌더링)
+    _stamp_eyes_last(arr, skin_base)
 
     _mirror_clothing_to_layer2(arr)   # 6. 레이어2 엣지 복사
 
@@ -1388,8 +1389,10 @@ def generate_skin_from_photo(photo: Image.Image, features: dict) -> Image.Image:
     hair_rgb   = parse_color(features.get("hair_color", "검정"))
     hair_style = features.get("hair_style", "")
     hair_bangs = features.get("hair_bangs", "")
+    skin_base_photo = arr.copy()
     draw_hair_body_only(arr, hair_rgb, hair_style)
     draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
+    _stamp_eyes_last(arr, skin_base_photo)
     _mirror_clothing_to_layer2(arr)
 
     if features.get("glasses", False):
