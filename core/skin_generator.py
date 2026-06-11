@@ -1191,14 +1191,15 @@ EYE_SHAPE_MAP = {
 EYE_FALLBACK = "base_eyes (3).png"
 
 
-_EYE_BASE3_PROB = 0.55  # 다른 눈 형태가 감지돼도 base_eyes(3) 사용 확률
+_EYE_BOOST_FILE = "base_eyes (4).png"
+_EYE_BOOST_PROB = 0.55  # 다른 눈 형태가 감지돼도 base_eyes(4) 사용 확률
 
 def draw_eyes(arr: np.ndarray, eye_shape: str, eye_rgb: tuple):
     """눈 형태 적용 + 홍채 색상 재채색"""
     import random
     fname = EYE_SHAPE_MAP.get((eye_shape or "").strip(), EYE_FALLBACK)
-    if fname != EYE_FALLBACK and random.random() < _EYE_BASE3_PROB:
-        fname = EYE_FALLBACK
+    if fname != _EYE_BOOST_FILE and random.random() < _EYE_BOOST_PROB:
+        fname = _EYE_BOOST_FILE
     p = BASESKIN_DIR / fname
     if not p.exists():
         p = BASESKIN_DIR / EYE_FALLBACK
