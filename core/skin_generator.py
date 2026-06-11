@@ -966,17 +966,25 @@ def draw_hair_body_only(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
 
 
 def _stamp_eyes_last(arr: np.ndarray, skin_base: np.ndarray) -> None:
-    """모든 헤어 적용 완료 후:
-    1. skin_base에서 실제 눈 행(y=11..15)을 layer1 face에 복원
-    2. layer2 face 눈 행(y=11..15)만 투명화 → 앞머리(y=9..10)는 유지, 눈만 노출
+    """모든 헤어 적용 완료 후, skin_base에서 눈 픽셀 정확한 위치만 검출:
+    1. layer1 해당 픽셀 복원 (헤어가 덮어썼을 경우 대비)
+    2. layer2 해당 픽셀만 투명화 → 행 단위가 아닌 픽셀 단위로 최소 제거"""
+    l1 = skin_base[8:16, 8:16, :]
 
-    눈 템플릿별 실제 픽셀 위치:
-      base_eyes(1~3): y=11..14 / base_eyes(4,5): y=12..14
-      base_eyes(6,7): y=13..15 / base_eyes(8,9): y=13..14
-    앞머리 템플릿: full/side y=9..10~, curtain/none y=8..10~
-    → y=11 미만은 건드리지 않아 앞머리가 살아있음"""
-    arr[12:16, 8:16]  = skin_base[12:16, 8:16]   # layer1 눈 행 복원
-    arr[12:16, 40:48] = 0                          # layer2 눈 행 투명화 (앞머리 y=9..11 3행 보존)
+    face_rgb = l1[:, :, :3].astype(float)
+    lower    = face_rgb[4:8, 1:7].reshape(-1, 3)
+    brt      = lower.mean(axis=1)
+    bright   = lower[brt > brt.mean()] if (brt > brt.mean()).any() else lower
+    skin_avg = bright.mean(axis=0)
+
+    diff     = np.sqrt(((face_rgb - skin_avg) ** 2).sum(axis=-1))
+    eye_mask = (diff > 20) & (l1[:, :, 3] > 10)  # 눈/눈썹 픽셀 위치 (8×8 bool)
+
+    if not eye_mask.any():
+        return
+
+    arr[8:16, 8:16][eye_mask]  = l1[eye_mask]  # layer1 픽셀 복원
+    arr[8:16, 40:48][eye_mask] = 0              # layer2 해당 픽셀만 투명화
 
 
 def draw_hair_bangs_only(arr: np.ndarray, hair_rgb: tuple, hair_bangs: str):
