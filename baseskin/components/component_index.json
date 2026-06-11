@@ -1911,7 +1911,7 @@
       "학생룩",
       "귀여운"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref100_head.png",
@@ -1935,7 +1935,7 @@
       "어두운",
       "데일리룩"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref101_head.png",
@@ -1958,7 +1958,7 @@
       "후드",
       "시크"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref102_head.png",
@@ -1982,7 +1982,7 @@
       "중성적",
       "스포티"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "유니폼",
     "files": {
       "head": "ref103_head.png",
@@ -2006,7 +2006,7 @@
       "발랄한",
       "귀여운"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref104_head.png",
@@ -2029,7 +2029,7 @@
       "모던",
       "체크무늬"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref105_head.png",
@@ -2052,7 +2052,7 @@
       "편안한",
       "귀여운"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref106_head.png",
@@ -2075,7 +2075,7 @@
       "기본",
       "심플"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref107_head.png",
@@ -2122,7 +2122,7 @@
       "모던",
       "시크"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref109_head.png",
@@ -2146,7 +2146,7 @@
       "스트릿",
       "회색"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref110_head.png",
@@ -2170,7 +2170,7 @@
       "중성적인",
       "학생룩"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref111_head.png",
@@ -2193,7 +2193,7 @@
       "모던",
       "데일리룩"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref112_head.png",
@@ -2217,7 +2217,7 @@
       "반바지",
       "체크 패턴"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref113_head.png",
@@ -2265,7 +2265,7 @@
       "학생",
       "어반"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "세미캐주얼",
     "files": {
       "head": "ref115_head.png",
@@ -2288,7 +2288,7 @@
       "긴팔",
       "귀여운"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref116_head.png",
@@ -2312,7 +2312,7 @@
       "헤드폰",
       "긴머리"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref117_head.png",
@@ -2335,7 +2335,7 @@
       "다크",
       "판타지"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref118_head.png",
@@ -2358,7 +2358,7 @@
       "코트",
       "갈색"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "세미캐주얼",
     "files": {
       "head": "ref119_head.png",
@@ -2382,7 +2382,7 @@
       "스웨터",
       "재킷"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref120_head.png",
@@ -2406,7 +2406,7 @@
       "흑백",
       "모던"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref121_head.png",
@@ -2452,7 +2452,7 @@
       "모던한",
       "스타일리시한"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "세미캐주얼",
     "files": {
       "head": "ref84_head.png",
@@ -2475,7 +2475,7 @@
       "학생",
       "모던"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref85_head.png",
@@ -2570,7 +2570,7 @@
       "흑백",
       "스포티"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref89_head.png",
@@ -2593,7 +2593,7 @@
       "시크",
       "스트릿"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref90_head.png",
@@ -2617,7 +2617,7 @@
       "흑백",
       "활동적인"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref91_head.png",
@@ -2640,7 +2640,7 @@
       "스트릿",
       "활동적인"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref92_head.png",
@@ -2664,7 +2664,7 @@
       "어스톤",
       "내추럴"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref93_head.png",
@@ -2688,7 +2688,7 @@
       "편안한",
       "긴팔"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref94_head.png",
@@ -2712,7 +2712,7 @@
       "반바지",
       "모던"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref95_head.png",
@@ -2735,7 +2735,7 @@
       "주황색 포인트",
       "모노톤"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "유니폼",
     "files": {
       "head": "ref96_head.png",
@@ -2759,7 +2759,7 @@
       "트레이닝복",
       "마스크"
     ],
-    "gender": "중성",
+    "gender": "남성",
     "formality": "캐주얼",
     "files": {
       "head": "ref97_head.png",
@@ -2783,7 +2783,7 @@
       "줄무늬",
       "심플"
     ],
-    "gender": "여성",
+    "gender": "남성",
     "formality": "유니폼",
     "files": {
       "head": "ref98_head.png",
