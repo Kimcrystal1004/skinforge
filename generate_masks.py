@@ -98,10 +98,10 @@ def draw_longpants(m):
     draw_shoes(m)
 
 def draw_shorts(m):
-    """반바지: 몸통 하단 + 다리 2/3, 신발"""
+    """반바지: 몸통 하단 + 다리 1/2 (6/12px), 신발"""
     fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=28)
-    fill_part(m, RLEG, ALL_FACES, BOT, y_clip_max=28)   # 12px 중 8px (2/3)
-    fill_part(m, LLEG, ALL_FACES, BOT, y_clip_max=60)   # 좌다리도 동일 비율
+    fill_part(m, RLEG, ALL_FACES, BOT, y_clip_max=26)   # 12px 중 6px (1/2) — 더 짧게
+    fill_part(m, LLEG, ALL_FACES, BOT, y_clip_max=58)   # 좌다리도 동일
     draw_shoes(m)
 
 def draw_miniskirt(m):

@@ -328,6 +328,21 @@ def _score_ref_bot(fname: str, features: dict) -> float:
     elif input_cat != "unknown" and ref_cat != "unknown" and input_cat != ref_cat:
         score -= 10.0  # 카테고리 불일치 페널티
 
+    # 반바지 목표: 레퍼런스의 다리 하단이 피부색에 가까울수록 가산점
+    # (짧은 옷/맨다리를 가진 레퍼런스가 반바지 허벅지 텍스처로 적합)
+    if input_cat == "shorts":
+        ref_arr = _load_ref(fname)
+        # 오른다리 하단 3행 (y=29..32, x=4..8) 평균 색
+        leg_lower = ref_arr[29:32, 4:8, :]
+        valid = leg_lower[:, :, 3] > 10
+        if valid.any():
+            lower_rgb = leg_lower[valid, :3].astype(float).mean(axis=0)
+            # 피부색 추정: 노랑/빨강 채널이 높고 파랑 낮으면 피부
+            r, g, b = lower_rgb
+            is_skin_like = r > 150 and g > 120 and b < 180 and r > b
+            if is_skin_like:
+                score += 15.0  # 하단이 맨살 → 반바지 레퍼런스
+
     for rt in ref_tags:
         if rt in bot_style:
             score += 15.0
@@ -631,6 +646,11 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
     arm_ref  = _comps["arm"]
     leg_ref  = _comps["leg"]
 
+    # 반바지: 긴바지 레퍼런스를 반바지 높이로 가상 크롭 (허벅지 텍스처만 사용)
+    bot_style_raw = (features.get("bottom_style", "") or "").lower()
+    if _bottom_category(bot_style_raw) == "shorts":
+        leg_ref = _trim_ref_for_shorts(leg_ref)
+
     zone_maxv = _zone_stats_split(body_ref, leg_ref, mask_arr, arm_ref)
 
     # 자켓 스타일: 하의에 맞는 베이스 마스크를 먼저 깔고 jacket 오버레이 덮기
@@ -664,6 +684,16 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
         acc_arr  = np.array(Image.open(acc_path).convert("RGBA"), dtype=np.uint8)
         acc_maxv = _zone_stats_split(body_ref, leg_ref, acc_arr, arm_ref)
         _paint_mask(arr, acc_arr, body_ref, leg_ref, zone_colors, acc_maxv, arm_ref)
+
+
+def _trim_ref_for_shorts(leg_ref: np.ndarray) -> np.ndarray:
+    """긴바지 레퍼런스를 반바지 높이로 가상 크롭.
+    다리 하단(y=26..32 / y=58..64)을 투명화 → 상단 절반 텍스처만 사용.
+    레퍼런스에 반바지가 없어도 긴바지 허벅지 부분을 반바지처럼 쓸 수 있음."""
+    mod = leg_ref.copy()
+    mod[26:32, 0:16, 3] = 0    # 오른다리 레이어1 하단 제거
+    mod[58:64, 16:32, 3] = 0   # 왼다리 레이어1 하단 제거
+    return mod
 
 
 def _fill_back_faces(arr: np.ndarray):
