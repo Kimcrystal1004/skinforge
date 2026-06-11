@@ -150,9 +150,18 @@ ACC_OVERLAY_MAP = [
 def pick_mask(features: dict) -> Path:
     top = (features.get("top_style",    "") or "").lower()
     bot = (features.get("bottom_style", "") or "").lower()
+
+    # 반바지 여부를 _SHORTS_SYNONYMS 전체로 판단 (MASK_STYLE_MAP 키워드보다 넓음)
+    is_shorts = any(k in bot for k in _SHORTS_SYNONYMS)
+
     for top_kws, bot_kws, filename in MASK_STYLE_MAP:
         top_ok = (not top_kws) or any(k in top for k in top_kws)
-        bot_ok = (not bot_kws) or any(k in bot for k in bot_kws)
+        # 반바지 키워드가 bot_kws에 있는 행이면 is_shorts로 대체 판단
+        has_shorts_kw = any(k in ["반바지","shorts","쇼츠"] for k in bot_kws)
+        if has_shorts_kw:
+            bot_ok = is_shorts
+        else:
+            bot_ok = (not bot_kws) or any(k in bot for k in bot_kws)
         if top_ok and bot_ok:
             p = BASESKIN_DIR / filename
             if p.exists():
@@ -276,15 +285,26 @@ def _score_ref_top(fname: str, features: dict) -> float:
     return score
 
 
-_SHORTS_SYNONYMS = {"반바지","쇼츠","shorts","핫팬츠","bermuda","짧은바지","short pants"}
+_SHORTS_SYNONYMS = {
+    "반바지","쇼츠","shorts","핫팬츠","bermuda","짧은바지","short pants",
+    "hot pants","cutoff","denim shorts","데님 쇼츠","cargo short",
+    "5부 바지","7부 바지","5부","반팬츠","체크 쇼츠","짧은 팬츠",
+    "short","ショーツ",
+}
 _SKIRT_SYNONYMS  = {"치마","스커트","skirt","미니스커트","롱스커트"}
 _PANTS_SYNONYMS  = {"바지","슬랙스","청바지","pants","slacks","trousers","leggings"}
 
 def _bottom_category(style: str) -> str:
     s = style.lower()
-    if any(k in s for k in _SHORTS_SYNONYMS): return "shorts"
+    # shorts 먼저 — "short sleeve" 같은 상의 설명에 "short"가 있을 수 있으므로
+    # 명확한 하의 키워드 우선, 그 다음 "short" 단어 단독 체크
+    specific_shorts = _SHORTS_SYNONYMS - {"short"}
+    if any(k in s for k in specific_shorts): return "shorts"
     if any(k in s for k in _SKIRT_SYNONYMS):  return "skirt"
     if any(k in s for k in _PANTS_SYNONYMS):  return "pants"
+    # "short"가 bottom_style에 단독으로 있는 경우 (ex: "grey short")
+    words = s.split()
+    if "short" in words or "shorts" in words: return "shorts"
     return "unknown"
 
 def _score_ref_bot(fname: str, features: dict) -> float:
@@ -610,7 +630,7 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
     # 자켓 스타일: 하의에 맞는 베이스 마스크를 먼저 깔고 jacket 오버레이 덮기
     if "jacket" in mask_path.name:
         bot = (features.get("bottom_style", "") or "").lower()
-        if any(k in bot for k in ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지"]):
+        if any(k in bot for k in _SHORTS_SYNONYMS | {"짧은 바지","short pant"}):
             base_mask_name = "mask_longsleeve_shorts.png"
         elif any(k in bot for k in ["롱스커트","긴 스커트","맥시","원피스","드레스"]):
             base_mask_name = "mask_longsleeve_longskirt.png"
@@ -836,19 +856,29 @@ def draw_hair_from_ref(arr: np.ndarray, head_comp: np.ndarray,
     diff  = rgb_f - ref_skin[np.newaxis, np.newaxis, :]
     dist  = np.sqrt((diff ** 2).sum(axis=-1))     # (16,32)
 
-    # 피부: 거리 < 45, 헤어: 거리 ≥ 45
-    is_skin = valid & (dist < 45)
-    is_hair = valid & (dist >= 45)
+    # ref_skin 밝기 기준으로 임계값 동적 조정 (밝은 피부→좀 더 관대하게)
+    skin_brightness = float(ref_skin.mean())
+    skin_thresh = max(35.0, skin_brightness * 0.30)
 
-    # ── 피부 픽셀 → 베이스 피부톤 복원 (arr는 이미 피부톤 적용됨, 덮어쓰기 방지)
+    # 얼굴 앞면(y=8..16, x=8..16)은 피부·눈 혼재 → 강제 피부 처리
+    face_mask = np.zeros((16, 32), dtype=bool)
+    face_mask[8:16, 8:16] = True
+
+    is_skin = valid & ((dist < skin_thresh) | face_mask)
+    is_hair = valid & (dist >= skin_thresh) & ~face_mask
+
+    # ── 피부 픽셀 → 베이스 피부톤 복원
     ys_s, xs_s = np.where(is_skin)
     if len(ys_s) > 0:
         arr[ys_s, xs_s, :] = skin_base[ys_s, xs_s, :]
 
-    # ── 헤어 픽셀 → 타겟 색으로 재채색 (V값 보존)
+    # ── 헤어 픽셀 → 타겟 색으로 재채색 (V값 max-정규화로 명암 구조 보존)
     if is_hair.any():
-        gray   = (rgb_f[:,:,0]*0.299 + rgb_f[:,:,1]*0.587 + rgb_f[:,:,2]*0.114)
-        v_norm = np.clip(gray / 200.0, 0.1, 1.0)
+        gray = (rgb_f[:,:,0]*0.299 + rgb_f[:,:,1]*0.587 + rgb_f[:,:,2]*0.114)
+
+        # 헤어 픽셀들의 최대 명도 기준으로 정규화 (레퍼런스 밝기 구조 보존)
+        max_gray = float(gray[is_hair].max())
+        v_norm   = np.clip(gray / max(max_gray, 1.0), 0.0, 1.0)
 
         tr, tg, tb = hair_rgb
         boost = BRIGHTNESS_BOOST

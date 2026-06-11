@@ -29,7 +29,7 @@ EXTRACT_PROMPT = """
   "shirt_color": "#hex (재킷·코트 안에 입은 셔츠/블라우스 색상, 없으면 top_color와 동일)",
   "top_style": "상의 스타일 (예: 흰 셔츠, 검정 후드, 교복, 검정 정장 재킷)",
   "bottom_color": "#hex (하의 대표 색상)",
-  "bottom_style": "하의 스타일 (예: 청바지, 검정 슬랙스)",
+  "bottom_style": "하의 스타일 — 반드시 한국어로. 예: 청바지, 검정 슬랙스, 회색 반바지, 베이지 치마, 검정 레깅스\n  ⚠️ 반바지·쇼츠는 반드시 '반바지'라는 단어를 포함시키세요.",
   "shoes_color": "#hex (신발 색상)",
   "accessories": "악세사리 설명 (없으면 없음)",
   "glasses": true,
