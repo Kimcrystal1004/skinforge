@@ -422,11 +422,14 @@ def apply_mask_clothing(arr: np.ndarray, features: dict):
     if "jacket" in mask_path.name:
         base_mask_path = BASESKIN_DIR / "mask_longsleeve.png"
         if base_mask_path.exists():
+            # 안에 입은 셔츠 색 (shirt_color 없으면 흰색 기본)
+            shirt_rgb = parse_color(features.get("shirt_color") or "#f0f0f0")
+            shirt_zone_colors = {**zone_colors, "top": shirt_rgb, "jacket": shirt_rgb}
             base_mask = np.array(Image.open(base_mask_path).convert("RGBA"), dtype=np.uint8)
             base_maxv = _zone_stats_split(top_ref, bot_ref, base_mask)
             tmp_mask = base_mask.copy()
             tmp_mask[mask_arr[:, :, 3] > 10, 3] = 0
-            _paint_mask(arr, tmp_mask, top_ref, bot_ref, zone_colors, base_maxv)
+            _paint_mask(arr, tmp_mask, top_ref, bot_ref, shirt_zone_colors, base_maxv)
 
     _paint_mask(arr, mask_arr, top_ref, bot_ref, zone_colors, zone_maxv)
 
