@@ -966,9 +966,12 @@ def draw_hair_body_only(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
 
 
 def _stamp_eyes_last(arr: np.ndarray, skin_base: np.ndarray) -> None:
-    """모든 헤어 적용 완료 후, layer2 face의 눈 행(y=9..13)을 무조건 투명화.
-    detection 없이 고정 좌표 사용 → layer1 눈이 항상 보임, 튀어나옴 없음."""
-    # layer2 face 눈 영역(y=9..13, x=40..48) 전체 투명화
+    """모든 헤어 적용 완료 후:
+    1. skin_base에서 눈 행(y=9..13)을 layer1 face에 복원 (헤어가 덮어썼을 수 있음)
+    2. layer2 face 눈 행을 투명화 → layer1 눈이 평면으로 보임 (튀어나옴 없음)"""
+    # layer1 복원: skin_base(draw_eyes 직후 백업)에서 눈 행 강제 덮어쓰기
+    arr[9:13, 8:16] = skin_base[9:13, 8:16]
+    # layer2 눈 행 투명화: 앞머리 구멍 → 튀어나옴 없이 layer1 눈 노출
     arr[9:13, 40:48] = 0
 
 
