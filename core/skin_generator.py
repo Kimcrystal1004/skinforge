@@ -755,9 +755,9 @@ HAIR_BANGS_FALLBACK = "base_hair_bangs_full.png"
 
 # 몸통 연장 파일 — 뱅 위에 추가 합성 (단발은 None)
 HAIR_BODY_MAP: dict = {
-    "장발_생머리":      ["base_hair_long_straight.png"],
+    "장발_생머리":      ["base_hair_long_wave.png"],     # 생머리도 웨이브가 더 자연스러움
     "장발_웨이브":      ["base_hair_long_wave.png"],
-    "중장발_생머리":    ["base_hair_mid_straight.png"],
+    "중장발_생머리":    ["base_hair_mid_wave.png"],      # 동일
     "중장발_웨이브":    ["base_hair_mid_wave.png"],
     "꽁지머리":         ["base_hair_ponytail.png"],
     "짧은꽁지":         ["base_hair_short_ponytail.png"],
