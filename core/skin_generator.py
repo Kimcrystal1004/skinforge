@@ -111,7 +111,8 @@ MASK_STYLE_MAP = [
      ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지","short pants"],  "mask_jacket.png"),
     (["자켓","jacket","코트","블레이저","카디건","가디건","cardigan","니트","스웨터","집업","점퍼","후드집업"],
      [],                                                                               "mask_jacket.png"),
-    # 오프숄더 / 크롭 (숄더리스)
+    # 오프숄더 / 크롭 (숄더리스) — 반바지 먼저, 치마, 롱스커트, 폴백 순
+    (["오프숄더","off-shoulder"],  ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은바지","short pants"], "mask_crop_shorts_shorderless.png"),
     (["오프숄더","off-shoulder"],  ["롱스커트","긴 스커트","맥시","원피스","드레스"], "mask_crop_long_shorderless.png"),
     (["오프숄더","off-shoulder"],  ["스커트","치마","미니"],                          "mask_crop_shorts_shorderless.png"),
     (["오프숄더","off-shoulder"],  [],                                                "mask_crop_long_shorderless.png"),
@@ -126,10 +127,10 @@ MASK_STYLE_MAP = [
     (["민소매","나시","sleeveless","탱크"], ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지","short pants"], "mask_sleeveless_shorts.png"),
     (["민소매","나시","sleeveless","탱크"], [],                                             "mask_sleeveless.png"),
     # 반팔
-    (["반팔","short sleeve","반소매","반팔티","t-shirt","tshirt"], ["롱스커트","긴 스커트","맥시","원피스","드레스"],    "mask_shortsleeve_longskirt.png"),
-    (["반팔","short sleeve","반소매","반팔티","t-shirt","tshirt"], ["스커트","치마","미니스커트"],                       "mask_shortsleeve_skirt.png"),
-    (["반팔","short sleeve","반소매","반팔티","t-shirt","tshirt"], ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지","short pants"], "mask_shortsleeve_shorts.png"),
-    (["반팔","short sleeve","반소매","반팔티","t-shirt","tshirt"], [],                                                   "mask_shortsleeve.png"),
+    (["반팔","short sleeve","반소매","반팔티","t-shirt","tshirt","티셔츠","tee","polo"], ["롱스커트","긴 스커트","맥시","원피스","드레스"],    "mask_shortsleeve_longskirt.png"),
+    (["반팔","short sleeve","반소매","반팔티","t-shirt","tshirt","티셔츠","tee","polo"], ["스커트","치마","미니스커트"],                       "mask_shortsleeve_skirt.png"),
+    (["반팔","short sleeve","반소매","반팔티","t-shirt","tshirt","티셔츠","tee","polo"], ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지","short pants"], "mask_shortsleeve_shorts.png"),
+    (["반팔","short sleeve","반소매","반팔티","t-shirt","tshirt","티셔츠","tee","polo"], [],                                                   "mask_shortsleeve.png"),
     # 긴팔 (나머지)
     ([], ["롱스커트","긴 스커트","맥시","원피스","드레스"],                                  "mask_longsleeve_longskirt.png"),
     ([], ["스커트","치마","미니스커트"],                                                     "mask_longsleeve_skirt.png"),
@@ -1087,7 +1088,6 @@ def generate_skin(features: dict) -> Image.Image:
         tone_key = "warm_bright"
 
     arr = np.array(apply_skin_tone(load_base(tone_key), tone_key), dtype=np.uint8).copy()
-    skin_base = arr.copy()   # 피부톤 직후 백업 (헤어 렌더링 시 피부 픽셀 복원용)
 
     hair_rgb   = parse_color(features.get("hair_color", "검정"))
     hair_style = features.get("hair_style", "")
@@ -1103,6 +1103,9 @@ def generate_skin(features: dict) -> Image.Image:
     # 2. 눈 (피부 위)
     draw_eyes(arr, eye_shape, eye_rgb)
 
+    # 눈 적용 후 백업 — draw_hair_from_ref가 face 복원 시 눈 픽셀도 보존됨
+    skin_base = arr.copy()
+
     # 3. 레퍼런스 컴포넌트 선택 (body/arm/leg/head_comp)
     comps = _select_ref_components(features)
 
@@ -1115,15 +1118,15 @@ def generate_skin(features: dict) -> Image.Image:
     # 5. 머리카락
     head_comp = comps.get("head_comp")
     if head_comp is not None:
-        # 레퍼런스 헤드 컴포넌트 기반 (고품질)
+        # 레퍼런스 헤드 컴포넌트 기반 — 헤드 UV 전체(머리+앞머리) 처리
         draw_hair_from_ref(arr, head_comp, hair_rgb, skin_base)
+        # head_comp가 헤드 UV를 담당하므로 base 뱅 파일은 스킵
     else:
-        pass  # 아래에서 일괄 처리
+        # 컴포넌트 없을 때만 base 뱅 파일 사용
+        draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
 
-    # 몸통 연장 — 단발/숏컷은 HAIR_BODY_MAP[key]=None 이라 자동 스킵됨
+    # 몸통 연장 (장발만) — 단발/숏컷은 HAIR_BODY_MAP[key]=None 이라 자동 스킵
     draw_hair_body_only(arr, hair_rgb, hair_style)
-    # 앞머리 레이어 (항상 최상단)
-    draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
 
     _mirror_clothing_to_layer2(arr)   # 6. 레이어2 엣지 복사
 

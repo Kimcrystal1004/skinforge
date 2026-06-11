@@ -20,7 +20,7 @@ EXTRACT_PROMPT = """
 {
   "skin_tone": "아래 중 하나만: pale | warm_bright | warm_normal | warm_dark | cool_bright | cool_normal | cool_dark | warm_deeper | cool_deeper | dark | very_dark\n  (pale=창백/anime흰, warm_bright=밝은웜톤, warm_deeper=짙은웜톤/남아시아, cool_deeper=짙은쿨톤, dark=어두운갈색, very_dark=매우어두운피부)",
   "eye_shape": "아래 중 하나만: 큰눈 | 둥근눈 | 일반 | 아몬드눈 | 반쌍꺼풀 | 가는눈 | 좁은눈 | 작은눈\n  (실제사람 동양인→일반이 기본, 서양인→큰눈/아몬드눈, 캐릭터→눈 모양 맞게)",
-  "eye_color": "#hex (홍채 색상 — 동양인 실사는 #2c2c2c~#3d2b1f, 캐릭터·서양인은 실제 색)",
+  "eye_color": "#hex — 정확한 홍채 색상.\n  실사 동양인: 어두운 갈색/검정 계열 (#2c2c2c, #3d2b1f, #4a3020 등).\n  캐릭터·서양인·이국적 눈: 실제 눈 색 정확히 추출 (파랑=#4a90d9, 민트/청록=#39c5bb, 초록=#3daa4a, 붉은=#cc3333, 보라=#9b59b6, 노랑=#e8c327, 금색=#c8a83c).\n  ⚠️ 캐릭터의 눈이 특이한 색이라면 반드시 그 색의 hex를 반환하세요.",
   "hair_color": "#hex (머리카락의 대표 색상)",
   "hair_style": "아래 중 하나만: 장발_생머리 | 장발_웨이브 | 중장발_생머리 | 중장발_웨이브 | 꽁지머리 | 짧은꽁지 | 사이드테일 | 양갈래_생머리 | 양갈래_웨이브 | 짧은양갈래_생머리 | 짧은양갈래_웨이브 | 단발 | 숏컷\n  (숏컷=남성 짧은머리/버즈컷/크롭컷, 단발=턱 위 단발)",
   "hair_bangs": "아래 중 하나만: 일자뱅 | 사이드뱅 | 노뱅 | 가르마",
