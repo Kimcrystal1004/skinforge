@@ -914,6 +914,44 @@ def draw_hair_body_only(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
             _composite_layer(arr, colored)
 
 
+def _punch_bangs_for_eyes(arr: np.ndarray) -> None:
+    """레이어2 앞머리가 눈 영역을 완전히 가릴 때 눈당 최대 2픽셀 투명화.
+
+    - 레이어1 얼굴(arr[8:16, 8:16])에서 피부색과 다른 픽셀 = 눈/눈썹
+    - 레이어2 얼굴(arr[8:16, 40:48]) 대응 위치가 완전히 불투명하면 중앙 1픽셀 제거
+    - 왼쪽 눈(x=0..3)·오른쪽 눈(x=4..7) 각각 독립 처리
+    """
+    l1 = arr[8:16, 8:16, :]    # 레이어1 얼굴 (8×8)
+    l2 = arr[8:16, 40:48, :]   # 레이어2 앞머리 (8×8)
+
+    # 피부색 추정: 얼굴 아래 절반(y=4..8) 밝은 픽셀 평균
+    face_rgb = l1[:, :, :3].astype(float)
+    lower = face_rgb[4:8, 1:7].reshape(-1, 3)
+    brt   = lower.mean(axis=1)
+    bright = lower[brt > brt.mean()] if (brt > brt.mean()).any() else lower
+    skin_avg = bright.mean(axis=0)
+
+    # 눈/눈썹 픽셀: 피부색과 유클리드 거리 > 35이고 알파 > 0
+    diff     = np.sqrt(((face_rgb - skin_avg) ** 2).sum(axis=-1))  # (8,8)
+    eye_mask = (diff > 35) & (l1[:, :, 3] > 10)                   # bool (8,8)
+
+    if not eye_mask.any():
+        return
+
+    l2_alpha = l2[:, :, 3]   # (8,8)
+
+    # 왼쪽(x=0..3) · 오른쪽(x=4..7) 눈 구역 각각 처리
+    for x_start, x_end in [(0, 4), (4, 8)]:
+        for ey in range(8):
+            eye_cols = [c for c in range(x_start, x_end) if eye_mask[ey, c]]
+            if not eye_cols:
+                continue
+            # 해당 눈 픽셀이 레이어2 앞머리로 모두 덮인 경우만
+            if all(l2_alpha[ey, c] > 10 for c in eye_cols):
+                mid_c = eye_cols[len(eye_cols) // 2]
+                arr[8 + ey, 40 + mid_c, 3] = 0   # 중앙 1픽셀 투명화
+
+
 def draw_hair_bangs_only(arr: np.ndarray, hair_rgb: tuple, hair_bangs: str):
     """앞머리(뱅) 레이어만 합성 (머리카락 최상단)"""
     bangs_name = HAIR_BANGS_MAP.get((hair_bangs or "").strip(), HAIR_BANGS_FALLBACK)
@@ -922,6 +960,8 @@ def draw_hair_bangs_only(arr: np.ndarray, hair_rgb: tuple, hair_bangs: str):
         base_arr = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
         colored = recolor_hair_base(base_arr, hair_rgb)
         _composite_layer(arr, colored)
+    # 앞머리가 눈을 완전히 가리면 눈당 1픽셀 뚫기
+    _punch_bangs_for_eyes(arr)
 
 
 def draw_hair(arr: np.ndarray, hair_rgb: tuple, hair_style: str, hair_bangs: str = ""):
