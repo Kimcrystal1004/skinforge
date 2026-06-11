@@ -102,26 +102,50 @@ _SHADE_MAP = _build_shade_map()
 
 
 # ── 마스크 파일 선택 ───────────────────────────────────────────────
+# (top 키워드, bottom 키워드, 파일명) — 위에 있을수록 우선
+# top/bot 키워드 모두 비어있으면 무조건 매칭 (폴백 역할)
 MASK_STYLE_MAP = [
-    # (top 키워드, bottom 키워드, 파일명)  — 위에 있을수록 우선
-    (["자켓", "jacket", "코트", "블레이저"],          [],                          "mask_jacket.png"),
-    (["크롭", "crop"],  ["반바지", "shorts", "미니"],  "mask_crop_shorts.png"),
-    (["크롭", "crop"],  [],                            "mask_crop_long.png"),
-    (["크롭", "crop"],  ["반바지", "shorts", "미니"],  "mask_crop_shorts_shorderless.png"),  # 오프숄더 크롭+반바지
-    (["오프숄더", "off-shoulder", "어깨"],             ["반바지", "shorts", "미니"],  "mask_crop_shorts_shorderless.png"),
-    (["오프숄더", "off-shoulder", "어깨"],             [],                            "mask_crop_long_shorderless.png"),
-    (["민소매", "나시", "sleeveless", "탱크"],         [],                            "mask_sleeveless.png"),
-    ([],  ["롱스커트", "맥시", "긴 스커트", "원피스", "드레스"], "mask_longskirt.png"),
-    ([],  ["스커트", "치마", "미니스커트"],                      "mask_shortsskirt.png"),
-    ([],  ["반바지", "shorts", "미니"],                          "mask_shorts.png"),
-    (["반팔", "short sleeve", "shortsleeve"],          [],        "mask_shortsleeve.png"),
+    # 자켓/코트
+    (["자켓","jacket","코트","블레이저"], [],                                          "mask_jacket.png"),
+    # 오프숄더 / 크롭 (숄더리스)
+    (["오프숄더","off-shoulder"],  ["롱스커트","긴 스커트","맥시","원피스","드레스"], "mask_crop_long_shorderless.png"),
+    (["오프숄더","off-shoulder"],  ["스커트","치마","미니"],                          "mask_crop_shorts_shorderless.png"),
+    (["오프숄더","off-shoulder"],  [],                                                "mask_crop_long_shorderless.png"),
+    # 크롭탑
+    (["크롭","crop"], ["롱스커트","긴 스커트","맥시","원피스","드레스"],              "mask_crop_skirt.png"),
+    (["크롭","crop"], ["스커트","치마","미니"],                                        "mask_crop_skirt.png"),
+    (["크롭","crop"], ["반바지","shorts","미니"],                                      "mask_crop_shorts.png"),
+    (["크롭","crop"], [],                                                              "mask_crop_long.png"),
+    # 민소매
+    (["민소매","나시","sleeveless","탱크"], ["롱스커트","긴 스커트","맥시","원피스","드레스"], "mask_sleeveless_longskirt.png"),
+    (["민소매","나시","sleeveless","탱크"], ["스커트","치마","미니"],                        "mask_sleeveless_skirt.png"),
+    (["민소매","나시","sleeveless","탱크"], ["반바지","shorts","미니"],                      "mask_sleeveless_shorts.png"),
+    (["민소매","나시","sleeveless","탱크"], [],                                             "mask_sleeveless.png"),
+    # 반팔
+    (["반팔","short sleeve","반소매"], ["롱스커트","긴 스커트","맥시","원피스","드레스"],    "mask_shortsleeve_longskirt.png"),
+    (["반팔","short sleeve","반소매"], ["스커트","치마","미니스커트"],                       "mask_shortsleeve_skirt.png"),
+    (["반팔","short sleeve","반소매"], ["반바지","shorts","미니"],                           "mask_shortsleeve_shorts.png"),
+    (["반팔","short sleeve","반소매"], [],                                                   "mask_shortsleeve.png"),
+    # 긴팔 (나머지)
+    ([], ["롱스커트","긴 스커트","맥시","원피스","드레스"],                                  "mask_longsleeve_longskirt.png"),
+    ([], ["스커트","치마","미니스커트"],                                                     "mask_longsleeve_skirt.png"),
+    ([], ["반바지","shorts","미니"],                                                         "mask_longsleeve_shorts.png"),
 ]
 MASK_FALLBACK = "mask_longsleeve.png"
 
+# 악세서리 키워드 → 오버레이 마스크
+ACC_OVERLAY_MAP = [
+    (["시계","watch"],                        "mask_acc_watch.png"),
+    (["목걸이","necklace","체인"],             "mask_acc_necklace.png"),
+    (["귀걸이","earring","이어링"],            "mask_acc_earrings.png"),
+    (["벨트","belt"],                          "mask_acc_belt.png"),
+    (["부츠","boots"],                         "mask_acc_boots.png"),
+]
+
 
 def pick_mask(features: dict) -> Path:
-    top   = (features.get("top_style",    "") or "").lower()
-    bot   = (features.get("bottom_style", "") or "").lower()
+    top = (features.get("top_style",    "") or "").lower()
+    bot = (features.get("bottom_style", "") or "").lower()
     for top_kws, bot_kws, filename in MASK_STYLE_MAP:
         top_ok = (not top_kws) or any(k in top for k in top_kws)
         bot_ok = (not bot_kws) or any(k in bot for k in bot_kws)
@@ -130,6 +154,26 @@ def pick_mask(features: dict) -> Path:
             if p.exists():
                 return p
     return BASESKIN_DIR / MASK_FALLBACK
+
+
+def pick_acc_overlays(features: dict) -> list[Path]:
+    """악세서리 텍스트에서 오버레이 마스크 파일 목록 반환"""
+    acc = (features.get("accessories", "") or "").lower()
+    if not acc or acc == "없음":
+        return []
+    overlays = []
+    for kws, filename in ACC_OVERLAY_MAP:
+        if any(k in acc for k in kws):
+            p = BASESKIN_DIR / filename
+            if p.exists():
+                overlays.append(p)
+    # 신발 스타일 기반 부츠 처리
+    shoes = (features.get("shoes_color", "") or "").lower() + (features.get("bottom_style", "") or "").lower()
+    if any(k in shoes for k in ["부츠","boots"]):
+        p = BASESKIN_DIR / "mask_acc_boots.png"
+        if p.exists() and p not in overlays:
+            overlays.append(p)
+    return overlays
 
 
 _REF_SKIN_CACHE: dict = {}
@@ -385,6 +429,12 @@ def apply_mask_clothing(arr: np.ndarray, features: dict):
             _paint_mask(arr, tmp_mask, top_ref, bot_ref, zone_colors, base_maxv)
 
     _paint_mask(arr, mask_arr, top_ref, bot_ref, zone_colors, zone_maxv)
+
+    # 악세서리 오버레이 적용
+    for acc_path in pick_acc_overlays(features):
+        acc_arr  = np.array(Image.open(acc_path).convert("RGBA"), dtype=np.uint8)
+        acc_maxv = _zone_stats_split(top_ref, bot_ref, acc_arr)
+        _paint_mask(arr, acc_arr, top_ref, bot_ref, zone_colors, acc_maxv)
 
 
 def _mirror_clothing_to_layer2(arr: np.ndarray):
