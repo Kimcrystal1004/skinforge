@@ -102,6 +102,45 @@ def _build_shade_map() -> np.ndarray:
 _SHADE_MAP = _build_shade_map()
 
 
+def _build_pleat_darken_map() -> np.ndarray:
+    """치마/바지 주름 수직 줄무늬 다크닝 맵 (ref8/9 패턴 기반).
+    1.0=원본, 낮을수록 어둡게. UV 면 내부 열 위치로 주름 음영 표현.
+    y 범위를 지정해 BODY(y=16..32)와 LLEG(y=48..64)의 x 겹침 방지."""
+    m = np.ones((64, 64), dtype=np.float32)
+
+    def _stripe(y0, y1, x_start, cols_darken):
+        """cols_darken: [(col_offset, factor), ...]"""
+        for col, f in cols_darken:
+            m[y0:y1, x_start + col] = np.minimum(m[y0:y1, x_start + col], f)
+
+    # ── y=16..32 영역: BODY(x=16..40) + RLEG(x=0..16) ────────────
+    # Body front (8px wide): ref9 패턴 — 중앙 cols 3,4 진하게, 2,5 중간
+    _stripe(16, 32, 20, [(2, 0.82), (3, 0.70), (4, 0.70), (5, 0.82)])
+    _stripe(16, 32, 16, [(1, 0.82), (2, 0.82)])   # body right  (4px)
+    _stripe(16, 32, 28, [(1, 0.82), (2, 0.82)])   # body left   (4px)
+    _stripe(16, 32, 32, [(2, 0.82), (3, 0.70), (4, 0.70), (5, 0.82)])  # body back (8px)
+    _stripe(16, 32,  4, [(1, 0.86), (2, 0.86)])   # rleg front  (4px)
+    _stripe(16, 32,  0, [(1, 0.86), (2, 0.86)])   # rleg right  (4px)
+    _stripe(16, 32,  8, [(1, 0.86), (2, 0.86)])   # rleg left   (4px)
+    _stripe(16, 32, 12, [(1, 0.86), (2, 0.86)])   # rleg back   (4px)
+
+    # ── y=48..64 영역: LLEG(x=16..32) ───────────────────────────
+    _stripe(48, 64, 20, [(1, 0.86), (2, 0.86)])   # lleg front  (4px)
+    _stripe(48, 64, 16, [(1, 0.86), (2, 0.86)])   # lleg left   (4px)
+    _stripe(48, 64, 24, [(1, 0.86), (2, 0.86)])   # lleg right  (4px)
+    _stripe(48, 64, 28, [(1, 0.86), (2, 0.86)])   # lleg back   (4px)
+
+    return m
+
+_PLEAT_DARKEN_MAP = _build_pleat_darken_map()
+
+# 다리 UV 서브 마스크 (밑단 행 동적 계산용)
+_RLEG_UV = np.zeros((64, 64), dtype=bool)
+_RLEG_UV[16:32, 0:16] = True
+_LLEG_UV = np.zeros((64, 64), dtype=bool)
+_LLEG_UV[48:64, 16:32] = True
+
+
 # ── 마스크 파일 선택 ───────────────────────────────────────────────
 # (top 키워드, bottom 키워드, 파일명) — 위에 있을수록 우선
 # top/bot 키워드 모두 비어있으면 무조건 매칭 (폴백 역할)
@@ -568,16 +607,27 @@ def _zone_stats_split(body_ref: np.ndarray, bot_ref: np.ndarray,
 
 def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
                          target_rgb: tuple) -> None:
-    """BOT 존 전용: 레퍼런스 V 무시, shade_map으로 면별 명암만 적용.
-    치마/바지 몸통-다리 색 통일 보장."""
+    """BOT 존 전용: shade_map + 주름 다크닝 + 밑단 암화.
+    레퍼런스 V 무시로 몸통-다리 색 통일, ref8/9 패턴 기반 주름 표현."""
     if not zmask.any():
         return
     tr, tg, tb = target_rgb
     t_h, t_s, t_v = rgb_to_hsv(tr / 255, tg / 255, tb / 255)
     t_v = max(t_v, 0.15)
     ys, xs = np.where(zmask)
-    shades   = _SHADE_MAP[ys, xs]
-    final_v  = np.clip(t_v * shades * BRIGHTNESS_BOOST, 0.0, 1.0)
+    shades = _SHADE_MAP[ys, xs]
+    pleat  = _PLEAT_DARKEN_MAP[ys, xs]
+
+    # 밑단 효과: RLEG/LLEG 각각의 BOT 존 내 최하 2행 어둡게
+    hem = np.ones(len(ys), dtype=np.float32)
+    for leg_uv in (_RLEG_UV, _LLEG_UV):
+        in_leg = leg_uv[ys, xs]
+        if in_leg.any():
+            leg_y_max = int(ys[in_leg].max())
+            in_hem = in_leg & (ys >= leg_y_max - 1)
+            hem[in_hem] = 0.74
+
+    final_v = np.clip(t_v * shades * pleat * hem * BRIGHTNESS_BOOST, 0.0, 1.0)
     hi_f = t_h * 6.0; hi_i = int(hi_f) % 6; frac = hi_f - int(hi_f)
     p_v  = final_v * (1 - t_s)
     q_v  = final_v * (1 - frac * t_s)
