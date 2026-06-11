@@ -105,8 +105,11 @@ _SHADE_MAP = _build_shade_map()
 # (top 키워드, bottom 키워드, 파일명) — 위에 있을수록 우선
 # top/bot 키워드 모두 비어있으면 무조건 매칭 (폴백 역할)
 MASK_STYLE_MAP = [
-    # 자켓/코트
-    (["자켓","jacket","코트","블레이저"], [],                                          "mask_jacket.png"),
+    # 자켓/코트/카디건/아우터 (반바지 조합 먼저)
+    (["자켓","jacket","코트","블레이저","카디건","가디건","cardigan","니트","스웨터","집업","점퍼","후드집업"],
+     ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지","short pants"],  "mask_jacket.png"),
+    (["자켓","jacket","코트","블레이저","카디건","가디건","cardigan","니트","스웨터","집업","점퍼","후드집업"],
+     [],                                                                               "mask_jacket.png"),
     # 오프숄더 / 크롭 (숄더리스)
     (["오프숄더","off-shoulder"],  ["롱스커트","긴 스커트","맥시","원피스","드레스"], "mask_crop_long_shorderless.png"),
     (["오프숄더","off-shoulder"],  ["스커트","치마","미니"],                          "mask_crop_shorts_shorderless.png"),
@@ -437,11 +440,22 @@ def apply_mask_clothing(arr: np.ndarray, features: dict):
     top_ref, bot_ref = _select_ref_pair(features)
     zone_maxv = _zone_stats_split(top_ref, bot_ref, mask_arr)
 
-    # 자켓 스타일: longsleeve를 먼저 깔고 jacket 오버레이 덮기
+    # 자켓 스타일: 하의에 맞는 베이스 마스크를 먼저 깔고 jacket 오버레이 덮기
     if "jacket" in mask_path.name:
-        base_mask_path = BASESKIN_DIR / "mask_longsleeve.png"
+        bot = (features.get("bottom_style", "") or "").lower()
+        if any(k in bot for k in ["반바지","shorts","쇼츠","핫팬츠","bermuda","짧은 바지","짧은바지"]):
+            base_mask_name = "mask_longsleeve_shorts.png"
+        elif any(k in bot for k in ["롱스커트","긴 스커트","맥시","원피스","드레스"]):
+            base_mask_name = "mask_longsleeve_longskirt.png"
+        elif any(k in bot for k in ["스커트","치마","미니스커트"]):
+            base_mask_name = "mask_longsleeve_skirt.png"
+        else:
+            base_mask_name = "mask_longsleeve.png"
+
+        base_mask_path = BASESKIN_DIR / base_mask_name
+        if not base_mask_path.exists():
+            base_mask_path = BASESKIN_DIR / "mask_longsleeve.png"
         if base_mask_path.exists():
-            # 안에 입은 셔츠 색 (shirt_color 없으면 흰색 기본)
             shirt_rgb = parse_color(features.get("shirt_color") or "#f0f0f0")
             shirt_zone_colors = {**zone_colors, "top": shirt_rgb, "jacket": shirt_rgb}
             base_mask = np.array(Image.open(base_mask_path).convert("RGBA"), dtype=np.uint8)
