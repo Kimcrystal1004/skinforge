@@ -13,15 +13,18 @@ from PIL import Image
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
 EXTRACT_PROMPT = """
-주어진 인물 사진을 분석해 다음 항목을 JSON으로만 반환하세요. 설명 없이 JSON만 출력.
-⚠️ 배경(건물, 벽, 하늘, 바닥 등)은 완전히 무시하고, 사진 속 인물의 신체·의상·헤어만 분석하세요.
-⚠️ 색상 필드(hair_color, top_color, bottom_color, shoes_color)는 반드시 HTML hex 코드(예: #2b1a0e)로만 반환하세요.
+주어진 인물·캐릭터 사진을 분석해 다음 항목을 JSON으로만 반환하세요. 설명 없이 JSON만 출력.
+⚠️ 배경은 완전히 무시하고, 인물/캐릭터의 신체·의상·헤어·눈만 분석하세요.
+⚠️ 색상 필드(hair_color, eye_color, top_color, shirt_color, bottom_color, shoes_color)는 반드시 HTML hex 코드(예: #2b1a0e)로만 반환하세요.
 
 {
-  "skin_tone": "warm_bright | warm_normal | warm_dark | cool_bright | cool_normal | cool_dark",
+  "skin_tone": "아래 중 하나만: pale | warm_bright | warm_normal | warm_dark | cool_bright | cool_normal | cool_dark | warm_deeper | cool_deeper | dark | very_dark\n  (pale=창백/anime흰, warm_bright=밝은웜톤, warm_deeper=짙은웜톤/남아시아, cool_deeper=짙은쿨톤, dark=어두운갈색, very_dark=매우어두운피부)",
+  "eye_shape": "아래 중 하나만: 큰눈 | 둥근눈 | 일반 | 아몬드눈 | 반쌍꺼풀 | 가는눈 | 좁은눈 | 작은눈\n  (실제사람 동양인→일반이 기본, 서양인→큰눈/아몬드눈, 캐릭터→눈 모양 맞게)",
+  "eye_color": "#hex (홍채 색상 — 동양인 실사는 #2c2c2c~#3d2b1f, 캐릭터·서양인은 실제 색)",
   "hair_color": "#hex (머리카락의 대표 색상)",
-  "hair_style": "아래 중 하나만 출력: 장발_생머리 | 장발_웨이브 | 중장발_생머리 | 중장발_웨이브 | 꽁지머리 | 짧은꽁지 | 사이드테일 | 양갈래_생머리 | 양갈래_웨이브 | 짧은양갈래_생머리 | 짧은양갈래_웨이브 | 단발",
-  "hair_bangs": "아래 중 하나만 출력: 일자뱅 | 사이드뱅 | 노뱅 | 가르마",
+  "hair_style": "아래 중 하나만: 장발_생머리 | 장발_웨이브 | 중장발_생머리 | 중장발_웨이브 | 꽁지머리 | 짧은꽁지 | 사이드테일 | 양갈래_생머리 | 양갈래_웨이브 | 짧은양갈래_생머리 | 짧은양갈래_웨이브 | 단발",
+  "hair_bangs": "아래 중 하나만: 일자뱅 | 사이드뱅 | 노뱅 | 가르마",
+  "body_type": "slim | normal | athletic | muscular",
   "top_color": "#hex (가장 겉에 보이는 상의 색상 — 재킷/코트 착용 시 재킷 색)",
   "shirt_color": "#hex (재킷·코트 안에 입은 셔츠/블라우스 색상, 없으면 top_color와 동일)",
   "top_style": "상의 스타일 (예: 흰 셔츠, 검정 후드, 교복, 검정 정장 재킷)",

@@ -693,8 +693,67 @@ def _shade_tuple(rgb: tuple, f: float) -> tuple:
 
 
 # ── 메인 ─────────────────────────────────────────────────────────
-VALID_TONES = {"warm_bright", "warm_normal", "warm_dark",
-               "cool_bright", "cool_normal", "cool_dark"}
+# ── 눈 형태 매핑 ─────────────────────────────────────────────────
+EYE_SHAPE_MAP = {
+    "큰눈":     "base_eyes (1).png",
+    "둥근눈":   "base_eyes (2).png",
+    "일반":     "base_eyes (3).png",   # 기본값 (동양인 실사)
+    "아몬드눈": "base_eyes (4).png",
+    "반쌍꺼풀": "base_eyes (5).png",
+    "가는눈":   "base_eyes (6).png",
+    "좁은눈":   "base_eyes (7).png",
+    "작은눈":   "base_eyes (8).png",
+}
+EYE_FALLBACK = "base_eyes (3).png"
+
+
+def draw_eyes(arr: np.ndarray, eye_shape: str, eye_rgb: tuple):
+    """눈 형태 적용 + 홍채 색상 재채색"""
+    fname = EYE_SHAPE_MAP.get((eye_shape or "").strip(), EYE_FALLBACK)
+    p = BASESKIN_DIR / fname
+    if not p.exists():
+        p = BASESKIN_DIR / EYE_FALLBACK
+    base = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
+    er, eg, eb = eye_rgb
+    result = base.copy()
+    valid = base[:, :, 3] > 10
+    ys, xs = np.where(valid)
+    for y, x in zip(ys, xs):
+        r, g, b = int(base[y, x, 0]), int(base[y, x, 1]), int(base[y, x, 2])
+        gray = int(r * 0.299 + g * 0.587 + b * 0.114)
+        # 홍채 범위 (윤곽·하이라이트 제외)
+        if 15 < gray < 160:
+            factor = max(0.3, gray / 80.0)
+            result[y, x, 0] = min(255, int(er * factor))
+            result[y, x, 1] = min(255, int(eg * factor))
+            result[y, x, 2] = min(255, int(eb * factor))
+    _composite_layer(arr, result)
+
+
+def draw_muscle(arr: np.ndarray):
+    """근육 음영 오버레이 (회색값 → 피부 위 multiply 어둡게)"""
+    p = BASESKIN_DIR / "base_muscle.png"
+    if not p.exists():
+        return
+    muscle = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
+    valid = muscle[:, :, 3] > 10
+    ys, xs = np.where(valid)
+    for y, x in zip(ys, xs):
+        if arr[y, x, 3] < 10:
+            continue
+        factor = muscle[y, x, 0] / 255.0
+        arr[y, x, 0] = min(255, int(arr[y, x, 0] * factor))
+        arr[y, x, 1] = min(255, int(arr[y, x, 1] * factor))
+        arr[y, x, 2] = min(255, int(arr[y, x, 2] * factor))
+
+
+VALID_TONES = {
+    "warm_bright", "warm_normal", "warm_dark",
+    "cool_bright", "cool_normal", "cool_dark",
+    "warm_dark_dark", "cool_dark_dark",
+    "cool_dark_dark_dark", "cool_dark_dark_dark_dark",
+    "pale", "warm_deeper", "cool_deeper", "dark", "very_dark",
+}
 
 
 def generate_skin(features: dict) -> Image.Image:
@@ -707,11 +766,21 @@ def generate_skin(features: dict) -> Image.Image:
     hair_rgb   = parse_color(features.get("hair_color", "검정"))
     hair_style = features.get("hair_style", "")
     hair_bangs = features.get("hair_bangs", "")
+    eye_rgb    = parse_color(features.get("eye_color") or "#2c2c2c")
+    eye_shape  = features.get("eye_shape", "일반")
+    body_type  = (features.get("body_type") or "normal").lower()
 
-    apply_mask_clothing(arr, features)               # 1. 의상
-    draw_hair_body_only(arr, hair_rgb, hair_style)   # 2. 몸통 머리카락
-    draw_hair_bangs_only(arr, hair_rgb, hair_bangs)  # 3. 앞머리 (최상단)
-    _mirror_clothing_to_layer2(arr)                  # 4. 최종 레이어1 → 레이어2 복사
+    # 1. 근육 오버레이 (피부 위, 의상 아래)
+    if body_type in ("athletic", "muscular"):
+        draw_muscle(arr)
+
+    # 2. 눈 (피부 위)
+    draw_eyes(arr, eye_shape, eye_rgb)
+
+    apply_mask_clothing(arr, features)               # 3. 의상
+    draw_hair_body_only(arr, hair_rgb, hair_style)   # 4. 몸통 머리카락
+    draw_hair_bangs_only(arr, hair_rgb, hair_bangs)  # 5. 앞머리 (최상단)
+    _mirror_clothing_to_layer2(arr)                  # 6. 레이어2 엣지 복사
 
     if features.get("glasses", False):
         draw_glasses(arr)
