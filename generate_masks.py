@@ -105,17 +105,17 @@ def draw_longpants(m):
     draw_shoes(m)
 
 def draw_shorts(m):
-    """반바지: 몸통 하단 + 다리 상반부(허벅지), 신발"""
+    """반바지: 몸통 하단 + 다리 상단 4줄(허벅지 상부만), 신발"""
     fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=28)
-    fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=26)  # 6/12px — 허벅지만
-    fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=58)
+    fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=24)  # 4/12px — 허벅지 상부
+    fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=56)
     draw_shoes(m)
 
 def draw_miniskirt(m):
-    """짧은 치마: 몸통 하단 + 다리 최상단(치마 실루엣), 신발"""
+    """짧은 치마: 몸통 하단 + 다리 최상단 2줄(치마 실루엣), 신발"""
     fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=27)
-    fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=24)  # 상위 4줄만
-    fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=56)
+    fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=22)  # 2/12px — 치마 실루엣만
+    fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=54)
     draw_shoes(m)
 
 def draw_longskirt(m):
