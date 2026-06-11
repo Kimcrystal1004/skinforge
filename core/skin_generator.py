@@ -594,8 +594,9 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
         if zone in _BOT_ZONES:
             _paint_zone_pixels(zmask, bot_v, bot_valid, target_rgb, mv)
         elif zone in _TOP_ZONES:
-            # 팔 UV → arm_ref, 몸통 UV → body_ref 분리 적용
-            _paint_zone_pixels(zmask & _ARM_UV_MASK,  arm_v,  arm_valid,  target_rgb, mv)
+            # 팔 UV: sleeve 색이 별도로 있으면 그것 사용, 없으면 target_rgb
+            sleeve_rgb = zone_colors.get("sleeve", target_rgb)
+            _paint_zone_pixels(zmask & _ARM_UV_MASK,  arm_v,  arm_valid,  sleeve_rgb, mv)
             _paint_zone_pixels(zmask & ~_ARM_UV_MASK, body_v, body_valid, target_rgb, mv)
         else:
             _paint_zone_pixels(zmask, body_v, body_valid, target_rgb, mv)
@@ -608,9 +609,13 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
     top_rgb    = parse_color(features.get("top_color",    "흰색"))
     bottom_rgb = parse_color(features.get("bottom_color", "네이비"))
     shoes_rgb  = parse_color(features.get("shoes_color",  "검정"))
+    # 소매 색 (몸통과 다를 경우 — 검정 소매, 장갑, 암워머 등)
+    sleeve_raw = features.get("sleeve_color") or features.get("top_color") or "흰색"
+    sleeve_rgb = parse_color(sleeve_raw)
 
     zone_colors = {
         "top":    top_rgb,
+        "sleeve": sleeve_rgb,   # 팔 UV에 별도 적용 (_paint_mask 참조)
         "bottom": bottom_rgb,
         "shoes":  shoes_rgb,
         "jacket": top_rgb,
@@ -662,14 +667,11 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
 
 
 def _fill_back_faces(arr: np.ndarray):
-    """뒷면 UV가 단색(std<18)이면 앞면 패턴을 좌우반전+어둡게 복사해 텍스처 추가."""
+    """뒷면 UV가 단색(std<18)이면 앞면 패턴을 좌우반전+어둡게 복사해 텍스처 추가.
+    팔은 제외 — 팔 뒤면을 통으로 채우면 부자연스러운 회색 블록이 됨."""
     # (앞면 x,y,w,h), (뒷면 x,y,w,h), 어둡기 배율
     PAIRS = [
-        ((20, 20, 8, 12), (32, 20, 8, 12), 0.68),   # 몸통
-        ((44, 20, 4, 12), (52, 20, 4, 12), 0.68),   # 오른팔
-        ((36, 52, 4, 12), (44, 52, 4, 12), 0.68),   # 왼팔
-        (( 4, 20, 4, 12), (12, 20, 4, 12), 0.68),   # 오른다리
-        ((20, 52, 4, 12), (28, 52, 4, 12), 0.68),   # 왼다리
+        ((20, 20, 8, 12), (32, 20, 8, 12), 0.68),   # 몸통만 (팔/다리 제외)
     ]
     for (fx, fy, fw, fh), (bx, by, bw, bh), shade in PAIRS:
         back = arr[by:by+bh, bx:bx+bw, :]
@@ -907,25 +909,30 @@ def draw_hair_from_ref(arr: np.ndarray, head_comp: np.ndarray,
     if len(ys_s) > 0:
         arr[ys_s, xs_s, :] = skin_base[ys_s, xs_s, :]
 
-    # ── 헤어 픽셀 → 타겟 색으로 재채색 (V값 max-정규화로 명암 구조 보존)
+    # ── 헤어 픽셀 → HSV 방식 재채색 (면별 명암 + 색조·채도 교체)
     if is_hair.any():
         gray = (rgb_f[:,:,0]*0.299 + rgb_f[:,:,1]*0.587 + rgb_f[:,:,2]*0.114)
 
-        # 헤어 픽셀들의 최대 명도 기준으로 정규화 (레퍼런스 밝기 구조 보존)
-        max_gray = float(gray[is_hair].max())
-        v_norm   = np.clip(gray / max(max_gray, 1.0), 0.0, 1.0)
+        # UV 면별 위치 명암 (레퍼런스가 평면 텍스처여도 입체감 유지)
+        _HEAD_FACE_SHADE = np.ones((16, 32), dtype=np.float32)
+        _HEAD_FACE_SHADE[0:8,  8:16] = 0.88   # 머리 윗면
+        _HEAD_FACE_SHADE[8:16, 0:8]  = 0.78   # 오른 옆면
+        _HEAD_FACE_SHADE[8:16, 16:24]= 0.78   # 왼 옆면
+        _HEAD_FACE_SHADE[8:16, 24:32]= 0.62   # 뒷면
 
-        tr, tg, tb = hair_rgb
-        boost = BRIGHTNESS_BOOST
-        hr = np.clip(tr * v_norm * boost, 0, 255).astype(np.uint8)
-        hg = np.clip(tg * v_norm * boost, 0, 255).astype(np.uint8)
-        hb = np.clip(tb * v_norm * boost, 0, 255).astype(np.uint8)
+        max_gray = float(gray[is_hair].max())
+        # 레퍼런스 밝기 × 면 위치 명암 합산
+        v_base = np.clip(gray / max(max_gray, 1.0), 0.0, 1.0) * _HEAD_FACE_SHADE
+
+        # HSV 방식: 타겟 H, S 유지하며 V만 스케일
+        tr_f, tg_f, tb_f = hair_rgb[0]/255.0, hair_rgb[1]/255.0, hair_rgb[2]/255.0
+        t_h, t_s, t_v = rgb_to_hsv(tr_f, tg_f, tb_f)
+        rgb_out = _np_hsv_recolor(arr[:, :, :3], arr[:, :, 3],
+                                  t_h, t_s, v_base, 1.0, max(t_v, 0.20))
 
         ys_h, xs_h = np.where(is_hair)
-        arr[ys_h, xs_h, 0] = hr[ys_h, xs_h]
-        arr[ys_h, xs_h, 1] = hg[ys_h, xs_h]
-        arr[ys_h, xs_h, 2] = hb[ys_h, xs_h]
-        arr[ys_h, xs_h, 3] = 255
+        arr[ys_h, xs_h, :3] = rgb_out[ys_h, xs_h]
+        arr[ys_h, xs_h, 3]  = 255
 
 
 def draw_long_hair_body(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
