@@ -566,6 +566,31 @@ def _zone_stats_split(body_ref: np.ndarray, bot_ref: np.ndarray,
     return maxv
 
 
+def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
+                         target_rgb: tuple) -> None:
+    """BOT 존 전용: 레퍼런스 V 무시, shade_map으로 면별 명암만 적용.
+    치마/바지 몸통-다리 색 통일 보장."""
+    if not zmask.any():
+        return
+    tr, tg, tb = target_rgb
+    t_h, t_s, t_v = rgb_to_hsv(tr / 255, tg / 255, tb / 255)
+    t_v = max(t_v, 0.15)
+    ys, xs = np.where(zmask)
+    shades   = _SHADE_MAP[ys, xs]
+    final_v  = np.clip(t_v * shades * BRIGHTNESS_BOOST, 0.0, 1.0)
+    hi_f = t_h * 6.0; hi_i = int(hi_f) % 6; frac = hi_f - int(hi_f)
+    p_v  = final_v * (1 - t_s)
+    q_v  = final_v * (1 - frac * t_s)
+    tv_  = final_v * (1 - (1 - frac) * t_s)
+    lut  = [(final_v, q_v, p_v, p_v, tv_, final_v),
+            (tv_, final_v, final_v, q_v, p_v, p_v),
+            (p_v, p_v, tv_, final_v, final_v, q_v)]
+    arr[ys, xs, 0] = np.clip(lut[0][hi_i] * 255, 0, 255).astype(np.uint8)
+    arr[ys, xs, 1] = np.clip(lut[1][hi_i] * 255, 0, 255).astype(np.uint8)
+    arr[ys, xs, 2] = np.clip(lut[2][hi_i] * 255, 0, 255).astype(np.uint8)
+    arr[ys, xs, 3] = 255
+
+
 def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
                 arm_ref=None):
     """존별로 다른 레퍼런스 텍스처를 사용해 HSV 색조 변환 적용.
@@ -622,9 +647,9 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
         mv = zone_maxv.get(zone, 1.0)
 
         if zone in _BOT_ZONES:
-            # 다리 UV는 leg_ref V, 몸통 하단 UV는 body_ref V → 같은 maxV로 정규화
-            _paint_zone_pixels(zmask & _LEG_UV_MASK,  bot_v,  bot_valid,  target_rgb, mv)
-            _paint_zone_pixels(zmask & ~_LEG_UV_MASK, body_v, body_valid, target_rgb, mv)
+            # 치마/바지/신발: 레퍼런스 V 무시, shade_map 기반 단색 칠하기
+            # → 레퍼런스 다리 텍스처가 어두워도 몸통과 동일한 밝기로 통일
+            _paint_bot_zone_flat(arr, zmask, target_rgb)
         elif zone in _TOP_ZONES:
             # 팔 UV: sleeve 색이 별도로 있으면 그것 사용, 없으면 target_rgb
             sleeve_rgb = zone_colors.get("sleeve", target_rgb)
