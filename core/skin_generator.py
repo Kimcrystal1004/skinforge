@@ -3,6 +3,7 @@ skin_generator.py
 특징 JSON → Pillow 픽셀 조작 → 64×64 마인크래프트 스킨 PNG
 """
 
+import re
 import numpy as np
 from PIL import Image
 from pathlib import Path
@@ -211,6 +212,29 @@ def _load_ref_tags():
 
 _load_ref_tags()
 
+# ── 컴포넌트 라이브러리 (mine_assets.py 실행 후 활성화) ──────────────
+_COMP_CACHE: dict = {}
+_COMP_INDEX: dict = {}
+
+def _load_comp_index():
+    idx_path = BASESKIN_DIR / "components" / "component_index.json"
+    if idx_path.exists():
+        try:
+            _COMP_INDEX.update(_json.loads(idx_path.read_text(encoding="utf-8")))
+        except Exception:
+            pass
+
+_load_comp_index()
+
+
+def _load_component(ref_num: str, comp_name: str):
+    """baseskin/components/ref{N}_{comp}.png 로드 (캐시)"""
+    key = f"{ref_num}_{comp_name}"
+    if key not in _COMP_CACHE:
+        p = BASESKIN_DIR / "components" / f"ref{ref_num}_{comp_name}.png"
+        _COMP_CACHE[key] = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8) if p.exists() else None
+    return _COMP_CACHE[key]
+
 
 def _hex_to_rgb(hex_str) -> np.ndarray:
     if not hex_str:
@@ -302,6 +326,55 @@ def _score_ref_bot(fname: str, features: dict) -> float:
     return score
 
 
+def _score_ref_arm(fname: str, features: dict) -> float:
+    """팔 컴포넌트 — 소매 길이 일치 시 +20, 불일치 -10"""
+    score = _score_ref_top(fname, features)
+    tag = _REF_TAGS.get(fname, {})
+    if not tag:
+        return score
+
+    top_style = (features.get("top_style", "") or "").lower()
+    ref_top   = (tag.get("top_style", "") or "").lower()
+
+    _SLEEVE_SHORT     = ["반팔","short sleeve","반소매","반팔티"]
+    _SLEEVE_NONE      = ["민소매","sleeveless","나시","탱크","오프숄더"]
+
+    def sleeve_type(s: str) -> str:
+        if any(k in s for k in _SLEEVE_NONE):  return "none"
+        if any(k in s for k in _SLEEVE_SHORT): return "short"
+        return "long"
+
+    if sleeve_type(top_style) == sleeve_type(ref_top):
+        score += 20.0
+    else:
+        score -= 10.0
+    return score
+
+
+def _score_ref_hair(ref_num: str, features: dict) -> float:
+    """헤드 컴포넌트 기준 헤어 유사도 (성별 + 머리 윗면 대표색)"""
+    tag = _COMP_INDEX.get(ref_num, {})
+    score = 0.0
+
+    gender_exp = (features.get("gender_expression", "") or "").lower()
+    ref_gender = (tag.get("gender", "") or "").lower()
+    gender_map = {"여성적": "여성", "남성적": "남성", "중성적": "중성"}
+    if gender_map.get(gender_exp) == ref_gender:
+        score += 10.0
+
+    head_comp = _load_component(ref_num, "head")
+    if head_comp is not None:
+        # 머리 윗면 (UV y=0..8, x=8..16) 대표색 ≈ 헤어 대표색
+        top_face = head_comp[0:8, 8:16, :]
+        valid = top_face[:, :, 3] > 10
+        if valid.any():
+            dominant = top_face[valid, :3].astype(float).mean(axis=0)
+            target   = _hex_to_rgb(features.get("hair_color") or "#2b1a0e")
+            dist     = float(np.sum((dominant - target) ** 2))
+            score   += max(0.0, 20.0 - dist / 1200.0)
+    return score
+
+
 def _best_ref(score_fn, features: dict, fallback: str) -> str:
     all_refs = sorted(BASESKIN_DIR.glob("reference (*).png"))
     best_fname = fallback
@@ -323,8 +396,11 @@ def _load_ref(fname: str) -> np.ndarray:
     return _REF_SKIN_CACHE[fname]
 
 
-def _select_ref_pair(features: dict) -> tuple:
-    """(top_ref_arr, bot_ref_arr) 반환 — 상의/하의 각각 최적 레퍼런스"""
+def _select_ref_components(features: dict) -> dict:
+    """
+    4-way 레퍼런스 + 헤드 컴포넌트 선택.
+    반환: {"body": arr, "arm": arr, "leg": arr, "head_comp": arr|None}
+    """
     top_style = (features.get("top_style", "") or "").lower()
     bot_style = (features.get("bottom_style", "") or "").lower()
 
@@ -334,13 +410,55 @@ def _select_ref_pair(features: dict) -> tuple:
         bot_ok = (not bot_kws) or any(k in bot_style for k in bot_kws)
         if top_ok and bot_ok and (BASESKIN_DIR / fname).exists():
             arr = _load_ref(fname)
-            print(f"[ref_select] special → {fname} (top+bot)")
-            return arr, arr
+            print(f"[ref_select] special → {fname} (all zones)")
+            return {"body": arr, "arm": arr, "leg": arr, "head_comp": None}
 
-    top_fname, top_score = _best_ref(_score_ref_top, features, _REF_FALLBACK)
-    bot_fname, bot_score = _best_ref(_score_ref_bot, features, _REF_FALLBACK)
-    print(f"[ref_select] top={top_fname}({top_score:.1f})  bot={bot_fname}({bot_score:.1f})")
-    return _load_ref(top_fname), _load_ref(bot_fname)
+    all_refs = sorted(BASESKIN_DIR.glob("reference (*).png"))
+
+    best_body = (_REF_FALLBACK, -1.0)
+    best_arm  = (_REF_FALLBACK, -1.0)
+    best_leg  = (_REF_FALLBACK, -1.0)
+    best_hair = (None, -1.0)
+
+    for p in all_refs:
+        fname = p.name
+        t_score = _score_ref_top(fname, features)
+        a_score = _score_ref_arm(fname, features)
+        b_score = _score_ref_bot(fname, features)
+
+        if t_score > best_body[1]: best_body = (fname, t_score)
+        if a_score > best_arm[1]:  best_arm  = (fname, a_score)
+        if b_score > best_leg[1]:  best_leg  = (fname, b_score)
+
+        if _COMP_INDEX:
+            m = re.search(r'reference \((\d+)\)', fname)
+            if m:
+                ref_num = m.group(1)
+                h_score = _score_ref_hair(ref_num, features)
+                if h_score > best_hair[1]:
+                    best_hair = (ref_num, h_score)
+
+    print(f"[ref_select] body={best_body[0]}({best_body[1]:.1f}) "
+          f"arm={best_arm[0]}({best_arm[1]:.1f}) "
+          f"leg={best_leg[0]}({best_leg[1]:.1f}) "
+          f"hair_ref={best_hair[0]}")
+
+    head_comp = None
+    if _COMP_INDEX and best_hair[0]:
+        head_comp = _load_component(best_hair[0], "head")
+
+    return {
+        "body":      _load_ref(best_body[0]),
+        "arm":       _load_ref(best_arm[0]),
+        "leg":       _load_ref(best_leg[0]),
+        "head_comp": head_comp,
+    }
+
+
+def _select_ref_pair(features: dict) -> tuple:
+    """하위 호환 래퍼 — (body_ref, leg_ref)"""
+    comps = _select_ref_components(features)
+    return comps["body"], comps["leg"]
 
 
 def _build_zone_masks(mask_arr: np.ndarray) -> dict:
@@ -361,44 +479,68 @@ def _build_zone_masks(mask_arr: np.ndarray) -> dict:
 _TOP_ZONES = {"top", "jacket", "acc"}
 _BOT_ZONES = {"bottom", "shoes"}
 
+# 팔 UV 영역 — top/jacket 존 중 팔에 속하는 픽셀 구분용
+_ARM_UV_MASK = np.zeros((64, 64), dtype=bool)
+_ARM_UV_MASK[16:32, 40:56] = True   # 오른팔 레이어1
+_ARM_UV_MASK[48:64, 32:48] = True   # 왼팔 레이어1
 
-def _zone_stats_split(top_ref: np.ndarray, bot_ref: np.ndarray, mask_arr: np.ndarray) -> dict:
-    """존별 최대 V — 상의 존은 top_ref, 하의 존은 bot_ref 기준"""
-    top_v = _np_rgb2v(top_ref[:, :, :3])
-    bot_v = _np_rgb2v(bot_ref[:, :, :3])
-    top_valid = top_ref[:, :, 3] > 10
-    bot_valid = bot_ref[:, :, 3] > 10
+
+def _zone_stats_split(body_ref: np.ndarray, bot_ref: np.ndarray,
+                      mask_arr: np.ndarray,
+                      arm_ref: np.ndarray = None) -> dict:
+    """존별 최대 V — body/arm/bot 참조를 각각 다른 ref로"""
+    if arm_ref is None:
+        arm_ref = body_ref
+    body_v = _np_rgb2v(body_ref[:, :, :3])
+    arm_v  = _np_rgb2v(arm_ref[:, :, :3])
+    bot_v  = _np_rgb2v(bot_ref[:, :, :3])
+    body_valid = body_ref[:, :, 3] > 10
+    arm_valid  = arm_ref[:, :, 3] > 10
+    bot_valid  = bot_ref[:, :, 3] > 10
     maxv: dict = {}
     for zone, zmask in _build_zone_masks(mask_arr).items():
-        ref_v, ref_valid = (top_v, top_valid) if zone in _TOP_ZONES else (bot_v, bot_valid)
-        combined = zmask & ref_valid
+        if zone in _BOT_ZONES:
+            combined = zmask & bot_valid
+            rv = bot_v
+        elif zone in _TOP_ZONES:
+            arm_part  = zmask & _ARM_UV_MASK & arm_valid
+            body_part = zmask & ~_ARM_UV_MASK & body_valid
+            combined  = arm_part | body_part
+            rv = np.where(_ARM_UV_MASK, arm_v, body_v)
+        else:
+            combined = zmask & body_valid
+            rv = body_v
         if combined.any():
-            maxv[zone] = float(ref_v[combined].max())
+            maxv[zone] = float(rv[combined].max())
     return maxv
 
 
-def _paint_mask(arr, mask_arr, top_ref, bot_ref, zone_colors, zone_maxv):
-    """존별로 다른 레퍼런스 텍스처를 사용해 HSV 색조 변환 적용"""
-    top_v_map = _np_rgb2v(top_ref[:, :, :3])
-    bot_v_map = _np_rgb2v(bot_ref[:, :, :3])
-    top_valid = top_ref[:, :, 3] > 10
-    bot_valid = bot_ref[:, :, 3] > 10
+def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
+                arm_ref=None):
+    """존별로 다른 레퍼런스 텍스처를 사용해 HSV 색조 변환 적용.
+    팔 UV 영역은 arm_ref, 몸통은 body_ref, 다리/신발은 bot_ref 사용."""
+    if arm_ref is None:
+        arm_ref = body_ref
+
+    body_v = _np_rgb2v(body_ref[:, :, :3])
+    arm_v  = _np_rgb2v(arm_ref[:, :, :3])
+    bot_v  = _np_rgb2v(bot_ref[:, :, :3])
+    body_valid = body_ref[:, :, 3] > 10
+    arm_valid  = arm_ref[:, :, 3] > 10
+    bot_valid  = bot_ref[:, :, 3] > 10
+
     zone_masks = _build_zone_masks(mask_arr)
 
-    for zone, zmask in zone_masks.items():
-        if not zmask.any():
-            continue
-        is_top   = zone in _TOP_ZONES
-        ref_v_map = top_v_map if is_top else bot_v_map
-        ref_valid = top_valid  if is_top else bot_valid
-
-        target_rgb = zone_colors.get(zone, DEFAULT_COLOR)
+    def _paint_zone_pixels(zmask_sub, ref_v_map, ref_valid,
+                           target_rgb, mv):
+        """zmask_sub 영역을 ref_v 기반으로 HSV 재채색"""
+        if not zmask_sub.any():
+            return
         tr, tg, tb = target_rgb
         t_h, t_s, t_v = rgb_to_hsv(tr/255, tg/255, tb/255)
-        mv = zone_maxv.get(zone, 1.0)
 
-        has_ref = zmask & ref_valid
-        no_ref  = zmask & ~ref_valid
+        has_ref = zmask_sub & ref_valid
+        no_ref  = zmask_sub & ~ref_valid
 
         if has_ref.any():
             rgb_out = _np_hsv_recolor(arr[:, :, :3], arr[:, :, 3],
@@ -411,8 +553,10 @@ def _paint_mask(arr, mask_arr, top_ref, bot_ref, zone_colors, zone_maxv):
             final_v = np.clip(t_v * (0.8 + 0.2 * _SHADE_MAP[no_ref]), 0.0, 1.0)
             v = final_v; s = t_s; hi_f = t_h * 6.0; hi_i = int(hi_f) % 6
             frac = hi_f - int(hi_f)
-            p = v*(1-s); q = v*(1-frac*s); tv_ = v*(1-(1-frac)*s)
-            lut_r = [v, q, p, p, tv_, v]; lut_g = [tv_, v, v, q, p, p]; lut_b = [p, p, tv_, v, v, q]
+            p_v = v*(1-s); q_v = v*(1-frac*s); tv_ = v*(1-(1-frac)*s)
+            lut_r = [v, q_v, p_v, p_v, tv_, v]
+            lut_g = [tv_, v, v, q_v, p_v, p_v]
+            lut_b = [p_v, p_v, tv_, v, v, q_v]
             r_out = np.clip(lut_r[hi_i] * 255, 0, 255).astype(np.uint8)
             g_out = np.clip(lut_g[hi_i] * 255, 0, 255).astype(np.uint8)
             b_out = np.clip(lut_b[hi_i] * 255, 0, 255).astype(np.uint8)
@@ -420,9 +564,26 @@ def _paint_mask(arr, mask_arr, top_ref, bot_ref, zone_colors, zone_maxv):
             arr[ys, xs, 0] = r_out; arr[ys, xs, 1] = g_out; arr[ys, xs, 2] = b_out
             arr[ys, xs, 3] = 255
 
+    for zone, zmask in zone_masks.items():
+        if not zmask.any():
+            continue
+        target_rgb = zone_colors.get(zone, DEFAULT_COLOR)
+        mv = zone_maxv.get(zone, 1.0)
 
-def apply_mask_clothing(arr: np.ndarray, features: dict):
-    """스타일별 레퍼런스 스킨 텍스처 + HSV 색조 변환으로 의상 적용"""
+        if zone in _BOT_ZONES:
+            _paint_zone_pixels(zmask, bot_v, bot_valid, target_rgb, mv)
+        elif zone in _TOP_ZONES:
+            # 팔 UV → arm_ref, 몸통 UV → body_ref 분리 적용
+            _paint_zone_pixels(zmask & _ARM_UV_MASK,  arm_v,  arm_valid,  target_rgb, mv)
+            _paint_zone_pixels(zmask & ~_ARM_UV_MASK, body_v, body_valid, target_rgb, mv)
+        else:
+            _paint_zone_pixels(zmask, body_v, body_valid, target_rgb, mv)
+
+
+def apply_mask_clothing(arr: np.ndarray, features: dict,
+                        _comps: dict = None):
+    """스타일별 레퍼런스 스킨 텍스처 + HSV 색조 변환으로 의상 적용.
+    _comps: _select_ref_components() 결과를 외부에서 전달 (캐싱용)"""
     top_rgb    = parse_color(features.get("top_color",    "흰색"))
     bottom_rgb = parse_color(features.get("bottom_color", "네이비"))
     shoes_rgb  = parse_color(features.get("shoes_color",  "검정"))
@@ -437,8 +598,14 @@ def apply_mask_clothing(arr: np.ndarray, features: dict):
 
     mask_path = pick_mask(features)
     mask_arr  = np.array(Image.open(mask_path).convert("RGBA"), dtype=np.uint8)
-    top_ref, bot_ref = _select_ref_pair(features)
-    zone_maxv = _zone_stats_split(top_ref, bot_ref, mask_arr)
+
+    if _comps is None:
+        _comps = _select_ref_components(features)
+    body_ref = _comps["body"]
+    arm_ref  = _comps["arm"]
+    leg_ref  = _comps["leg"]
+
+    zone_maxv = _zone_stats_split(body_ref, leg_ref, mask_arr, arm_ref)
 
     # 자켓 스타일: 하의에 맞는 베이스 마스크를 먼저 깔고 jacket 오버레이 덮기
     if "jacket" in mask_path.name:
@@ -459,18 +626,18 @@ def apply_mask_clothing(arr: np.ndarray, features: dict):
             shirt_rgb = parse_color(features.get("shirt_color") or "#f0f0f0")
             shirt_zone_colors = {**zone_colors, "top": shirt_rgb, "jacket": shirt_rgb}
             base_mask = np.array(Image.open(base_mask_path).convert("RGBA"), dtype=np.uint8)
-            base_maxv = _zone_stats_split(top_ref, bot_ref, base_mask)
-            tmp_mask = base_mask.copy()
+            base_maxv = _zone_stats_split(body_ref, leg_ref, base_mask, arm_ref)
+            tmp_mask  = base_mask.copy()
             tmp_mask[mask_arr[:, :, 3] > 10, 3] = 0
-            _paint_mask(arr, tmp_mask, top_ref, bot_ref, shirt_zone_colors, base_maxv)
+            _paint_mask(arr, tmp_mask, body_ref, leg_ref, shirt_zone_colors, base_maxv, arm_ref)
 
-    _paint_mask(arr, mask_arr, top_ref, bot_ref, zone_colors, zone_maxv)
+    _paint_mask(arr, mask_arr, body_ref, leg_ref, zone_colors, zone_maxv, arm_ref)
 
     # 악세서리 오버레이 적용
     for acc_path in pick_acc_overlays(features):
         acc_arr  = np.array(Image.open(acc_path).convert("RGBA"), dtype=np.uint8)
-        acc_maxv = _zone_stats_split(top_ref, bot_ref, acc_arr)
-        _paint_mask(arr, acc_arr, top_ref, bot_ref, zone_colors, acc_maxv)
+        acc_maxv = _zone_stats_split(body_ref, leg_ref, acc_arr, arm_ref)
+        _paint_mask(arr, acc_arr, body_ref, leg_ref, zone_colors, acc_maxv, arm_ref)
 
 
 def _mirror_clothing_to_layer2(arr: np.ndarray):
@@ -635,6 +802,67 @@ def draw_hair(arr: np.ndarray, hair_rgb: tuple, hair_style: str, hair_bangs: str
         _composite_layer(arr, colored)
 
 
+def draw_hair_from_ref(arr: np.ndarray, head_comp: np.ndarray,
+                       hair_rgb: tuple, skin_base: np.ndarray):
+    """레퍼런스 헤드 컴포넌트를 이용한 고품질 머리카락 렌더링.
+
+    head_comp : mine_assets.py로 추출한 ref{N}_head.png (64×64 RGBA)
+    hair_rgb  : 목표 머리카락 RGB
+    skin_base : 피부톤 적용 직후 arr 복사본 (피부 픽셀 복원용)
+    """
+    if head_comp is None:
+        return
+
+    # 헤드 UV 영역: y=0..16, x=0..32
+    comp  = head_comp[0:16, 0:32, :]   # (16, 32, 4)
+    valid = comp[:, :, 3] > 10
+
+    if not valid.any():
+        return
+
+    # ── 레퍼런스 피부톤 추정: 얼굴 앞면 (y=8..16, x=8..16) 밝은 픽셀 평균
+    face  = comp[8:16, 8:16, :]
+    fv    = face[:, :, 3] > 10
+    if fv.any():
+        fp    = face[fv, :3].astype(float)
+        brt   = fp.mean(axis=1)
+        bmask = brt > brt.mean()
+        ref_skin = fp[bmask].mean(axis=0) if bmask.any() else fp.mean(axis=0)
+    else:
+        ref_skin = np.array([180.0, 140.0, 110.0])  # 기본 피부색 추정
+
+    # ── 각 픽셀 → 피부 or 헤어 분류 (벡터화)
+    rgb_f = comp[:, :, :3].astype(float)          # (16,32,3)
+    diff  = rgb_f - ref_skin[np.newaxis, np.newaxis, :]
+    dist  = np.sqrt((diff ** 2).sum(axis=-1))     # (16,32)
+
+    # 피부: 거리 < 45, 헤어: 거리 ≥ 45
+    is_skin = valid & (dist < 45)
+    is_hair = valid & (dist >= 45)
+
+    # ── 피부 픽셀 → 베이스 피부톤 복원 (arr는 이미 피부톤 적용됨, 덮어쓰기 방지)
+    ys_s, xs_s = np.where(is_skin)
+    if len(ys_s) > 0:
+        arr[ys_s, xs_s, :] = skin_base[ys_s, xs_s, :]
+
+    # ── 헤어 픽셀 → 타겟 색으로 재채색 (V값 보존)
+    if is_hair.any():
+        gray   = (rgb_f[:,:,0]*0.299 + rgb_f[:,:,1]*0.587 + rgb_f[:,:,2]*0.114)
+        v_norm = np.clip(gray / 200.0, 0.1, 1.0)
+
+        tr, tg, tb = hair_rgb
+        boost = BRIGHTNESS_BOOST
+        hr = np.clip(tr * v_norm * boost, 0, 255).astype(np.uint8)
+        hg = np.clip(tg * v_norm * boost, 0, 255).astype(np.uint8)
+        hb = np.clip(tb * v_norm * boost, 0, 255).astype(np.uint8)
+
+        ys_h, xs_h = np.where(is_hair)
+        arr[ys_h, xs_h, 0] = hr[ys_h, xs_h]
+        arr[ys_h, xs_h, 1] = hg[ys_h, xs_h]
+        arr[ys_h, xs_h, 2] = hb[ys_h, xs_h]
+        arr[ys_h, xs_h, 3] = 255
+
+
 def draw_long_hair_body(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
     """긴 머리 — 의상 위에 몸통 뒷면까지 머리카락 덮기 (의상 적용 후 호출)"""
     style_lower = (hair_style or "").lower()
@@ -795,6 +1023,7 @@ def generate_skin(features: dict) -> Image.Image:
         tone_key = "warm_bright"
 
     arr = np.array(apply_skin_tone(load_base(tone_key), tone_key), dtype=np.uint8).copy()
+    skin_base = arr.copy()   # 피부톤 직후 백업 (헤어 렌더링 시 피부 픽셀 복원용)
 
     hair_rgb   = parse_color(features.get("hair_color", "검정"))
     hair_style = features.get("hair_style", "")
@@ -810,10 +1039,25 @@ def generate_skin(features: dict) -> Image.Image:
     # 2. 눈 (피부 위)
     draw_eyes(arr, eye_shape, eye_rgb)
 
-    apply_mask_clothing(arr, features)               # 3. 의상
-    draw_hair_body_only(arr, hair_rgb, hair_style)   # 4. 몸통 머리카락
-    draw_hair_bangs_only(arr, hair_rgb, hair_bangs)  # 5. 앞머리 (최상단)
-    _mirror_clothing_to_layer2(arr)                  # 6. 레이어2 엣지 복사
+    # 3. 레퍼런스 컴포넌트 선택 (body/arm/leg/head_comp)
+    comps = _select_ref_components(features)
+
+    # 4. 의상
+    apply_mask_clothing(arr, features, _comps=comps)
+
+    # 5. 머리카락
+    head_comp = comps.get("head_comp")
+    if head_comp is not None:
+        # 레퍼런스 헤드 컴포넌트 기반 (고품질)
+        draw_hair_from_ref(arr, head_comp, hair_rgb, skin_base)
+        # 앞머리는 기존 베이스 파일 레이어로 정밀 적용
+        draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
+    else:
+        # 컴포넌트 미생성 시 기존 방식
+        draw_hair_body_only(arr, hair_rgb, hair_style)
+        draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
+
+    _mirror_clothing_to_layer2(arr)   # 6. 레이어2 엣지 복사
 
     if features.get("glasses", False):
         draw_glasses(arr)
