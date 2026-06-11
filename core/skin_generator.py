@@ -317,13 +317,8 @@ def _score_ref_top(fname: str, features: dict) -> float:
         if len(word) > 1 and word in ref_top:
             score += 10.0
 
-    gender_map = {"여성적": "여성", "남성적": "남성", "중성적": "중성"}
-    input_gender = gender_map.get(gender_exp, "")
-    if input_gender and ref_gender:
-        if input_gender == ref_gender:
-            score += 25.0   # 성별 일치 — 가장 높은 가중치
-        elif {input_gender, ref_gender} == {"남성", "여성"}:
-            score -= 20.0   # 남↔여 완전 반대 강력 페널티
+    # 의상 레퍼런스는 성별 무관 — 카테고리(반소매/긴소매/치마 등)만 매칭
+    # 성별 가중치 제거: 남성 입력에 여성 레퍼런스 의상 텍스처를 써도 문제없음
 
     top_rgb = parse_color(features.get("top_color") or "#888888")
     ref_top_rgb = _hex_to_rgb(tag.get("top_color") or "#888888")
@@ -397,13 +392,7 @@ def _score_ref_bot(fname: str, features: dict) -> float:
         if len(word) > 1 and word in ref_bot:
             score += 10.0
 
-    gender_map = {"여성적": "여성", "남성적": "남성", "중성적": "중성"}
-    input_gender = gender_map.get(gender_exp, "")
-    if input_gender and ref_gender:
-        if input_gender == ref_gender:
-            score += 25.0
-        elif {input_gender, ref_gender} == {"남성", "여성"}:
-            score -= 20.0
+    # 의상 레퍼런스는 성별 무관 — 치마/바지/반바지 카테고리만 매칭
 
     bot_rgb = parse_color(features.get("bottom_color") or "#888888")
     ref_bot_rgb = _hex_to_rgb(tag.get("bottom_color") or "#888888")
@@ -1033,12 +1022,14 @@ def draw_hair(arr: np.ndarray, hair_rgb: tuple, hair_style: str, hair_bangs: str
 
 
 def draw_hair_from_ref(arr: np.ndarray, head_comp: np.ndarray,
-                       hair_rgb: tuple, skin_base: np.ndarray):
+                       hair_rgb: tuple, skin_base: np.ndarray,
+                       hair_style: str = ""):
     """레퍼런스 헤드 컴포넌트를 이용한 고품질 머리카락 렌더링.
 
     head_comp : mine_assets.py로 추출한 ref{N}_head.png (64×64 RGBA)
     hair_rgb  : 목표 머리카락 RGB
     skin_base : 피부톤 적용 직후 arr 복사본 (피부 픽셀 복원용)
+    hair_style: 헤어 스타일 (숏컷이면 레퍼런스 텍스처 패턴 무시)
     """
     if head_comp is None:
         return
@@ -1084,18 +1075,22 @@ def draw_hair_from_ref(arr: np.ndarray, head_comp: np.ndarray,
 
     # ── 헤어 픽셀 → HSV 방식 재채색 (면별 명암 + 색조·채도 교체)
     if is_hair.any():
-        gray = (rgb_f[:,:,0]*0.299 + rgb_f[:,:,1]*0.587 + rgb_f[:,:,2]*0.114)
-
-        # UV 면별 위치 명암 (레퍼런스가 평면 텍스처여도 입체감 유지)
+        # UV 면별 위치 명암
         _HEAD_FACE_SHADE = np.ones((16, 32), dtype=np.float32)
         _HEAD_FACE_SHADE[0:8,  8:16] = 0.88   # 머리 윗면
         _HEAD_FACE_SHADE[8:16, 0:8]  = 0.78   # 오른 옆면
         _HEAD_FACE_SHADE[8:16, 16:24]= 0.78   # 왼 옆면
         _HEAD_FACE_SHADE[8:16, 24:32]= 0.62   # 뒷면
 
-        max_gray = float(gray[is_hair].max())
-        # 레퍼런스 밝기 × 면 위치 명암 합산
-        v_base = np.clip(gray / max(max_gray, 1.0), 0.0, 1.0) * _HEAD_FACE_SHADE
+        _is_short = (hair_style or "").strip() in ("숏컷", "단발")
+        if _is_short:
+            # 숏컷/단발: 레퍼런스 텍스처 패턴 무시 → 면 셰이드만으로 flat 칠
+            # 긴 머리 레퍼런스의 웨이브·층·패턴이 블리드스루되는 현상 방지
+            v_base = _HEAD_FACE_SHADE
+        else:
+            gray   = (rgb_f[:,:,0]*0.299 + rgb_f[:,:,1]*0.587 + rgb_f[:,:,2]*0.114)
+            max_gray = float(gray[is_hair].max())
+            v_base = np.clip(gray / max(max_gray, 1.0), 0.0, 1.0) * _HEAD_FACE_SHADE
 
         # HSV 방식: 타겟 H, S 유지하며 V만 스케일
         tr_f, tg_f, tb_f = hair_rgb[0]/255.0, hair_rgb[1]/255.0, hair_rgb[2]/255.0
@@ -1299,7 +1294,7 @@ def generate_skin(features: dict) -> Image.Image:
     head_comp = comps.get("head_comp")
     if head_comp is not None:
         # 레퍼런스 헤드 컴포넌트 기반 — 헤드 UV 전체 처리
-        draw_hair_from_ref(arr, head_comp, hair_rgb, skin_base)
+        draw_hair_from_ref(arr, head_comp, hair_rgb, skin_base, hair_style)
 
     # 몸통 연장 (장발만) — 단발/숏컷은 HAIR_BODY_MAP[key]=None 이라 자동 스킵
     draw_hair_body_only(arr, hair_rgb, hair_style)
