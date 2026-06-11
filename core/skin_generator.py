@@ -1118,15 +1118,13 @@ def generate_skin(features: dict) -> Image.Image:
     # 5. 머리카락
     head_comp = comps.get("head_comp")
     if head_comp is not None:
-        # 레퍼런스 헤드 컴포넌트 기반 — 헤드 UV 전체(머리+앞머리) 처리
+        # 레퍼런스 헤드 컴포넌트 기반 — 헤드 UV 전체 처리
         draw_hair_from_ref(arr, head_comp, hair_rgb, skin_base)
-        # head_comp가 헤드 UV를 담당하므로 base 뱅 파일은 스킵
-    else:
-        # 컴포넌트 없을 때만 base 뱅 파일 사용
-        draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
 
     # 몸통 연장 (장발만) — 단발/숏컷은 HAIR_BODY_MAP[key]=None 이라 자동 스킵
     draw_hair_body_only(arr, hair_rgb, hair_style)
+    # 앞머리 레이어는 항상 최상단 (대머리 방지)
+    draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
 
     _mirror_clothing_to_layer2(arr)   # 6. 레이어2 엣지 복사
 
