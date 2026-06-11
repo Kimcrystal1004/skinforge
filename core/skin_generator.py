@@ -966,25 +966,10 @@ def draw_hair_body_only(arr: np.ndarray, hair_rgb: tuple, hair_style: str):
 
 
 def _stamp_eyes_last(arr: np.ndarray, skin_base: np.ndarray) -> None:
-    """모든 헤어 적용 완료 후, layer2 앞머리 중 눈/눈썹 위치 픽셀만 투명화.
-    layer2에 눈을 복사하지 않고 구멍만 뚫어 layer1 눈이 자연스럽게 보이게 함.
-    (layer2 복사 시 Minecraft 오프셋으로 눈이 튀어나와 보이는 문제 방지)"""
-    l1 = skin_base[8:16, 8:16, :]   # 헤어 이전 백업 — 신뢰할 수 있는 눈 위치 source
-
-    face_rgb = l1[:, :, :3].astype(float)
-    lower    = face_rgb[4:8, 1:7].reshape(-1, 3)
-    brt      = lower.mean(axis=1)
-    bright   = lower[brt > brt.mean()] if (brt > brt.mean()).any() else lower
-    skin_avg = bright.mean(axis=0)
-
-    diff     = np.sqrt(((face_rgb - skin_avg) ** 2).sum(axis=-1))
-    eye_mask = (diff > 25) & (l1[:, :, 3] > 10)
-
-    if not eye_mask.any():
-        return
-
-    # layer2 face에서 눈 위치 픽셀만 투명화 → layer1 눈이 그대로 보임 (튀어나옴 없음)
-    arr[8:16, 40:48][eye_mask] = 0
+    """모든 헤어 적용 완료 후, layer2 face의 눈 행(y=9..13)을 무조건 투명화.
+    detection 없이 고정 좌표 사용 → layer1 눈이 항상 보임, 튀어나옴 없음."""
+    # layer2 face 눈 영역(y=9..13, x=40..48) 전체 투명화
+    arr[9:13, 40:48] = 0
 
 
 def draw_hair_bangs_only(arr: np.ndarray, hair_rgb: tuple, hair_bangs: str):
