@@ -975,8 +975,8 @@ def _stamp_eyes_last(arr: np.ndarray, skin_base: np.ndarray) -> None:
       base_eyes(6,7): y=13..15 / base_eyes(8,9): y=13..14
     앞머리 템플릿: full/side y=9..10~, curtain/none y=8..10~
     → y=11 미만은 건드리지 않아 앞머리가 살아있음"""
-    arr[11:16, 8:16]  = skin_base[11:16, 8:16]   # layer1 눈 행 복원
-    arr[11:16, 40:48] = 0                          # layer2 눈 행 투명화
+    arr[12:16, 8:16]  = skin_base[12:16, 8:16]   # layer1 눈 행 복원
+    arr[12:16, 40:48] = 0                          # layer2 눈 행 투명화 (앞머리 y=9..11 3행 보존)
 
 
 def draw_hair_bangs_only(arr: np.ndarray, hair_rgb: tuple, hair_bangs: str):
