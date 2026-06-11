@@ -314,8 +314,12 @@ def _score_ref_top(fname: str, features: dict) -> float:
             score += 10.0
 
     gender_map = {"여성적": "여성", "남성적": "남성", "중성적": "중성"}
-    if gender_map.get(gender_exp) == ref_gender:
-        score += 5.0
+    input_gender = gender_map.get(gender_exp, "")
+    if input_gender and ref_gender:
+        if input_gender == ref_gender:
+            score += 25.0   # 성별 일치 — 가장 높은 가중치
+        elif {input_gender, ref_gender} == {"남성", "여성"}:
+            score -= 20.0   # 남↔여 완전 반대 강력 페널티
 
     top_rgb = parse_color(features.get("top_color") or "#888888")
     ref_top_rgb = _hex_to_rgb(tag.get("top_color") or "#888888")
@@ -390,8 +394,12 @@ def _score_ref_bot(fname: str, features: dict) -> float:
             score += 10.0
 
     gender_map = {"여성적": "여성", "남성적": "남성", "중성적": "중성"}
-    if gender_map.get(gender_exp) == ref_gender:
-        score += 5.0
+    input_gender = gender_map.get(gender_exp, "")
+    if input_gender and ref_gender:
+        if input_gender == ref_gender:
+            score += 25.0
+        elif {input_gender, ref_gender} == {"남성", "여성"}:
+            score -= 20.0
 
     bot_rgb = parse_color(features.get("bottom_color") or "#888888")
     ref_bot_rgb = _hex_to_rgb(tag.get("bottom_color") or "#888888")
@@ -789,27 +797,30 @@ def _trim_ref_for_shorts(leg_ref: np.ndarray) -> np.ndarray:
 
 
 def _fill_back_faces(arr: np.ndarray):
-    """뒷면 UV가 단색(std<18)이면 앞면 패턴을 좌우반전+어둡게 복사해 텍스처 추가.
-    팔은 제외 — 팔 뒤면을 통으로 채우면 부자연스러운 회색 블록이 됨."""
+    """뒷면 UV가 단색(std<14)이면 앞면 패턴을 좌우반전+어둡게 복사.
+    slim 포맷 레퍼런스의 팔 1~2px 단색 줄무늬 문제 포함 처리."""
     # (앞면 x,y,w,h), (뒷면 x,y,w,h), 어둡기 배율
     PAIRS = [
-        ((20, 20, 8, 12), (32, 20, 8, 12), 0.68),   # 몸통만 (팔/다리 제외)
+        ((20, 20, 8, 12), (32, 20, 8, 12), 0.68),   # 몸통 앞→뒤
+        ((44, 20, 4, 12), (52, 20, 4, 12), 0.68),   # 오른팔 앞→뒤
+        ((36, 52, 4, 12), (44, 52, 4, 12), 0.68),   # 왼팔  앞→뒤
+        (( 4, 20, 4, 12), (12, 20, 4, 12), 0.72),   # 오른다리 앞→뒤
+        ((20, 52, 4, 12), (28, 52, 4, 12), 0.72),   # 왼다리  앞→뒤
     ]
     for (fx, fy, fw, fh), (bx, by, bw, bh), shade in PAIRS:
         back = arr[by:by+bh, bx:bx+bw, :]
         valid_back = back[:, :, 3] > 10
         if not valid_back.any():
             continue
-        # 공간적 표준편차 계산 — 픽셀마다 RGB 변화량 (채널별 평균)
         back_rgb = back[:, :, :3].astype(float)
         spatial_std = float(max(
             back_rgb[:, :, 0][valid_back].std(),
             back_rgb[:, :, 1][valid_back].std(),
             back_rgb[:, :, 2][valid_back].std(),
         ))
-        if spatial_std >= 18:
-            continue  # 이미 충분한 텍스처
-        # 앞면 좌우반전 + shade
+        if spatial_std >= 14:
+            continue  # 충분한 텍스처 있음
+        # 앞면 좌우반전 + shade 적용
         front = arr[fy:fy+fh, fx:fx+fw, :].copy()
         front_flip = front[:, ::-1, :]
         rgb = np.clip(front_flip[:, :, :3].astype(float) * shade, 0, 255).astype(np.uint8)
