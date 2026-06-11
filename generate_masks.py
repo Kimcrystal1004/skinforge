@@ -98,36 +98,35 @@ def draw_jacket(m):
 
 # ── 하의 그리기 함수 ──────────────────────────────────────────────
 def draw_longpants(m):
-    """긴바지: 몸통 하단 + 전체 다리, 신발"""
+    """긴바지: 몸통 하단 + 전체 다리(신발 바로 위까지), 신발"""
     fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=28)
-    fill_part(m, RLEG, ALL_FACES, BOT, y_clip_max=28)
-    fill_part(m, LLEG, ALL_FACES, BOT, y_clip_max=60)
+    fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=30)  # 30 = 신발(30..32) 시작점
+    fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=62)  # 62 = 신발(62..64) 시작점
     draw_shoes(m)
 
 def draw_shorts(m):
-    """반바지: 몸통 하단 + 다리 1/2 (6/12px), 신발"""
+    """반바지: 몸통 하단 + 다리 상반부(허벅지), 신발"""
     fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=28)
-    fill_part(m, RLEG, ALL_FACES, BOT, y_clip_max=26)   # 12px 중 6px (1/2) — 더 짧게
-    fill_part(m, LLEG, ALL_FACES, BOT, y_clip_max=58)   # 좌다리도 동일
+    fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=26)  # 6/12px — 허벅지만
+    fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=58)
     draw_shoes(m)
 
 def draw_miniskirt(m):
-    """짧은 치마: 몸통 하단 + 다리 상단만 (치마 실루엣)"""
+    """짧은 치마: 몸통 하단 + 다리 최상단(치마 실루엣), 신발"""
     fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=27)
-    # 치마는 다리 상단 4줄만 (Y자 실루엣이 아닌 통 모양)
-    fill_part(m, RLEG, ALL_FACES, BOT, y_clip_max=24)
-    fill_part(m, LLEG, ALL_FACES, BOT, y_clip_max=56)
+    fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=24)  # 상위 4줄만
+    fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=56)
     draw_shoes(m)
 
 def draw_longskirt(m):
-    """긴치마: 몸통 하단 + 전체 다리 (치마처럼 연결)"""
+    """긴치마: 몸통 하단 + 전체 다리(신발 위까지), 신발"""
     fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=27)
-    fill_part(m, RLEG, ALL_FACES, BOT, y_clip_max=28)
-    fill_part(m, LLEG, ALL_FACES, BOT, y_clip_max=60)
+    fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=30)
+    fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=62)
     draw_shoes(m)
 
 def draw_shoes(m):
-    """신발: 다리 하단 2줄 + 발바닥(밑창)"""
+    """신발: 다리 하단 2줄(y=30..32/62..64) + 발바닥(밑창)"""
     fill_part(m, RLEG, SIDE_FACES, SHOE, y_clip_min=30)
     fill_part(m, LLEG, SIDE_FACES, SHOE, y_clip_min=62)
     fill(m,  8, 16, 4, 4, SHOE)   # 오른발 밑창 (RLEG bottom face)

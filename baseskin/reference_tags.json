@@ -1233,5 +1233,613 @@
     ],
     "gender": "여성",
     "formality": "유니폼"
+  },
+  "reference (100).png": {
+    "top_style": "갈색 멜빵 탑",
+    "bottom_style": "갈색 체크 치마",
+    "top_color": "#C6A99A",
+    "bottom_color": "#8F6F5E",
+    "style_tags": [
+      "캐주얼",
+      "체크",
+      "멜빵",
+      "치마",
+      "학생룩",
+      "귀여운"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (101).png": {
+    "top_style": "남색 후드티",
+    "bottom_style": "검정 바지",
+    "top_color": "#2E3449",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "후드티",
+      "캐주얼",
+      "바지",
+      "편안한",
+      "어두운",
+      "데일리룩"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (102).png": {
+    "top_style": "검정 후드 재킷",
+    "bottom_style": "검정 반바지",
+    "top_color": "#222222",
+    "bottom_color": "#222222",
+    "style_tags": [
+      "캐주얼",
+      "스트릿",
+      "모던",
+      "후드",
+      "시크"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (103).png": {
+    "top_style": "검정 스트라이프 셔츠",
+    "bottom_style": "검정 스트라이프 긴 바지",
+    "top_color": "#000000",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "검정",
+      "흰색",
+      "스트라이프",
+      "교복",
+      "중성적",
+      "스포티"
+    ],
+    "gender": "중성",
+    "formality": "유니폼"
+  },
+  "reference (104).png": {
+    "top_style": "갈색 알파벳 포인트 흰색 긴팔 티셔츠",
+    "bottom_style": "흰색 반바지",
+    "top_color": "#FCFBFB",
+    "bottom_color": "#FCFBFB",
+    "style_tags": [
+      "캐주얼",
+      "학생",
+      "편안한",
+      "심플한",
+      "발랄한",
+      "귀여운"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (105).png": {
+    "top_style": "청자켓과 검정 티셔츠",
+    "bottom_style": "청바지",
+    "top_color": "#4f89bb",
+    "bottom_color": "#4f89bb",
+    "style_tags": [
+      "청자켓",
+      "캐주얼",
+      "스트릿",
+      "모던",
+      "체크무늬"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (106).png": {
+    "top_style": "노란색 반팔 티셔츠",
+    "bottom_style": "살색 반바지",
+    "top_color": "#FDD94E",
+    "bottom_color": "#F8D8C3",
+    "style_tags": [
+      "캐주얼",
+      "여름",
+      "반팔",
+      "편안한",
+      "귀여운"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (107).png": {
+    "top_style": "긴팔 셔츠",
+    "bottom_style": "긴 바지",
+    "top_color": "#32A8A8",
+    "bottom_color": "#3C3C3C",
+    "style_tags": [
+      "캐주얼",
+      "긴팔",
+      "바지",
+      "기본",
+      "심플"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (108).png": {
+    "top_style": "남색 슈트 재킷, 하늘색 셔츠, 넥타이",
+    "bottom_style": "남색 긴 바지",
+    "top_color": "#2C3B68",
+    "bottom_color": "#2C3B68",
+    "style_tags": [
+      "슈트",
+      "정장",
+      "남색",
+      "별 무늬",
+      "넥타이",
+      "판타지"
+    ],
+    "gender": "남성",
+    "formality": "포멀"
+  },
+  "reference (109).png": {
+    "top_style": "검정 터틀넥 긴팔 티셔츠",
+    "bottom_style": "검정 긴바지",
+    "top_color": "#1A1A1A",
+    "bottom_color": "#1A1A1A",
+    "style_tags": [
+      "블론드 헤어",
+      "터틀넥",
+      "캐주얼",
+      "모던",
+      "시크"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (110).png": {
+    "top_style": "회색 후드티",
+    "bottom_style": "회색 긴 바지",
+    "top_color": "#d3d3d3",
+    "bottom_color": "#d3d3d3",
+    "style_tags": [
+      "캐주얼",
+      "후드티",
+      "모던",
+      "편안한",
+      "스트릿",
+      "회색"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (111).png": {
+    "top_style": "검정 티셔츠에 체크무늬 셔츠 재킷",
+    "bottom_style": "살구색 반바지",
+    "top_color": "#a34348",
+    "bottom_color": "#f2dbcb",
+    "style_tags": [
+      "체크무늬",
+      "캐주얼",
+      "오버셔츠",
+      "편안한",
+      "중성적인",
+      "학생룩"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (112).png": {
+    "top_style": "크림색 긴팔 티셔츠",
+    "bottom_style": "어두운 남색 긴바지",
+    "top_color": "#f1e2db",
+    "bottom_color": "#313d4a",
+    "style_tags": [
+      "캐주얼",
+      "안경",
+      "편안한",
+      "모던",
+      "데일리룩"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (113).png": {
+    "top_style": "크롭탑 위에 입은 체크 셔츠",
+    "bottom_style": "빨간색 반바지",
+    "top_color": "#C64E59",
+    "bottom_color": "#C03B44",
+    "style_tags": [
+      "캐주얼",
+      "발랄한",
+      "십대",
+      "크롭탑",
+      "반바지",
+      "체크 패턴"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (114).png": {
+    "top_style": "베이지색 트렌치코트, 어두운 셔츠",
+    "bottom_style": "흰색 긴바지, 스트라이프 디테일",
+    "top_color": "#b49a8a",
+    "bottom_color": "#ffffff",
+    "style_tags": [
+      "제복",
+      "코트",
+      "스트라이프",
+      "모던",
+      "캐주얼",
+      "소년미"
+    ],
+    "gender": "남성",
+    "formality": "유니폼"
+  },
+  "reference (115).png": {
+    "top_style": "검정 재킷과 셔츠",
+    "bottom_style": "검정 바지",
+    "top_color": "#222222",
+    "bottom_color": "#222222",
+    "style_tags": [
+      "재킷",
+      "모던",
+      "시크",
+      "심플",
+      "학생",
+      "어반"
+    ],
+    "gender": "여성",
+    "formality": "세미캐주얼"
+  },
+  "reference (116).png": {
+    "top_style": "투톤 줄무늬 긴팔 티셔츠",
+    "bottom_style": "투톤 줄무늬 긴바지",
+    "top_color": "#CCCCCC",
+    "bottom_color": "#CCCCCC",
+    "style_tags": [
+      "줄무늬",
+      "투톤",
+      "캐주얼",
+      "긴팔",
+      "귀여운"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (117).png": {
+    "top_style": "레이어드 스트라이프 크롭탑",
+    "bottom_style": "짧은 반바지",
+    "top_color": "#ABABAB",
+    "bottom_color": "#FEE0C5",
+    "style_tags": [
+      "스트라이프",
+      "크롭탑",
+      "레이어드",
+      "캐주얼",
+      "헤드폰",
+      "긴머리"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (118).png": {
+    "top_style": "체크 남방 레이어드",
+    "bottom_style": "긴바지",
+    "top_color": "#4D3F38",
+    "bottom_color": "#3D3029",
+    "style_tags": [
+      "캐주얼",
+      "레이어드",
+      "체크",
+      "다크",
+      "판타지"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (119).png": {
+    "top_style": "갈색 재킷과 블라우스",
+    "bottom_style": "갈색 바지",
+    "top_color": "#6D4135",
+    "bottom_color": "#6D4135",
+    "style_tags": [
+      "스팀펑크",
+      "탐험가",
+      "레트로",
+      "코트",
+      "갈색"
+    ],
+    "gender": "여성",
+    "formality": "세미캐주얼"
+  },
+  "reference (120).png": {
+    "top_style": "갈색 재킷 레이어드 베이지 스웨터",
+    "bottom_style": "갈색 바지",
+    "top_color": "#E0D2B4",
+    "bottom_color": "#5F452C",
+    "style_tags": [
+      "캐주얼",
+      "레이어드",
+      "갈색",
+      "베이지",
+      "스웨터",
+      "재킷"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (121).png": {
+    "top_style": "배색 후드티",
+    "bottom_style": "검정 바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "배색",
+      "후드티",
+      "캐주얼",
+      "스트릿",
+      "흑백",
+      "모던"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (122).png": {
+    "top_style": "넥타이 연두색 셔츠",
+    "bottom_style": "어두운 갈색 바지",
+    "top_color": "#badbb6",
+    "bottom_color": "#513e2d",
+    "style_tags": [
+      "학생복",
+      "단정한",
+      "캐주얼",
+      "셔츠",
+      "긴팔"
+    ],
+    "gender": "남성",
+    "formality": "유니폼"
+  },
+  "reference (84).png": {
+    "top_style": "검정 재킷과 얇은 넥타이",
+    "bottom_style": "검정 바지",
+    "top_color": "#1C1C1D",
+    "bottom_color": "#1C1C1D",
+    "style_tags": [
+      "어두운",
+      "시크한",
+      "중성적인",
+      "모던한",
+      "스타일리시한"
+    ],
+    "gender": "중성",
+    "formality": "세미캐주얼"
+  },
+  "reference (85).png": {
+    "top_style": "흰색 반팔 티셔츠",
+    "bottom_style": "베이지색 반바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#EECCBB",
+    "style_tags": [
+      "캐주얼",
+      "심플한",
+      "소녀풍",
+      "학생",
+      "모던"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (86).png": {
+    "top_style": "흰색 티셔츠 위에 네이비 체크 셔츠",
+    "bottom_style": "검정색 바지",
+    "top_color": "#2B303A",
+    "bottom_color": "#333333",
+    "style_tags": [
+      "캐주얼",
+      "체크",
+      "셔츠",
+      "깔끔한",
+      "남성스러운",
+      "심플한"
+    ],
+    "gender": "남성",
+    "formality": "캐주얼"
+  },
+  "reference (87).png": {
+    "top_style": "검정 긴팔 티셔츠 위에 입은 버건디 체크 셔츠",
+    "bottom_style": "검정 긴바지",
+    "top_color": "#8B2127",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "캐주얼",
+      "레이어드",
+      "체크",
+      "모던",
+      "스트릿",
+      "댄디"
+    ],
+    "gender": "남성",
+    "formality": "캐주얼"
+  },
+  "reference (88).png": {
+    "top_style": "검정 조끼와 버건디 재킷",
+    "bottom_style": "검정 바지",
+    "top_color": "#801010",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "제복",
+      "정장",
+      "재킷",
+      "넥타이",
+      "포멀"
+    ],
+    "gender": "남성",
+    "formality": "유니폼"
+  },
+  "reference (89).png": {
+    "top_style": "흰색 후드 재킷",
+    "bottom_style": "흰색 트레이닝 바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "캐주얼",
+      "스트릿",
+      "모던",
+      "편안한",
+      "흑백",
+      "스포티"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (90).png": {
+    "top_style": "검정 긴팔 상의와 갈색 크롭탑",
+    "bottom_style": "흰색 긴 바지",
+    "top_color": "#1B1B1B",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "캐주얼",
+      "레이어드룩",
+      "크롭탑",
+      "시크",
+      "스트릿"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (91).png": {
+    "top_style": "검정 크롭 탑",
+    "bottom_style": "흰색 긴 바지",
+    "top_color": "#1e1e1e",
+    "bottom_color": "#ffffff",
+    "style_tags": [
+      "캐주얼",
+      "모던",
+      "스트릿",
+      "편안한",
+      "흑백",
+      "활동적인"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (92).png": {
+    "top_style": "검정 긴팔 티셔츠, 데님 재킷",
+    "bottom_style": "청바지",
+    "top_color": "#3A5172",
+    "bottom_color": "#2E445E",
+    "style_tags": [
+      "캐주얼",
+      "데님",
+      "레이어드",
+      "스트릿",
+      "활동적인"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼"
+  },
+  "reference (93).png": {
+    "top_style": "오버핏 캐주얼 재킷",
+    "bottom_style": "캐주얼 긴 바지",
+    "top_color": "#6C6B64",
+    "bottom_color": "#796D63",
+    "style_tags": [
+      "캐주얼",
+      "모던",
+      "편안한",
+      "심플한",
+      "어스톤",
+      "내추럴"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (94).png": {
+    "top_style": "갈색 줄무늬 긴팔 스웨터",
+    "bottom_style": "갈색 바지",
+    "top_color": "#4E3326",
+    "bottom_color": "#4E3326",
+    "style_tags": [
+      "갈색",
+      "스웨터",
+      "줄무늬",
+      "캐주얼",
+      "편안한",
+      "긴팔"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (95).png": {
+    "top_style": "검정 긴팔 티셔츠",
+    "bottom_style": "회색 반바지",
+    "top_color": "#2C2C2C",
+    "bottom_color": "#AAAAAA",
+    "style_tags": [
+      "캐주얼",
+      "심플한",
+      "일상복",
+      "긴팔",
+      "반바지",
+      "모던"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (96).png": {
+    "top_style": "검정색 긴팔 재킷",
+    "bottom_style": "흰색 긴바지",
+    "top_color": "#000000",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "유니폼",
+      "캐주얼",
+      "동물 테마",
+      "주황색 포인트",
+      "모노톤"
+    ],
+    "gender": "중성",
+    "formality": "유니폼"
+  },
+  "reference (97).png": {
+    "top_style": "흰색 후드티",
+    "bottom_style": "검정색 트레이닝 바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "캐주얼",
+      "스포티",
+      "흑백",
+      "후드티",
+      "트레이닝복",
+      "마스크"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼"
+  },
+  "reference (98).png": {
+    "top_style": "교복 셔츠",
+    "bottom_style": "검정 바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "교복",
+      "학생",
+      "캐주얼",
+      "넥타이",
+      "줄무늬",
+      "심플"
+    ],
+    "gender": "여성",
+    "formality": "유니폼"
+  },
+  "reference (99).png": {
+    "top_style": "검정 재킷과 넥타이 셔츠",
+    "bottom_style": "검정 긴 바지",
+    "top_color": "#000000",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "교복",
+      "유니폼",
+      "단정한",
+      "흑백",
+      "시크",
+      "넥타이"
+    ],
+    "gender": "남성",
+    "formality": "유니폼"
   }
 }

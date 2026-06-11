@@ -1897,5 +1897,925 @@
       "rleg": "ref83_rleg.png",
       "lleg": "ref83_lleg.png"
     }
+  },
+  "100": {
+    "top_style": "갈색 멜빵 탑",
+    "bottom_style": "갈색 체크 치마",
+    "top_color": "#C6A99A",
+    "bottom_color": "#8F6F5E",
+    "style_tags": [
+      "캐주얼",
+      "체크",
+      "멜빵",
+      "치마",
+      "학생룩",
+      "귀여운"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref100_head.png",
+      "body": "ref100_body.png",
+      "rarm": "ref100_rarm.png",
+      "larm": "ref100_larm.png",
+      "rleg": "ref100_rleg.png",
+      "lleg": "ref100_lleg.png"
+    }
+  },
+  "101": {
+    "top_style": "남색 후드티",
+    "bottom_style": "검정 바지",
+    "top_color": "#2E3449",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "후드티",
+      "캐주얼",
+      "바지",
+      "편안한",
+      "어두운",
+      "데일리룩"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref101_head.png",
+      "body": "ref101_body.png",
+      "rarm": "ref101_rarm.png",
+      "larm": "ref101_larm.png",
+      "rleg": "ref101_rleg.png",
+      "lleg": "ref101_lleg.png"
+    }
+  },
+  "102": {
+    "top_style": "검정 후드 재킷",
+    "bottom_style": "검정 반바지",
+    "top_color": "#222222",
+    "bottom_color": "#222222",
+    "style_tags": [
+      "캐주얼",
+      "스트릿",
+      "모던",
+      "후드",
+      "시크"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref102_head.png",
+      "body": "ref102_body.png",
+      "rarm": "ref102_rarm.png",
+      "larm": "ref102_larm.png",
+      "rleg": "ref102_rleg.png",
+      "lleg": "ref102_lleg.png"
+    }
+  },
+  "103": {
+    "top_style": "검정 스트라이프 셔츠",
+    "bottom_style": "검정 스트라이프 긴 바지",
+    "top_color": "#000000",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "검정",
+      "흰색",
+      "스트라이프",
+      "교복",
+      "중성적",
+      "스포티"
+    ],
+    "gender": "중성",
+    "formality": "유니폼",
+    "files": {
+      "head": "ref103_head.png",
+      "body": "ref103_body.png",
+      "rarm": "ref103_rarm.png",
+      "larm": "ref103_larm.png",
+      "rleg": "ref103_rleg.png",
+      "lleg": "ref103_lleg.png"
+    }
+  },
+  "104": {
+    "top_style": "갈색 알파벳 포인트 흰색 긴팔 티셔츠",
+    "bottom_style": "흰색 반바지",
+    "top_color": "#FCFBFB",
+    "bottom_color": "#FCFBFB",
+    "style_tags": [
+      "캐주얼",
+      "학생",
+      "편안한",
+      "심플한",
+      "발랄한",
+      "귀여운"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref104_head.png",
+      "body": "ref104_body.png",
+      "rarm": "ref104_rarm.png",
+      "larm": "ref104_larm.png",
+      "rleg": "ref104_rleg.png",
+      "lleg": "ref104_lleg.png"
+    }
+  },
+  "105": {
+    "top_style": "청자켓과 검정 티셔츠",
+    "bottom_style": "청바지",
+    "top_color": "#4f89bb",
+    "bottom_color": "#4f89bb",
+    "style_tags": [
+      "청자켓",
+      "캐주얼",
+      "스트릿",
+      "모던",
+      "체크무늬"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref105_head.png",
+      "body": "ref105_body.png",
+      "rarm": "ref105_rarm.png",
+      "larm": "ref105_larm.png",
+      "rleg": "ref105_rleg.png",
+      "lleg": "ref105_lleg.png"
+    }
+  },
+  "106": {
+    "top_style": "노란색 반팔 티셔츠",
+    "bottom_style": "살색 반바지",
+    "top_color": "#FDD94E",
+    "bottom_color": "#F8D8C3",
+    "style_tags": [
+      "캐주얼",
+      "여름",
+      "반팔",
+      "편안한",
+      "귀여운"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref106_head.png",
+      "body": "ref106_body.png",
+      "rarm": "ref106_rarm.png",
+      "larm": "ref106_larm.png",
+      "rleg": "ref106_rleg.png",
+      "lleg": "ref106_lleg.png"
+    }
+  },
+  "107": {
+    "top_style": "긴팔 셔츠",
+    "bottom_style": "긴 바지",
+    "top_color": "#32A8A8",
+    "bottom_color": "#3C3C3C",
+    "style_tags": [
+      "캐주얼",
+      "긴팔",
+      "바지",
+      "기본",
+      "심플"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref107_head.png",
+      "body": "ref107_body.png",
+      "rarm": "ref107_rarm.png",
+      "larm": "ref107_larm.png",
+      "rleg": "ref107_rleg.png",
+      "lleg": "ref107_lleg.png"
+    }
+  },
+  "108": {
+    "top_style": "남색 슈트 재킷, 하늘색 셔츠, 넥타이",
+    "bottom_style": "남색 긴 바지",
+    "top_color": "#2C3B68",
+    "bottom_color": "#2C3B68",
+    "style_tags": [
+      "슈트",
+      "정장",
+      "남색",
+      "별 무늬",
+      "넥타이",
+      "판타지"
+    ],
+    "gender": "남성",
+    "formality": "포멀",
+    "files": {
+      "head": "ref108_head.png",
+      "body": "ref108_body.png",
+      "rarm": "ref108_rarm.png",
+      "larm": "ref108_larm.png",
+      "rleg": "ref108_rleg.png",
+      "lleg": "ref108_lleg.png"
+    }
+  },
+  "109": {
+    "top_style": "검정 터틀넥 긴팔 티셔츠",
+    "bottom_style": "검정 긴바지",
+    "top_color": "#1A1A1A",
+    "bottom_color": "#1A1A1A",
+    "style_tags": [
+      "블론드 헤어",
+      "터틀넥",
+      "캐주얼",
+      "모던",
+      "시크"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref109_head.png",
+      "body": "ref109_body.png",
+      "rarm": "ref109_rarm.png",
+      "larm": "ref109_larm.png",
+      "rleg": "ref109_rleg.png",
+      "lleg": "ref109_lleg.png"
+    }
+  },
+  "110": {
+    "top_style": "회색 후드티",
+    "bottom_style": "회색 긴 바지",
+    "top_color": "#d3d3d3",
+    "bottom_color": "#d3d3d3",
+    "style_tags": [
+      "캐주얼",
+      "후드티",
+      "모던",
+      "편안한",
+      "스트릿",
+      "회색"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref110_head.png",
+      "body": "ref110_body.png",
+      "rarm": "ref110_rarm.png",
+      "larm": "ref110_larm.png",
+      "rleg": "ref110_rleg.png",
+      "lleg": "ref110_lleg.png"
+    }
+  },
+  "111": {
+    "top_style": "검정 티셔츠에 체크무늬 셔츠 재킷",
+    "bottom_style": "살구색 반바지",
+    "top_color": "#a34348",
+    "bottom_color": "#f2dbcb",
+    "style_tags": [
+      "체크무늬",
+      "캐주얼",
+      "오버셔츠",
+      "편안한",
+      "중성적인",
+      "학생룩"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref111_head.png",
+      "body": "ref111_body.png",
+      "rarm": "ref111_rarm.png",
+      "larm": "ref111_larm.png",
+      "rleg": "ref111_rleg.png",
+      "lleg": "ref111_lleg.png"
+    }
+  },
+  "112": {
+    "top_style": "크림색 긴팔 티셔츠",
+    "bottom_style": "어두운 남색 긴바지",
+    "top_color": "#f1e2db",
+    "bottom_color": "#313d4a",
+    "style_tags": [
+      "캐주얼",
+      "안경",
+      "편안한",
+      "모던",
+      "데일리룩"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref112_head.png",
+      "body": "ref112_body.png",
+      "rarm": "ref112_rarm.png",
+      "larm": "ref112_larm.png",
+      "rleg": "ref112_rleg.png",
+      "lleg": "ref112_lleg.png"
+    }
+  },
+  "113": {
+    "top_style": "크롭탑 위에 입은 체크 셔츠",
+    "bottom_style": "빨간색 반바지",
+    "top_color": "#C64E59",
+    "bottom_color": "#C03B44",
+    "style_tags": [
+      "캐주얼",
+      "발랄한",
+      "십대",
+      "크롭탑",
+      "반바지",
+      "체크 패턴"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref113_head.png",
+      "body": "ref113_body.png",
+      "rarm": "ref113_rarm.png",
+      "larm": "ref113_larm.png",
+      "rleg": "ref113_rleg.png",
+      "lleg": "ref113_lleg.png"
+    }
+  },
+  "114": {
+    "top_style": "베이지색 트렌치코트, 어두운 셔츠",
+    "bottom_style": "흰색 긴바지, 스트라이프 디테일",
+    "top_color": "#b49a8a",
+    "bottom_color": "#ffffff",
+    "style_tags": [
+      "제복",
+      "코트",
+      "스트라이프",
+      "모던",
+      "캐주얼",
+      "소년미"
+    ],
+    "gender": "남성",
+    "formality": "유니폼",
+    "files": {
+      "head": "ref114_head.png",
+      "body": "ref114_body.png",
+      "rarm": "ref114_rarm.png",
+      "larm": "ref114_larm.png",
+      "rleg": "ref114_rleg.png",
+      "lleg": "ref114_lleg.png"
+    }
+  },
+  "115": {
+    "top_style": "검정 재킷과 셔츠",
+    "bottom_style": "검정 바지",
+    "top_color": "#222222",
+    "bottom_color": "#222222",
+    "style_tags": [
+      "재킷",
+      "모던",
+      "시크",
+      "심플",
+      "학생",
+      "어반"
+    ],
+    "gender": "여성",
+    "formality": "세미캐주얼",
+    "files": {
+      "head": "ref115_head.png",
+      "body": "ref115_body.png",
+      "rarm": "ref115_rarm.png",
+      "larm": "ref115_larm.png",
+      "rleg": "ref115_rleg.png",
+      "lleg": "ref115_lleg.png"
+    }
+  },
+  "116": {
+    "top_style": "투톤 줄무늬 긴팔 티셔츠",
+    "bottom_style": "투톤 줄무늬 긴바지",
+    "top_color": "#CCCCCC",
+    "bottom_color": "#CCCCCC",
+    "style_tags": [
+      "줄무늬",
+      "투톤",
+      "캐주얼",
+      "긴팔",
+      "귀여운"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref116_head.png",
+      "body": "ref116_body.png",
+      "rarm": "ref116_rarm.png",
+      "larm": "ref116_larm.png",
+      "rleg": "ref116_rleg.png",
+      "lleg": "ref116_lleg.png"
+    }
+  },
+  "117": {
+    "top_style": "레이어드 스트라이프 크롭탑",
+    "bottom_style": "짧은 반바지",
+    "top_color": "#ABABAB",
+    "bottom_color": "#FEE0C5",
+    "style_tags": [
+      "스트라이프",
+      "크롭탑",
+      "레이어드",
+      "캐주얼",
+      "헤드폰",
+      "긴머리"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref117_head.png",
+      "body": "ref117_body.png",
+      "rarm": "ref117_rarm.png",
+      "larm": "ref117_larm.png",
+      "rleg": "ref117_rleg.png",
+      "lleg": "ref117_lleg.png"
+    }
+  },
+  "118": {
+    "top_style": "체크 남방 레이어드",
+    "bottom_style": "긴바지",
+    "top_color": "#4D3F38",
+    "bottom_color": "#3D3029",
+    "style_tags": [
+      "캐주얼",
+      "레이어드",
+      "체크",
+      "다크",
+      "판타지"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref118_head.png",
+      "body": "ref118_body.png",
+      "rarm": "ref118_rarm.png",
+      "larm": "ref118_larm.png",
+      "rleg": "ref118_rleg.png",
+      "lleg": "ref118_lleg.png"
+    }
+  },
+  "119": {
+    "top_style": "갈색 재킷과 블라우스",
+    "bottom_style": "갈색 바지",
+    "top_color": "#6D4135",
+    "bottom_color": "#6D4135",
+    "style_tags": [
+      "스팀펑크",
+      "탐험가",
+      "레트로",
+      "코트",
+      "갈색"
+    ],
+    "gender": "여성",
+    "formality": "세미캐주얼",
+    "files": {
+      "head": "ref119_head.png",
+      "body": "ref119_body.png",
+      "rarm": "ref119_rarm.png",
+      "larm": "ref119_larm.png",
+      "rleg": "ref119_rleg.png",
+      "lleg": "ref119_lleg.png"
+    }
+  },
+  "120": {
+    "top_style": "갈색 재킷 레이어드 베이지 스웨터",
+    "bottom_style": "갈색 바지",
+    "top_color": "#E0D2B4",
+    "bottom_color": "#5F452C",
+    "style_tags": [
+      "캐주얼",
+      "레이어드",
+      "갈색",
+      "베이지",
+      "스웨터",
+      "재킷"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref120_head.png",
+      "body": "ref120_body.png",
+      "rarm": "ref120_rarm.png",
+      "larm": "ref120_larm.png",
+      "rleg": "ref120_rleg.png",
+      "lleg": "ref120_lleg.png"
+    }
+  },
+  "121": {
+    "top_style": "배색 후드티",
+    "bottom_style": "검정 바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "배색",
+      "후드티",
+      "캐주얼",
+      "스트릿",
+      "흑백",
+      "모던"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref121_head.png",
+      "body": "ref121_body.png",
+      "rarm": "ref121_rarm.png",
+      "larm": "ref121_larm.png",
+      "rleg": "ref121_rleg.png",
+      "lleg": "ref121_lleg.png"
+    }
+  },
+  "122": {
+    "top_style": "넥타이 연두색 셔츠",
+    "bottom_style": "어두운 갈색 바지",
+    "top_color": "#badbb6",
+    "bottom_color": "#513e2d",
+    "style_tags": [
+      "학생복",
+      "단정한",
+      "캐주얼",
+      "셔츠",
+      "긴팔"
+    ],
+    "gender": "남성",
+    "formality": "유니폼",
+    "files": {
+      "head": "ref122_head.png",
+      "body": "ref122_body.png",
+      "rarm": "ref122_rarm.png",
+      "larm": "ref122_larm.png",
+      "rleg": "ref122_rleg.png",
+      "lleg": "ref122_lleg.png"
+    }
+  },
+  "84": {
+    "top_style": "검정 재킷과 얇은 넥타이",
+    "bottom_style": "검정 바지",
+    "top_color": "#1C1C1D",
+    "bottom_color": "#1C1C1D",
+    "style_tags": [
+      "어두운",
+      "시크한",
+      "중성적인",
+      "모던한",
+      "스타일리시한"
+    ],
+    "gender": "중성",
+    "formality": "세미캐주얼",
+    "files": {
+      "head": "ref84_head.png",
+      "body": "ref84_body.png",
+      "rarm": "ref84_rarm.png",
+      "larm": "ref84_larm.png",
+      "rleg": "ref84_rleg.png",
+      "lleg": "ref84_lleg.png"
+    }
+  },
+  "85": {
+    "top_style": "흰색 반팔 티셔츠",
+    "bottom_style": "베이지색 반바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#EECCBB",
+    "style_tags": [
+      "캐주얼",
+      "심플한",
+      "소녀풍",
+      "학생",
+      "모던"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref85_head.png",
+      "body": "ref85_body.png",
+      "rarm": "ref85_rarm.png",
+      "larm": "ref85_larm.png",
+      "rleg": "ref85_rleg.png",
+      "lleg": "ref85_lleg.png"
+    }
+  },
+  "86": {
+    "top_style": "흰색 티셔츠 위에 네이비 체크 셔츠",
+    "bottom_style": "검정색 바지",
+    "top_color": "#2B303A",
+    "bottom_color": "#333333",
+    "style_tags": [
+      "캐주얼",
+      "체크",
+      "셔츠",
+      "깔끔한",
+      "남성스러운",
+      "심플한"
+    ],
+    "gender": "남성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref86_head.png",
+      "body": "ref86_body.png",
+      "rarm": "ref86_rarm.png",
+      "larm": "ref86_larm.png",
+      "rleg": "ref86_rleg.png",
+      "lleg": "ref86_lleg.png"
+    }
+  },
+  "87": {
+    "top_style": "검정 긴팔 티셔츠 위에 입은 버건디 체크 셔츠",
+    "bottom_style": "검정 긴바지",
+    "top_color": "#8B2127",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "캐주얼",
+      "레이어드",
+      "체크",
+      "모던",
+      "스트릿",
+      "댄디"
+    ],
+    "gender": "남성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref87_head.png",
+      "body": "ref87_body.png",
+      "rarm": "ref87_rarm.png",
+      "larm": "ref87_larm.png",
+      "rleg": "ref87_rleg.png",
+      "lleg": "ref87_lleg.png"
+    }
+  },
+  "88": {
+    "top_style": "검정 조끼와 버건디 재킷",
+    "bottom_style": "검정 바지",
+    "top_color": "#801010",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "제복",
+      "정장",
+      "재킷",
+      "넥타이",
+      "포멀"
+    ],
+    "gender": "남성",
+    "formality": "유니폼",
+    "files": {
+      "head": "ref88_head.png",
+      "body": "ref88_body.png",
+      "rarm": "ref88_rarm.png",
+      "larm": "ref88_larm.png",
+      "rleg": "ref88_rleg.png",
+      "lleg": "ref88_lleg.png"
+    }
+  },
+  "89": {
+    "top_style": "흰색 후드 재킷",
+    "bottom_style": "흰색 트레이닝 바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "캐주얼",
+      "스트릿",
+      "모던",
+      "편안한",
+      "흑백",
+      "스포티"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref89_head.png",
+      "body": "ref89_body.png",
+      "rarm": "ref89_rarm.png",
+      "larm": "ref89_larm.png",
+      "rleg": "ref89_rleg.png",
+      "lleg": "ref89_lleg.png"
+    }
+  },
+  "90": {
+    "top_style": "검정 긴팔 상의와 갈색 크롭탑",
+    "bottom_style": "흰색 긴 바지",
+    "top_color": "#1B1B1B",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "캐주얼",
+      "레이어드룩",
+      "크롭탑",
+      "시크",
+      "스트릿"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref90_head.png",
+      "body": "ref90_body.png",
+      "rarm": "ref90_rarm.png",
+      "larm": "ref90_larm.png",
+      "rleg": "ref90_rleg.png",
+      "lleg": "ref90_lleg.png"
+    }
+  },
+  "91": {
+    "top_style": "검정 크롭 탑",
+    "bottom_style": "흰색 긴 바지",
+    "top_color": "#1e1e1e",
+    "bottom_color": "#ffffff",
+    "style_tags": [
+      "캐주얼",
+      "모던",
+      "스트릿",
+      "편안한",
+      "흑백",
+      "활동적인"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref91_head.png",
+      "body": "ref91_body.png",
+      "rarm": "ref91_rarm.png",
+      "larm": "ref91_larm.png",
+      "rleg": "ref91_rleg.png",
+      "lleg": "ref91_lleg.png"
+    }
+  },
+  "92": {
+    "top_style": "검정 긴팔 티셔츠, 데님 재킷",
+    "bottom_style": "청바지",
+    "top_color": "#3A5172",
+    "bottom_color": "#2E445E",
+    "style_tags": [
+      "캐주얼",
+      "데님",
+      "레이어드",
+      "스트릿",
+      "활동적인"
+    ],
+    "gender": "여성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref92_head.png",
+      "body": "ref92_body.png",
+      "rarm": "ref92_rarm.png",
+      "larm": "ref92_larm.png",
+      "rleg": "ref92_rleg.png",
+      "lleg": "ref92_lleg.png"
+    }
+  },
+  "93": {
+    "top_style": "오버핏 캐주얼 재킷",
+    "bottom_style": "캐주얼 긴 바지",
+    "top_color": "#6C6B64",
+    "bottom_color": "#796D63",
+    "style_tags": [
+      "캐주얼",
+      "모던",
+      "편안한",
+      "심플한",
+      "어스톤",
+      "내추럴"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref93_head.png",
+      "body": "ref93_body.png",
+      "rarm": "ref93_rarm.png",
+      "larm": "ref93_larm.png",
+      "rleg": "ref93_rleg.png",
+      "lleg": "ref93_lleg.png"
+    }
+  },
+  "94": {
+    "top_style": "갈색 줄무늬 긴팔 스웨터",
+    "bottom_style": "갈색 바지",
+    "top_color": "#4E3326",
+    "bottom_color": "#4E3326",
+    "style_tags": [
+      "갈색",
+      "스웨터",
+      "줄무늬",
+      "캐주얼",
+      "편안한",
+      "긴팔"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref94_head.png",
+      "body": "ref94_body.png",
+      "rarm": "ref94_rarm.png",
+      "larm": "ref94_larm.png",
+      "rleg": "ref94_rleg.png",
+      "lleg": "ref94_lleg.png"
+    }
+  },
+  "95": {
+    "top_style": "검정 긴팔 티셔츠",
+    "bottom_style": "회색 반바지",
+    "top_color": "#2C2C2C",
+    "bottom_color": "#AAAAAA",
+    "style_tags": [
+      "캐주얼",
+      "심플한",
+      "일상복",
+      "긴팔",
+      "반바지",
+      "모던"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref95_head.png",
+      "body": "ref95_body.png",
+      "rarm": "ref95_rarm.png",
+      "larm": "ref95_larm.png",
+      "rleg": "ref95_rleg.png",
+      "lleg": "ref95_lleg.png"
+    }
+  },
+  "96": {
+    "top_style": "검정색 긴팔 재킷",
+    "bottom_style": "흰색 긴바지",
+    "top_color": "#000000",
+    "bottom_color": "#FFFFFF",
+    "style_tags": [
+      "유니폼",
+      "캐주얼",
+      "동물 테마",
+      "주황색 포인트",
+      "모노톤"
+    ],
+    "gender": "중성",
+    "formality": "유니폼",
+    "files": {
+      "head": "ref96_head.png",
+      "body": "ref96_body.png",
+      "rarm": "ref96_rarm.png",
+      "larm": "ref96_larm.png",
+      "rleg": "ref96_rleg.png",
+      "lleg": "ref96_lleg.png"
+    }
+  },
+  "97": {
+    "top_style": "흰색 후드티",
+    "bottom_style": "검정색 트레이닝 바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "캐주얼",
+      "스포티",
+      "흑백",
+      "후드티",
+      "트레이닝복",
+      "마스크"
+    ],
+    "gender": "중성",
+    "formality": "캐주얼",
+    "files": {
+      "head": "ref97_head.png",
+      "body": "ref97_body.png",
+      "rarm": "ref97_rarm.png",
+      "larm": "ref97_larm.png",
+      "rleg": "ref97_rleg.png",
+      "lleg": "ref97_lleg.png"
+    }
+  },
+  "98": {
+    "top_style": "교복 셔츠",
+    "bottom_style": "검정 바지",
+    "top_color": "#FFFFFF",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "교복",
+      "학생",
+      "캐주얼",
+      "넥타이",
+      "줄무늬",
+      "심플"
+    ],
+    "gender": "여성",
+    "formality": "유니폼",
+    "files": {
+      "head": "ref98_head.png",
+      "body": "ref98_body.png",
+      "rarm": "ref98_rarm.png",
+      "larm": "ref98_larm.png",
+      "rleg": "ref98_rleg.png",
+      "lleg": "ref98_lleg.png"
+    }
+  },
+  "99": {
+    "top_style": "검정 재킷과 넥타이 셔츠",
+    "bottom_style": "검정 긴 바지",
+    "top_color": "#000000",
+    "bottom_color": "#000000",
+    "style_tags": [
+      "교복",
+      "유니폼",
+      "단정한",
+      "흑백",
+      "시크",
+      "넥타이"
+    ],
+    "gender": "남성",
+    "formality": "유니폼",
+    "files": {
+      "head": "ref99_head.png",
+      "body": "ref99_body.png",
+      "rarm": "ref99_rarm.png",
+      "larm": "ref99_larm.png",
+      "rleg": "ref99_rleg.png",
+      "lleg": "ref99_lleg.png"
+    }
   }
 }
