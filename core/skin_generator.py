@@ -660,6 +660,39 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
         _paint_mask(arr, acc_arr, body_ref, leg_ref, zone_colors, acc_maxv, arm_ref)
 
 
+def _fill_back_faces(arr: np.ndarray):
+    """뒷면 UV가 단색(std<18)이면 앞면 패턴을 좌우반전+어둡게 복사해 텍스처 추가."""
+    # (앞면 x,y,w,h), (뒷면 x,y,w,h), 어둡기 배율
+    PAIRS = [
+        ((20, 20, 8, 12), (32, 20, 8, 12), 0.68),   # 몸통
+        ((44, 20, 4, 12), (52, 20, 4, 12), 0.68),   # 오른팔
+        ((36, 52, 4, 12), (44, 52, 4, 12), 0.68),   # 왼팔
+        (( 4, 20, 4, 12), (12, 20, 4, 12), 0.68),   # 오른다리
+        ((20, 52, 4, 12), (28, 52, 4, 12), 0.68),   # 왼다리
+    ]
+    for (fx, fy, fw, fh), (bx, by, bw, bh), shade in PAIRS:
+        back = arr[by:by+bh, bx:bx+bw, :]
+        valid_back = back[:, :, 3] > 10
+        if not valid_back.any():
+            continue
+        # 공간적 표준편차 계산 — 픽셀마다 RGB 변화량 (채널별 평균)
+        back_rgb = back[:, :, :3].astype(float)
+        spatial_std = float(max(
+            back_rgb[:, :, 0][valid_back].std(),
+            back_rgb[:, :, 1][valid_back].std(),
+            back_rgb[:, :, 2][valid_back].std(),
+        ))
+        if spatial_std >= 18:
+            continue  # 이미 충분한 텍스처
+        # 앞면 좌우반전 + shade
+        front = arr[fy:fy+fh, fx:fx+fw, :].copy()
+        front_flip = front[:, ::-1, :]
+        rgb = np.clip(front_flip[:, :, :3].astype(float) * shade, 0, 255).astype(np.uint8)
+        valid_front = front_flip[:, :, 3] > 10
+        arr[by:by+bh, bx:bx+bw][valid_front, :3] = rgb[valid_front]
+        arr[by:by+bh, bx:bx+bw][valid_front, 3] = 255
+
+
 def _mirror_clothing_to_layer2(arr: np.ndarray):
     """밑단·소맷단·칼라만 Layer2에 복사 — 팔·다리·바디 전체 복사 없음"""
 
@@ -731,6 +764,7 @@ HAIR_BODY_MAP: dict = {
     "짧은양갈래_생머리":["base_hair_twin_straight_short_back.png", "base_hair_twin_straight_short_front.png"],
     "짧은양갈래_웨이브":["base_hair_twin_wave_short_back.png",     "base_hair_twin_wave_front.png"],
     "단발": None,
+    "숏컷": None,   # 남성 짧은머리 — 몸통 연장 없음
 }
 
 
@@ -1075,17 +1109,21 @@ def generate_skin(features: dict) -> Image.Image:
     # 4. 의상
     apply_mask_clothing(arr, features, _comps=comps)
 
+    # 4-1. 뒷면 텍스처 보강 (단색 → 앞면 패턴 미러링)
+    _fill_back_faces(arr)
+
     # 5. 머리카락
     head_comp = comps.get("head_comp")
     if head_comp is not None:
         # 레퍼런스 헤드 컴포넌트 기반 (고품질)
         draw_hair_from_ref(arr, head_comp, hair_rgb, skin_base)
-        # 앞머리는 기존 베이스 파일 레이어로 정밀 적용
-        draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
     else:
-        # 컴포넌트 미생성 시 기존 방식
-        draw_hair_body_only(arr, hair_rgb, hair_style)
-        draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
+        pass  # 아래에서 일괄 처리
+
+    # 몸통 연장 — 단발/숏컷은 HAIR_BODY_MAP[key]=None 이라 자동 스킵됨
+    draw_hair_body_only(arr, hair_rgb, hair_style)
+    # 앞머리 레이어 (항상 최상단)
+    draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
 
     _mirror_clothing_to_layer2(arr)   # 6. 레이어2 엣지 복사
 
