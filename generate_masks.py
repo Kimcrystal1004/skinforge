@@ -29,7 +29,7 @@ def save(m, name):
 
 # ── UV 좌표 상수 ──────────────────────────────────────────────────
 # 몸통 (Body layer1)
-BODY = dict(top=(20,16,8,4), front=(20,20,8,12), right=(16,20,4,12),
+BODY = dict(top=(20,16,8,4), bottom=(28,16,8,4), front=(20,20,8,12), right=(16,20,4,12),
             left=(28,20,4,12), back=(32,20,8,12))
 # 오른팔 (Right Arm layer1)
 RARM = dict(top=(44,16,4,4), front=(44,20,4,12), right=(40,20,4,12),
@@ -100,26 +100,29 @@ def draw_jacket(m):
 def draw_longpants(m):
     """긴바지: 몸통 하단 + 전체 다리(신발 바로 위까지), 신발"""
     fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=28)
-    fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=30)  # 30 = 신발(30..32) 시작점
-    fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=62)  # 62 = 신발(62..64) 시작점
+    fill_part(m, BODY, ["bottom"],  BOT)               # 몸통 하단면(접합부) → 하의 색
+    fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=30)
+    fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=62)
     draw_shoes(m)
 
 def draw_shorts(m):
     """반바지: 몸통 하단 + 다리 상단 2줄(허벅지 최상부만), 신발"""
     fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=28)
-    fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=22)  # 2/12px
+    fill_part(m, BODY, ["bottom"],  BOT)               # 몸통 하단면(접합부) → 하의 색
+    fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=22)
     fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=54)
     draw_shoes(m)
 
 def draw_miniskirt(m):
     """짧은 치마: 몸통 하단만(다리 노출), 신발"""
     fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=27)
-    # 다리에 별도 BOT 없음 — 치마는 body BOT+신발만으로 표현
+    fill_part(m, BODY, ["bottom"],  BOT)               # 몸통 하단면(접합부) → 하의 색
     draw_shoes(m)
 
 def draw_longskirt(m):
     """긴치마: 몸통 하단 + 전체 다리(신발 위까지), 신발"""
     fill_part(m, BODY, SIDE_FACES, BOT, y_clip_min=27)
+    fill_part(m, BODY, ["bottom"],  BOT)               # 몸통 하단면(접합부) → 하의 색
     fill_part(m, RLEG, ALL_FACES,  BOT, y_clip_max=30)
     fill_part(m, LLEG, ALL_FACES,  BOT, y_clip_max=62)
     draw_shoes(m)

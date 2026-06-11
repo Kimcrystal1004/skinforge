@@ -58,6 +58,7 @@ def detect_zone(r: int, g: int, b: int) -> str:
 _SHADE_REGIONS = [
     # 몸통
     (20, 16,  8,  4, 0.90),  # body top
+    (28, 16,  8,  4, 0.75),  # body bottom (몸통 하단면 — 다리 접합부)
     (16, 20,  4, 12, 0.80),  # body right
     (20, 20,  8, 12, 1.00),  # body front
     (28, 20,  4, 12, 0.80),  # body left
