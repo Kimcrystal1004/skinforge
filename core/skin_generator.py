@@ -655,19 +655,18 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
     t_h, t_s, t_v = rgb_to_hsv(tr / 255, tg / 255, tb / 255)
     t_v = max(t_v, 0.15)
     ys, xs = np.where(zmask)
-    shades = _SHADE_MAP[ys, xs]
-    # 치마일 때: 가랑이 그림자 등 극단적 암화 완화 + 다리 UV는 shade 상단 보정
     if skirt_shade_map is not None:
+        # 치마: 모든 면 동일 밝기(0.92)로 통일 → 몸통/다리 색 일치
+        # shadow map이 변화(주름/그림자)를 담당, 다리 UV는 shadow 제외
+        shades = np.full(len(ys), 0.92, dtype=np.float32)
+        pleat  = np.ones(len(ys), dtype=np.float32)
         is_leg = (_RLEG_UV | _LLEG_UV)[ys, xs]
-        shades = np.where(is_leg, np.maximum(shades, 0.88), np.maximum(shades, 0.72))
-    pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
-    # 다리 UV는 shadow map 제외 (짧은 치마는 2행만 커버 → shadow 왜곡)
-    if skirt_shade_map is not None:
         skirt_vals = skirt_shade_map[ys, xs]
-        is_leg = (_RLEG_UV | _LLEG_UV)[ys, xs]
         skirt = np.where(is_leg, 1.0, skirt_vals).astype(np.float32)
     else:
-        skirt = np.ones(len(ys), dtype=np.float32)
+        shades = _SHADE_MAP[ys, xs]
+        pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
+        skirt  = np.ones(len(ys), dtype=np.float32)
 
     # 밑단 효과: RLEG/LLEG 각각의 BOT 존 내 최하 2행 어둡게
     hem = np.ones(len(ys), dtype=np.float32)
