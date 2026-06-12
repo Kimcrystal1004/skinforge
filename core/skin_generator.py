@@ -652,19 +652,20 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
     tr, tg, tb = target_rgb
     t_h, t_s, t_v = rgb_to_hsv(tr / 255, tg / 255, tb / 255)
     t_v = max(t_v, 0.15)
+    if not zmask.any():
+        return
+    ys, xs = np.where(zmask)
     if skirt_shade_map is not None:
-        # 치마: 마스크 무시, 베이스 파일 비투명 픽셀만 사용
-        # 베이스 V값으로 밝기, 타깃 H/S로 색조만 적용
-        effective = ~np.isnan(skirt_shade_map)
-        if not effective.any():
-            return
-        ys, xs  = np.where(effective)
-        base_v  = skirt_shade_map[ys, xs]
-        final_v = np.clip(base_v * BRIGHTNESS_BOOST, 0.0, 1.0)
+        # 치마: 마스크 범위(레이어1+2) 사용, 베이스 V를 상대 명암으로 정규화
+        base_v = skirt_shade_map[ys, xs]   # NaN = 투명(base에 없는 위치)
+        has_b  = ~np.isnan(base_v)
+        if has_b.any():
+            max_v = float(base_v[has_b].max())
+            norm  = np.where(has_b, base_v / max(max_v, 0.01), 0.85).astype(np.float32)
+        else:
+            norm  = np.full(len(ys), 0.85, dtype=np.float32)
+        final_v = np.clip(t_v * norm * BRIGHTNESS_BOOST, 0.0, 1.0)
     else:
-        if not zmask.any():
-            return
-        ys, xs = np.where(zmask)
         shades = _SHADE_MAP[ys, xs]
         pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
 
@@ -749,8 +750,8 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
 
         if zone in _BOT_ZONES:
             _paint_bot_zone_flat(arr, zmask, target_rgb,
-                                 use_pleat=is_skirt,
-                                 skirt_shade_map=skirt_shade_map if is_skirt else None)
+                                 use_pleat=(is_skirt and zone == "bottom"),
+                                 skirt_shade_map=skirt_shade_map if (is_skirt and zone == "bottom") else None)
         elif zone in _TOP_ZONES:
             # 팔 UV: sleeve 색이 별도로 있으면 그것 사용, 없으면 target_rgb
             sleeve_rgb = zone_colors.get("sleeve", target_rgb)
