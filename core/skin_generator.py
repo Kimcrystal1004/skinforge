@@ -719,12 +719,8 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
         mv = zone_maxv.get(zone, 1.0)
 
         if zone in _BOT_ZONES:
-            if is_skirt and zone == "bottom":
-                # 치마: base_short/long_skirt 레퍼런스 텍스처 기반 재채색
-                _paint_zone_pixels(zmask, bot_v, bot_valid, target_rgb, mv)
-            else:
-                # 바지/반바지/신발: flat shading
-                _paint_bot_zone_flat(arr, zmask, target_rgb, use_pleat=False)
+            # 치마류만 주름 다크닝, 바지/반바지/신발은 flat shading
+            _paint_bot_zone_flat(arr, zmask, target_rgb, use_pleat=is_skirt)
         elif zone in _TOP_ZONES:
             # 팔 UV: sleeve 색이 별도로 있으면 그것 사용, 없으면 target_rgb
             sleeve_rgb = zone_colors.get("sleeve", target_rgb)
