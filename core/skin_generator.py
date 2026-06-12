@@ -149,8 +149,7 @@ def _load_skirt_shade_map(fname: str) -> np.ndarray:
     img = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
     has_pixel = img[:, :, 3] > 10
     v = _np_rgb2v(img[:, :, :3])
-    # V값을 부드럽게 리매핑: 0→0.60, 0.3→0.72, 1→1.0 (직접 적용 시 갈색 방지)
-    m[has_pixel] = (0.60 + 0.40 * v[has_pixel]).astype(np.float32)
+    m[has_pixel] = v[has_pixel]
     return m
 
 _SHORT_SKIRT_SHADE = _load_skirt_shade_map("base_short_skirt.png")
@@ -657,28 +656,24 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
     t_v = max(t_v, 0.15)
     ys, xs = np.where(zmask)
     if skirt_shade_map is not None:
-        # 치마: 모든 면 동일 밝기(0.92)로 통일, pleat 주름 유지, shadow map 적용
-        shades = np.full(len(ys), 0.92, dtype=np.float32)
-        pleat  = _PLEAT_DARKEN_MAP[ys, xs]
-        skirt  = skirt_shade_map[ys, xs]
+        # 치마: 베이스 파일 V값을 그대로 사용, 타깃 H/S만 적용 — 그림자 로직 없음
+        base_v  = skirt_shade_map[ys, xs]
+        final_v = np.clip(base_v * BRIGHTNESS_BOOST, 0.0, 1.0)
     else:
         shades = _SHADE_MAP[ys, xs]
         pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
-        skirt  = np.ones(len(ys), dtype=np.float32)
 
-    # 밑단 효과: 다리 UV 내 최하 2행 어둡게
-    # 단, 커버 범위가 4행 미만(짧은 치마 등)이면 건너뜀 — 전체가 밑단으로 처리되는 것 방지
-    hem = np.ones(len(ys), dtype=np.float32)
-    for leg_uv in (_RLEG_UV, _LLEG_UV):
-        in_leg = leg_uv[ys, xs]
-        if in_leg.any():
-            leg_ys = ys[in_leg]
-            leg_y_max = int(leg_ys.max())
-            if leg_y_max - int(leg_ys.min()) > 3:   # 4행 이상일 때만 hem 적용
-                in_hem = in_leg & (ys >= leg_y_max - 1)
-                hem[in_hem] = 0.74
+        hem = np.ones(len(ys), dtype=np.float32)
+        for leg_uv in (_RLEG_UV, _LLEG_UV):
+            in_leg = leg_uv[ys, xs]
+            if in_leg.any():
+                leg_ys = ys[in_leg]
+                leg_y_max = int(leg_ys.max())
+                if leg_y_max - int(leg_ys.min()) > 3:
+                    in_hem = in_leg & (ys >= leg_y_max - 1)
+                    hem[in_hem] = 0.74
 
-    final_v = np.clip(t_v * shades * pleat * hem * skirt * BRIGHTNESS_BOOST, 0.0, 1.0)
+        final_v = np.clip(t_v * shades * pleat * hem * BRIGHTNESS_BOOST, 0.0, 1.0)
     hi_f = t_h * 6.0; hi_i = int(hi_f) % 6; frac = hi_f - int(hi_f)
     p_v  = final_v * (1 - t_s)
     q_v  = final_v * (1 - frac * t_s)
