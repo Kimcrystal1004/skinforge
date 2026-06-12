@@ -660,8 +660,13 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
         base_v = skirt_shade_map[ys, xs]   # NaN = 투명(base에 없는 위치)
         has_b  = ~np.isnan(base_v)
         if has_b.any():
-            max_v = float(base_v[has_b].max())
-            norm  = np.where(has_b, base_v / max(max_v, 0.01), 0.85).astype(np.float32)
+            min_v   = float(base_v[has_b].min())
+            max_v   = float(base_v[has_b].max())
+            range_v = max(max_v - min_v, 0.01)
+            # [min_v, max_v] → [0.35, 1.0] 로 펼쳐 대비 살림
+            norm  = np.where(has_b,
+                             0.35 + 0.65 * (base_v - min_v) / range_v,
+                             0.85).astype(np.float32)
         else:
             norm  = np.full(len(ys), 0.85, dtype=np.float32)
         final_v = np.clip(t_v * norm * BRIGHTNESS_BOOST, 0.0, 1.0)
