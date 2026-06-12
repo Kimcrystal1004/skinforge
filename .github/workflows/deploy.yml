@@ -37,7 +37,6 @@ jobs:
             echo "APP_USER=${{ secrets.APP_USER }}" >> .env
             echo "APP_PW=${{ secrets.APP_PW }}" >> .env
 
-            # nginx 설정 업데이트 + sites-enabled 심볼릭 링크 확인
             sudo cp nginx-skinforge.conf /etc/nginx/sites-available/skinforge
             sudo ln -sf /etc/nginx/sites-available/skinforge /etc/nginx/sites-enabled/skinforge
             sudo nginx -t && sudo systemctl reload nginx
@@ -49,12 +48,24 @@ jobs:
             docker ps -aq --filter name=skinforge | xargs -r docker rm -f 2>/dev/null
             docker network rm skinforge_default 2>/dev/null
             set -e
-            docker compose up -d --build --force-recreate --progress=quiet
 
-            sleep 10
+            docker compose up -d --build --force-recreate > /dev/null 2>&1
+            echo "compose up done"
+
+      - name: 헬스체크
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          command_timeout: "5m"
+          script: |
+            sleep 15
             echo "=== container status ==="
             docker ps -a --filter name=skinforge --format "{{.Names}} {{.Status}}"
             echo "=== app logs ==="
-            docker logs skinforge --tail 30 2>&1
+            docker logs skinforge --tail 50 2>&1
             echo "=== port ==="
             ss -tlnp | grep 7860 || echo "7860 not bound"
+            echo "=== nginx test ==="
+            curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:7860/ || echo "curl failed"
