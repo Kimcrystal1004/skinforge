@@ -416,6 +416,18 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
         show_progress="minimal",
     )
 
+    gr.HTML("""
+    <script>
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            var btn = document.querySelector('#gen-btn button');
+            if (btn) btn.click();
+        }
+    });
+    </script>
+    """)
+
 if __name__ == "__main__":
     demo.queue(default_concurrency_limit=2)
     demo.launch(server_name="0.0.0.0", server_port=7860,
