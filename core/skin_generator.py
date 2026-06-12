@@ -665,14 +665,17 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
         pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
         skirt  = np.ones(len(ys), dtype=np.float32)
 
-    # 밑단 효과: RLEG/LLEG 각각의 BOT 존 내 최하 2행 어둡게
+    # 밑단 효과: 다리 UV 내 최하 2행 어둡게
+    # 단, 커버 범위가 4행 미만(짧은 치마 등)이면 건너뜀 — 전체가 밑단으로 처리되는 것 방지
     hem = np.ones(len(ys), dtype=np.float32)
     for leg_uv in (_RLEG_UV, _LLEG_UV):
         in_leg = leg_uv[ys, xs]
         if in_leg.any():
-            leg_y_max = int(ys[in_leg].max())
-            in_hem = in_leg & (ys >= leg_y_max - 1)
-            hem[in_hem] = 0.74
+            leg_ys = ys[in_leg]
+            leg_y_max = int(leg_ys.max())
+            if leg_y_max - int(leg_ys.min()) > 3:   # 4행 이상일 때만 hem 적용
+                in_hem = in_leg & (ys >= leg_y_max - 1)
+                hem[in_hem] = 0.74
 
     final_v = np.clip(t_v * shades * pleat * hem * skirt * BRIGHTNESS_BOOST, 0.0, 1.0)
     hi_f = t_h * 6.0; hi_i = int(hi_f) % 6; frac = hi_f - int(hi_f)
