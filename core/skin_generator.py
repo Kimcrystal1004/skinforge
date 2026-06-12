@@ -484,31 +484,30 @@ def _select_ref_components(features: dict) -> dict:
     top_style = (features.get("top_style", "") or "").lower()
     bot_style = (features.get("bottom_style", "") or "").lower()
 
-    # 특수 스타일: 상하의 동일 레퍼런스 강제
+    # 치마류 전용 leg 레퍼런스 — STYLE_REF_MAP보다 먼저 계산해서 모든 경로에 적용
+    _MINI_KWS  = {"미니", "짧은치마", "short skirt", "miniskirt", "미니스커트", "미니 스커트"}
+    _LONG_KWS  = {"롱스커트", "롱 스커트", "long skirt", "longskirt", "맥시", "플리츠롱", "롱드레스", "맥시드레스"}
+    _SKIRT_KWS2 = {"치마", "스커트", "skirt", "드레스", "dress", "원피스", "플리츠", "프릴", "레이어드"}
+    _is_mini   = any(k in bot_style for k in _MINI_KWS)
+    _is_long   = any(k in bot_style for k in _LONG_KWS)
+    _is_skirt2 = any(k in bot_style for k in _SKIRT_KWS2)
+    _skirt_leg_ref: str | None = None
+    if _is_mini or (_is_skirt2 and not _is_long):
+        if (BASESKIN_DIR / "base_short_skirt.png").exists():
+            _skirt_leg_ref = "base_short_skirt.png"
+    elif _is_long or _is_skirt2:
+        if (BASESKIN_DIR / "base_long_skirt.png").exists():
+            _skirt_leg_ref = "base_long_skirt.png"
+
+    # 특수 스타일: body/arm은 동일 레퍼런스, leg는 치마 전용 레퍼런스 우선 적용
     for top_kws, bot_kws, fname in _STYLE_REF_MAP:
         top_ok = (not top_kws) or any(k in top_style for k in top_kws)
         bot_ok = (not bot_kws) or any(k in bot_style for k in bot_kws)
         if top_ok and bot_ok and (BASESKIN_DIR / fname).exists():
-            arr = _load_ref(fname)
-            print(f"[ref_select] special → {fname} (all zones)")
-            return {"body": arr, "arm": arr, "leg": arr, "head_comp": None}
-
-    # 치마류 전용 leg 레퍼런스 (base_short_skirt / base_long_skirt)
-    _MINI_KWS = {"미니", "짧은 치마", "짧은치마", "short skirt", "miniskirt", "미니스커트"}
-    _LONG_KWS = {"롱스커트", "long skirt", "longskirt", "맥시", "플리츠롱", "롱 스커트"}
-    _SKIRT_KWS2 = {"치마", "스커트", "skirt", "드레스", "dress", "원피스"}
-    _is_mini  = any(k in bot_style for k in _MINI_KWS)
-    _is_long  = any(k in bot_style for k in _LONG_KWS)
-    _is_skirt2 = any(k in bot_style for k in _SKIRT_KWS2)
-    _skirt_leg_ref: str | None = None
-    if _is_mini or (_is_skirt2 and not _is_long):
-        p = BASESKIN_DIR / "base_short_skirt.png"
-        if p.exists():
-            _skirt_leg_ref = "base_short_skirt.png"
-    elif _is_long or _is_skirt2:
-        p = BASESKIN_DIR / "base_long_skirt.png"
-        if p.exists():
-            _skirt_leg_ref = "base_long_skirt.png"
+            arr      = _load_ref(fname)
+            leg_arr  = _load_ref(_skirt_leg_ref) if _skirt_leg_ref else arr
+            print(f"[ref_select] special → {fname} (leg={_skirt_leg_ref or fname})")
+            return {"body": arr, "arm": arr, "leg": leg_arr, "head_comp": None}
 
     all_refs = sorted(BASESKIN_DIR.glob("reference (*).png"))
 
