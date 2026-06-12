@@ -663,9 +663,11 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
             min_v   = float(base_v[has_b].min())
             max_v   = float(base_v[has_b].max())
             range_v = max(max_v - min_v, 0.01)
-            # [min_v, max_v] → [0.20, 1.0] 로 펼쳐 대비 살림
+            # [min_v, max_v] → [0, 1] 정규화 후 power curve로 중간 명암 강조
+            # floor 0.35: 가장 어두운 픽셀은 35% 밝기, 중간값은 power로 눌러줌
+            linear = ((base_v - min_v) / range_v).clip(0, 1)
             norm  = np.where(has_b,
-                             0.20 + 0.80 * (base_v - min_v) / range_v,
+                             0.35 + 0.65 * (linear ** 1.8),
                              0.85).astype(np.float32)
         else:
             norm  = np.full(len(ys), 0.85, dtype=np.float32)
