@@ -381,7 +381,19 @@ CSS += """
 #sample-wrap .label-wrap { display: none !important; }
 """
 
-with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
+_CTRL_ENTER_JS = """
+() => {
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            var btn = document.querySelector('#gen-btn button');
+            if (btn) btn.click();
+        }
+    });
+}
+"""
+
+with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme, js=_CTRL_ENTER_JS) as demo:
     gr.HTML(HEADER_HTML)
 
     with gr.Row(equal_height=False):
@@ -416,17 +428,6 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme) as demo:
         show_progress="minimal",
     )
 
-    gr.HTML("""
-    <script>
-    document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && e.key === 'Enter') {
-            e.preventDefault();
-            var btn = document.querySelector('#gen-btn button');
-            if (btn) btn.click();
-        }
-    });
-    </script>
-    """)
 
 if __name__ == "__main__":
     demo.queue(default_concurrency_limit=2)
