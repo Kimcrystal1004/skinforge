@@ -671,6 +671,13 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
                              0.85).astype(np.float32)
         else:
             norm  = np.full(len(ys), 0.85, dtype=np.float32)
+        # 치마 몸통 최상단 행 전체: 중간 어둡기(0.55)로 고정
+        not_leg = ~_LEG_UV_MASK[ys, xs]
+        body_ys = ys[not_leg]
+        if len(body_ys) > 0:
+            top_y   = int(body_ys.min())
+            top_row = (ys == top_y) & not_leg
+            norm[top_row] = 0.55
         final_v = np.clip(t_v * norm * BRIGHTNESS_BOOST, 0.0, 1.0)
     else:
         shades = _SHADE_MAP[ys, xs]
