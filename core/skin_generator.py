@@ -608,9 +608,9 @@ def _zone_stats_split(body_ref: np.ndarray, bot_ref: np.ndarray,
 
 
 def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
-                         target_rgb: tuple) -> None:
-    """BOT 존 전용: shade_map + 주름 다크닝 + 밑단 암화.
-    레퍼런스 V 무시로 몸통-다리 색 통일, ref8/9 패턴 기반 주름 표현."""
+                         target_rgb: tuple, use_pleat: bool = False) -> None:
+    """BOT 존 전용: shade_map + 밑단 암화. use_pleat=True일 때만 주름 다크닝 추가.
+    바지류는 use_pleat=False(flat), 치마류만 use_pleat=True."""
     if not zmask.any():
         return
     tr, tg, tb = target_rgb
@@ -618,7 +618,7 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
     t_v = max(t_v, 0.15)
     ys, xs = np.where(zmask)
     shades = _SHADE_MAP[ys, xs]
-    pleat  = _PLEAT_DARKEN_MAP[ys, xs]
+    pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
 
     # 밑단 효과: RLEG/LLEG 각각의 BOT 존 내 최하 2행 어둡게
     hem = np.ones(len(ys), dtype=np.float32)
@@ -692,6 +692,10 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
             arr[ys, xs, 0] = r_out; arr[ys, xs, 1] = g_out; arr[ys, xs, 2] = b_out
             arr[ys, xs, 3] = 255
 
+    _SKIRT_KWS = {"치마", "스커트", "skirt", "드레스", "dress", "원피스", "롱스커트", "미니스커트"}
+    bot_style  = (features.get("bottom_style", "") or "").lower()
+    is_skirt   = any(k in bot_style for k in _SKIRT_KWS)
+
     for zone, zmask in zone_masks.items():
         if not zmask.any():
             continue
@@ -699,9 +703,8 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
         mv = zone_maxv.get(zone, 1.0)
 
         if zone in _BOT_ZONES:
-            # 치마/바지/신발: 레퍼런스 V 무시, shade_map 기반 단색 칠하기
-            # → 레퍼런스 다리 텍스처가 어두워도 몸통과 동일한 밝기로 통일
-            _paint_bot_zone_flat(arr, zmask, target_rgb)
+            # 치마류만 주름 다크닝, 바지/반바지/신발은 flat shading
+            _paint_bot_zone_flat(arr, zmask, target_rgb, use_pleat=is_skirt)
         elif zone in _TOP_ZONES:
             # 팔 UV: sleeve 색이 별도로 있으면 그것 사용, 없으면 target_rgb
             sleeve_rgb = zone_colors.get("sleeve", target_rgb)
