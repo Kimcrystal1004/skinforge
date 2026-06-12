@@ -667,7 +667,7 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
             # floor 0.35: 가장 어두운 픽셀은 35% 밝기, 중간값은 power로 눌러줌
             linear = ((base_v - min_v) / range_v).clip(0, 1)
             norm  = np.where(has_b,
-                             0.35 + 0.65 * (linear ** 1.8),
+                             0.35 + 0.65 * (linear ** 2.5),
                              0.85).astype(np.float32)
         else:
             norm  = np.full(len(ys), 0.85, dtype=np.float32)
