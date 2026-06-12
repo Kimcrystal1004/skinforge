@@ -644,7 +644,7 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
 
 
 def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
-                arm_ref=None):
+                arm_ref=None, is_skirt=False):
     """존별로 다른 레퍼런스 텍스처를 사용해 HSV 색조 변환 적용.
     팔 UV 영역은 arm_ref, 몸통은 body_ref, 다리/신발은 bot_ref 사용."""
     if arm_ref is None:
@@ -691,10 +691,6 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
             ys, xs = np.where(no_ref)
             arr[ys, xs, 0] = r_out; arr[ys, xs, 1] = g_out; arr[ys, xs, 2] = b_out
             arr[ys, xs, 3] = 255
-
-    _SKIRT_KWS = {"치마", "스커트", "skirt", "드레스", "dress", "원피스", "롱스커트", "미니스커트"}
-    bot_style  = (features.get("bottom_style", "") or "").lower()
-    is_skirt   = any(k in bot_style for k in _SKIRT_KWS)
 
     for zone, zmask in zone_masks.items():
         if not zmask.any():
@@ -743,8 +739,12 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
     arm_ref  = _comps["arm"]
     leg_ref  = _comps["leg"]
 
-    # 반바지: 긴바지 레퍼런스를 반바지 높이로 가상 크롭 (허벅지 텍스처만 사용)
+    # 치마 여부 판별 (주름 명암 적용 여부 결정)
+    _SKIRT_KWS = {"치마", "스커트", "skirt", "드레스", "dress", "원피스", "롱스커트", "미니스커트"}
     bot_style_raw = (features.get("bottom_style", "") or "").lower()
+    is_skirt = any(k in bot_style_raw for k in _SKIRT_KWS)
+
+    # 반바지: 긴바지 레퍼런스를 반바지 높이로 가상 크롭 (허벅지 텍스처만 사용)
     if _bottom_category(bot_style_raw) == "shorts":
         leg_ref = _trim_ref_for_shorts(leg_ref)
 
@@ -768,15 +768,18 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
                 base_maxv = _zone_stats_split(body_ref, leg_ref, base_m, arm_ref)
                 tmp = base_m.copy()
                 tmp[mask_arr[:, :, 3] > 10, 3] = 0   # 재킷이 덮는 부분 제거
-                _paint_mask(arr, tmp, body_ref, leg_ref, shirt_zone_colors, base_maxv, arm_ref)
+                _paint_mask(arr, tmp, body_ref, leg_ref, shirt_zone_colors, base_maxv, arm_ref,
+                            is_skirt=is_skirt)
 
-    _paint_mask(arr, mask_arr, body_ref, leg_ref, zone_colors, zone_maxv, arm_ref)
+    _paint_mask(arr, mask_arr, body_ref, leg_ref, zone_colors, zone_maxv, arm_ref,
+                is_skirt=is_skirt)
 
     # 악세서리 오버레이 적용
     for acc_path in pick_acc_overlays(features):
         acc_arr  = np.array(Image.open(acc_path).convert("RGBA"), dtype=np.uint8)
         acc_maxv = _zone_stats_split(body_ref, leg_ref, acc_arr, arm_ref)
-        _paint_mask(arr, acc_arr, body_ref, leg_ref, zone_colors, acc_maxv, arm_ref)
+        _paint_mask(arr, acc_arr, body_ref, leg_ref, zone_colors, acc_maxv, arm_ref,
+                    is_skirt=is_skirt)
 
 
 def _trim_ref_for_shorts(leg_ref: np.ndarray) -> np.ndarray:
