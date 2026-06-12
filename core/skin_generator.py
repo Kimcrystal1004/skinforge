@@ -139,13 +139,13 @@ def _build_pleat_darken_map() -> np.ndarray:
 _PLEAT_DARKEN_MAP = _build_pleat_darken_map()
 
 
-def _load_skirt_shade_map(fname: str) -> np.ndarray:
-    """치마 전용 그림자 마스크 로드.
-    어두운 픽셀의 V값 = 밝기 배율 (낮을수록 어둡게), 투명 픽셀 = 1.0(영향 없음)."""
-    m = np.ones((64, 64), dtype=np.float32)
+def _load_skirt_shade_map(fname: str):
+    """치마 전용 베이스 V맵 로드.
+    비투명 픽셀 → raw V값, 투명 픽셀 → NaN, 파일 없으면 None 반환."""
     p = BASESKIN_DIR / fname
     if not p.exists():
-        return m
+        return None
+    m = np.full((64, 64), np.nan, dtype=np.float32)
     img = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
     has_pixel = img[:, :, 3] > 10
     v = _np_rgb2v(img[:, :, :3])
@@ -656,9 +656,13 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
     t_v = max(t_v, 0.15)
     ys, xs = np.where(zmask)
     if skirt_shade_map is not None:
-        # 치마: 베이스 파일 V값을 그대로 사용, 타깃 H/S만 적용 — 그림자 로직 없음
-        base_v  = skirt_shade_map[ys, xs]
-        final_v = np.clip(base_v * BRIGHTNESS_BOOST, 0.0, 1.0)
+        # 베이스 파일 픽셀 범위 우선: zmask를 베이스 비투명 픽셀 위치로 확장
+        has_base = ~np.isnan(skirt_shade_map)
+        zmask    = zmask | has_base
+        ys, xs   = np.where(zmask)
+        base_v   = skirt_shade_map[ys, xs]
+        base_v   = np.where(np.isnan(base_v), 1.0, base_v)  # zmask 전용 픽셀은 기본 밝기
+        final_v  = np.clip(base_v * BRIGHTNESS_BOOST, 0.0, 1.0)
     else:
         shades = _SHADE_MAP[ys, xs]
         pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
