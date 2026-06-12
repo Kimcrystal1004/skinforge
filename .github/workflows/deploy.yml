@@ -49,7 +49,7 @@ jobs:
             docker ps -aq --filter name=skinforge | xargs -r docker rm -f 2>/dev/null
             docker network rm skinforge_default 2>/dev/null
             set -e
-            docker compose up -d --build --force-recreate --quiet-pull 2>&1 | tail -5
+            docker compose up -d --build --force-recreate --progress=quiet
 
             sleep 10
             echo "=== container status ==="
