@@ -149,7 +149,8 @@ def _load_skirt_shade_map(fname: str) -> np.ndarray:
     img = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
     has_pixel = img[:, :, 3] > 10
     v = _np_rgb2v(img[:, :, :3])
-    m[has_pixel] = v[has_pixel]
+    # V값을 부드럽게 리매핑: 0→0.60, 0.3→0.72, 1→1.0 (직접 적용 시 갈색 방지)
+    m[has_pixel] = (0.60 + 0.40 * v[has_pixel]).astype(np.float32)
     return m
 
 _SHORT_SKIRT_SHADE = _load_skirt_shade_map("base_short_skirt.png")
@@ -656,10 +657,10 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
     t_v = max(t_v, 0.15)
     ys, xs = np.where(zmask)
     if skirt_shade_map is not None:
-        # 치마: 모든 면 동일 밝기(0.92)로 통일, pleat 주름 유지, shadow map 미적용
+        # 치마: 모든 면 동일 밝기(0.92)로 통일, pleat 주름 유지, shadow map 적용
         shades = np.full(len(ys), 0.92, dtype=np.float32)
         pleat  = _PLEAT_DARKEN_MAP[ys, xs]
-        skirt  = np.ones(len(ys), dtype=np.float32)
+        skirt  = skirt_shade_map[ys, xs]
     else:
         shades = _SHADE_MAP[ys, xs]
         pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
