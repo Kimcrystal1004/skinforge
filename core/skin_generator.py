@@ -671,19 +671,7 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
                              0.85).astype(np.float32)
         else:
             norm  = np.full(len(ys), 0.85, dtype=np.float32)
-        # 치마 상단 줄(상의와 접하는 몸통 최상단 행): 중간 어둡기 고정
-        # 몸통 UV는 y<40 구간에 있음 (다리 UV는 y>=40)
-        # y=17-20은 상단면(위에서만 보임)으로 픽셀 수가 적음 → 16px 이상인 행만 대상
-        upper   = ys < 40
-        upper_ys = ys[upper]
-        if len(upper_ys) > 0:
-            y_counts  = np.bincount(upper_ys, minlength=64)
-            wide_rows = np.where(y_counts >= 16)[0]
-            if len(wide_rows) > 0:
-                top_y   = int(wide_rows.min())
-                top_row = upper & (ys == top_y)
-                norm[top_row] = 0.55
-        final_v = np.clip(t_v * norm * BRIGHTNESS_BOOST, 0.0, 1.0)
+final_v = np.clip(t_v * norm * BRIGHTNESS_BOOST, 0.0, 1.0)
     else:
         shades = _SHADE_MAP[ys, xs]
         pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
