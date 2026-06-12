@@ -493,6 +493,23 @@ def _select_ref_components(features: dict) -> dict:
             print(f"[ref_select] special → {fname} (all zones)")
             return {"body": arr, "arm": arr, "leg": arr, "head_comp": None}
 
+    # 치마류 전용 leg 레퍼런스 (base_short_skirt / base_long_skirt)
+    _MINI_KWS = {"미니", "짧은 치마", "짧은치마", "short skirt", "miniskirt", "미니스커트"}
+    _LONG_KWS = {"롱스커트", "long skirt", "longskirt", "맥시", "플리츠롱", "롱 스커트"}
+    _SKIRT_KWS2 = {"치마", "스커트", "skirt", "드레스", "dress", "원피스"}
+    _is_mini  = any(k in bot_style for k in _MINI_KWS)
+    _is_long  = any(k in bot_style for k in _LONG_KWS)
+    _is_skirt2 = any(k in bot_style for k in _SKIRT_KWS2)
+    _skirt_leg_ref: str | None = None
+    if _is_mini or (_is_skirt2 and not _is_long):
+        p = BASESKIN_DIR / "base_short_skirt.png"
+        if p.exists():
+            _skirt_leg_ref = "base_short_skirt.png"
+    elif _is_long or _is_skirt2:
+        p = BASESKIN_DIR / "base_long_skirt.png"
+        if p.exists():
+            _skirt_leg_ref = "base_long_skirt.png"
+
     all_refs = sorted(BASESKIN_DIR.glob("reference (*).png"))
 
     best_body = (_REF_FALLBACK, -1.0)
@@ -518,9 +535,10 @@ def _select_ref_components(features: dict) -> dict:
                 if h_score > best_hair[1]:
                     best_hair = (ref_num, h_score)
 
+    leg_fname = _skirt_leg_ref if _skirt_leg_ref else best_leg[0]
     print(f"[ref_select] body={best_body[0]}({best_body[1]:.1f}) "
           f"arm={best_arm[0]}({best_arm[1]:.1f}) "
-          f"leg={best_leg[0]}({best_leg[1]:.1f}) "
+          f"leg={leg_fname} "
           f"hair_ref={best_hair[0]}")
 
     head_comp = None
@@ -530,7 +548,7 @@ def _select_ref_components(features: dict) -> dict:
     return {
         "body":      _load_ref(best_body[0]),
         "arm":       _load_ref(best_arm[0]),
-        "leg":       _load_ref(best_leg[0]),
+        "leg":       _load_ref(leg_fname),
         "head_comp": head_comp,
     }
 
