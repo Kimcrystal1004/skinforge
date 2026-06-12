@@ -656,11 +656,18 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
     t_v = max(t_v, 0.15)
     ys, xs = np.where(zmask)
     shades = _SHADE_MAP[ys, xs]
-    # 치마일 때: 가랑이 그림자(0.55) 등 극단적 암화를 완화 → 몸통/다리 색 통일
+    # 치마일 때: 가랑이 그림자 등 극단적 암화 완화 + 다리 UV는 shade 상단 보정
     if skirt_shade_map is not None:
-        shades = np.maximum(shades, 0.78)
+        is_leg = (_RLEG_UV | _LLEG_UV)[ys, xs]
+        shades = np.where(is_leg, np.maximum(shades, 0.88), np.maximum(shades, 0.72))
     pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
-    skirt  = skirt_shade_map[ys, xs] if skirt_shade_map is not None else np.ones(len(ys), dtype=np.float32)
+    # 다리 UV는 shadow map 제외 (짧은 치마는 2행만 커버 → shadow 왜곡)
+    if skirt_shade_map is not None:
+        skirt_vals = skirt_shade_map[ys, xs]
+        is_leg = (_RLEG_UV | _LLEG_UV)[ys, xs]
+        skirt = np.where(is_leg, 1.0, skirt_vals).astype(np.float32)
+    else:
+        skirt = np.ones(len(ys), dtype=np.float32)
 
     # 밑단 효과: RLEG/LLEG 각각의 BOT 존 내 최하 2행 어둡게
     hem = np.ones(len(ys), dtype=np.float32)
