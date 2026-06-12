@@ -656,6 +656,9 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
     t_v = max(t_v, 0.15)
     ys, xs = np.where(zmask)
     shades = _SHADE_MAP[ys, xs]
+    # 치마일 때: 가랑이 그림자(0.55) 등 극단적 암화를 완화 → 몸통/다리 색 통일
+    if skirt_shade_map is not None:
+        shades = np.maximum(shades, 0.78)
     pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
     skirt  = skirt_shade_map[ys, xs] if skirt_shade_map is not None else np.ones(len(ys), dtype=np.float32)
 
