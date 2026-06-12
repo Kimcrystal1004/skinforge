@@ -138,6 +138,23 @@ def _build_pleat_darken_map() -> np.ndarray:
 
 _PLEAT_DARKEN_MAP = _build_pleat_darken_map()
 
+
+def _load_skirt_shade_map(fname: str) -> np.ndarray:
+    """치마 전용 그림자 마스크 로드.
+    어두운 픽셀의 V값 = 밝기 배율 (낮을수록 어둡게), 투명 픽셀 = 1.0(영향 없음)."""
+    m = np.ones((64, 64), dtype=np.float32)
+    p = BASESKIN_DIR / fname
+    if not p.exists():
+        return m
+    img = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
+    has_pixel = img[:, :, 3] > 10
+    v = _np_rgb2v(img[:, :, :3])
+    m[has_pixel] = v[has_pixel]
+    return m
+
+_SHORT_SKIRT_SHADE = _load_skirt_shade_map("base_short_skirt.png")
+_LONG_SKIRT_SHADE  = _load_skirt_shade_map("base_long_skirt.png")
+
 # 다리 UV 서브 마스크 (밑단 행 동적 계산용)
 _RLEG_UV = np.zeros((64, 64), dtype=bool)
 _RLEG_UV[16:32, 0:16] = True
@@ -628,9 +645,10 @@ def _zone_stats_split(body_ref: np.ndarray, bot_ref: np.ndarray,
 
 
 def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
-                         target_rgb: tuple, use_pleat: bool = False) -> None:
-    """BOT 존 전용: shade_map + 밑단 암화. use_pleat=True일 때만 주름 다크닝 추가.
-    바지류는 use_pleat=False(flat), 치마류만 use_pleat=True."""
+                         target_rgb: tuple, use_pleat: bool = False,
+                         skirt_shade_map: np.ndarray = None) -> None:
+    """BOT 존 전용: shade_map + 밑단 암화.
+    skirt_shade_map: base_short/long_skirt.png 로드된 그림자 배율 맵."""
     if not zmask.any():
         return
     tr, tg, tb = target_rgb
@@ -639,6 +657,7 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
     ys, xs = np.where(zmask)
     shades = _SHADE_MAP[ys, xs]
     pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
+    skirt  = skirt_shade_map[ys, xs] if skirt_shade_map is not None else np.ones(len(ys), dtype=np.float32)
 
     # 밑단 효과: RLEG/LLEG 각각의 BOT 존 내 최하 2행 어둡게
     hem = np.ones(len(ys), dtype=np.float32)
@@ -649,7 +668,7 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
             in_hem = in_leg & (ys >= leg_y_max - 1)
             hem[in_hem] = 0.74
 
-    final_v = np.clip(t_v * shades * pleat * hem * BRIGHTNESS_BOOST, 0.0, 1.0)
+    final_v = np.clip(t_v * shades * pleat * hem * skirt * BRIGHTNESS_BOOST, 0.0, 1.0)
     hi_f = t_h * 6.0; hi_i = int(hi_f) % 6; frac = hi_f - int(hi_f)
     p_v  = final_v * (1 - t_s)
     q_v  = final_v * (1 - frac * t_s)
@@ -664,7 +683,7 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
 
 
 def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
-                arm_ref=None, is_skirt=False):
+                arm_ref=None, is_skirt=False, skirt_shade_map=None):
     """존별로 다른 레퍼런스 텍스처를 사용해 HSV 색조 변환 적용.
     팔 UV 영역은 arm_ref, 몸통은 body_ref, 다리/신발은 bot_ref 사용."""
     if arm_ref is None:
@@ -719,8 +738,9 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
         mv = zone_maxv.get(zone, 1.0)
 
         if zone in _BOT_ZONES:
-            # 치마류만 주름 다크닝, 바지/반바지/신발은 flat shading
-            _paint_bot_zone_flat(arr, zmask, target_rgb, use_pleat=is_skirt)
+            _paint_bot_zone_flat(arr, zmask, target_rgb,
+                                 use_pleat=is_skirt,
+                                 skirt_shade_map=skirt_shade_map if is_skirt else None)
         elif zone in _TOP_ZONES:
             # 팔 UV: sleeve 색이 별도로 있으면 그것 사용, 없으면 target_rgb
             sleeve_rgb = zone_colors.get("sleeve", target_rgb)
@@ -759,10 +779,16 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
     arm_ref  = _comps["arm"]
     leg_ref  = _comps["leg"]
 
-    # 치마 여부 판별 (주름 명암 적용 여부 결정)
+    # 치마 여부 + 전용 그림자 맵 결정
     _SKIRT_KWS = {"치마", "스커트", "skirt", "드레스", "dress", "원피스", "롱스커트", "미니스커트"}
+    _LONG_SKIRT_KWS = {"롱스커트", "롱 스커트", "long skirt", "맥시", "롱드레스"}
     bot_style_raw = (features.get("bottom_style", "") or "").lower()
     is_skirt = any(k in bot_style_raw for k in _SKIRT_KWS)
+    if is_skirt:
+        is_long = any(k in bot_style_raw for k in _LONG_SKIRT_KWS)
+        skirt_shade_map = _LONG_SKIRT_SHADE if is_long else _SHORT_SKIRT_SHADE
+    else:
+        skirt_shade_map = None
 
     # 반바지: 긴바지 레퍼런스를 반바지 높이로 가상 크롭 (허벅지 텍스처만 사용)
     if _bottom_category(bot_style_raw) == "shorts":
@@ -789,17 +815,17 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
                 tmp = base_m.copy()
                 tmp[mask_arr[:, :, 3] > 10, 3] = 0   # 재킷이 덮는 부분 제거
                 _paint_mask(arr, tmp, body_ref, leg_ref, shirt_zone_colors, base_maxv, arm_ref,
-                            is_skirt=is_skirt)
+                            is_skirt=is_skirt, skirt_shade_map=skirt_shade_map)
 
     _paint_mask(arr, mask_arr, body_ref, leg_ref, zone_colors, zone_maxv, arm_ref,
-                is_skirt=is_skirt)
+                is_skirt=is_skirt, skirt_shade_map=skirt_shade_map)
 
     # 악세서리 오버레이 적용
     for acc_path in pick_acc_overlays(features):
         acc_arr  = np.array(Image.open(acc_path).convert("RGBA"), dtype=np.uint8)
         acc_maxv = _zone_stats_split(body_ref, leg_ref, acc_arr, arm_ref)
         _paint_mask(arr, acc_arr, body_ref, leg_ref, zone_colors, acc_maxv, arm_ref,
-                    is_skirt=is_skirt)
+                    is_skirt=is_skirt, skirt_shade_map=skirt_shade_map)
 
 
 def _trim_ref_for_shorts(leg_ref: np.ndarray) -> np.ndarray:
