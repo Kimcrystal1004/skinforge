@@ -656,13 +656,10 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
     t_v = max(t_v, 0.15)
     ys, xs = np.where(zmask)
     if skirt_shade_map is not None:
-        # 치마: 모든 면 동일 밝기(0.92)로 통일 → 몸통/다리 색 일치
-        # shadow map이 변화(주름/그림자)를 담당, 다리 UV는 shadow 제외
+        # 치마: 모든 면 동일 밝기(0.92)로 통일, pleat 주름 유지, shadow map 미적용
         shades = np.full(len(ys), 0.92, dtype=np.float32)
-        pleat  = np.ones(len(ys), dtype=np.float32)
-        is_leg = (_RLEG_UV | _LLEG_UV)[ys, xs]
-        skirt_vals = skirt_shade_map[ys, xs]
-        skirt = np.where(is_leg, 1.0, skirt_vals).astype(np.float32)
+        pleat  = _PLEAT_DARKEN_MAP[ys, xs]
+        skirt  = np.ones(len(ys), dtype=np.float32)
     else:
         shades = _SHADE_MAP[ys, xs]
         pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
