@@ -648,22 +648,23 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
                          target_rgb: tuple, use_pleat: bool = False,
                          skirt_shade_map: np.ndarray = None) -> None:
     """BOT 존 전용: shade_map + 밑단 암화.
-    skirt_shade_map: base_short/long_skirt.png 로드된 그림자 배율 맵."""
-    if not zmask.any():
-        return
+    skirt_shade_map: base_short/long_skirt.png 로드된 V맵 (NaN=투명)."""
     tr, tg, tb = target_rgb
     t_h, t_s, t_v = rgb_to_hsv(tr / 255, tg / 255, tb / 255)
     t_v = max(t_v, 0.15)
-    ys, xs = np.where(zmask)
     if skirt_shade_map is not None:
-        # 베이스 파일 픽셀 범위 우선: zmask를 베이스 비투명 픽셀 위치로 확장
-        has_base = ~np.isnan(skirt_shade_map)
-        zmask    = zmask | has_base
-        ys, xs   = np.where(zmask)
-        base_v   = skirt_shade_map[ys, xs]
-        base_v   = np.where(np.isnan(base_v), 1.0, base_v)  # zmask 전용 픽셀은 기본 밝기
-        final_v  = np.clip(base_v * BRIGHTNESS_BOOST, 0.0, 1.0)
+        # 치마: 마스크 무시, 베이스 파일 비투명 픽셀만 사용
+        # 베이스 V값으로 밝기, 타깃 H/S로 색조만 적용
+        effective = ~np.isnan(skirt_shade_map)
+        if not effective.any():
+            return
+        ys, xs  = np.where(effective)
+        base_v  = skirt_shade_map[ys, xs]
+        final_v = np.clip(base_v * BRIGHTNESS_BOOST, 0.0, 1.0)
     else:
+        if not zmask.any():
+            return
+        ys, xs = np.where(zmask)
         shades = _SHADE_MAP[ys, xs]
         pleat  = _PLEAT_DARKEN_MAP[ys, xs] if use_pleat else np.ones(len(ys), dtype=np.float32)
 
