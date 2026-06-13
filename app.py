@@ -67,7 +67,7 @@ footer, .built-with { display: none !important; }
 .gradio-container .main .wrap { padding-left: 0 !important; padding-right: 0 !important; }
 .gradio-container .main .wrap > .gap { padding: 0 !important; gap: 8px !important; align-items: flex-start !important; }
 #result-box { margin: 0 !important; padding-top: 0 !important; }
-#upload-wrap { margin: 0 !important; padding-top: 2px !important; }
+#upload-wrap { margin: 0 !important; padding-top: 5px !important; padding-left: 6px !important; }
 
 /* 페이지 배경 */
 body, .gradio-container {
