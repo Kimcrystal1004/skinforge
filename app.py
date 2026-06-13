@@ -54,8 +54,13 @@ footer, .built-with { display: none !important; }
 #upload-wrap .source-selection,
 #upload-wrap [data-testid="source-select"] { display: none !important; }
 
-/* Gradio 기본 버튼 + 구분선 완전 숨김 (커스텀 HTML 버튼으로 대체) */
+/* Gradio 기본 버튼 숨김 */
 #gen-btn { display: none !important; }
+
+/* 구분선 제거: HTML 버튼 컨테이너 + 상태박스 블록 */
+#gen-html, #gen-html > div,
+#status-box, #status-box > div { border: none !important; box-shadow: none !important; padding: 0 !important; }
+.gradio-container hr { display: none !important; }
 
 /* 페이지 배경 */
 body, .gradio-container {
@@ -346,14 +351,15 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme, js=_CTRL_ENTER_JS) as
             photo_input = gr.Image(
                 type="pil", label="사진 업로드",
                 elem_id="upload-wrap", show_label=False,
+                height=340,
             )
-            gr.HTML(value=_BTN_GEN)
+            gr.HTML(value=_BTN_GEN, elem_id="gen-html")
             generate_btn = gr.Button(
                 "스킨 생성하기", variant="primary", elem_id="gen-btn",
             )
             status_output = gr.Textbox(
                 label="상태", interactive=False, elem_id="status-box",
-                show_label=False, visible=True,
+                show_label=False, visible=False,
             )
             if _SAMPLE_FILES:
                 gr.HTML("<div style='color:#666;font-size:12px;margin:6px 0 4px;'>📷 샘플 사진으로 테스트해보세요</div>")
