@@ -397,8 +397,13 @@ function sp(el,p,v){ el.style.setProperty(p,v,'important'); }
     '#upload-wrap{'
     +'background:#181818!important;'
     +'border:none!important;'
-    +'box-shadow:none!important;'
+    +'box-shadow:'
+      +'inset 0 5px 0 #c8c8c8,'
+      +'inset 5px 0 0 #c8c8c8,'
+      +'inset 0 -5px 0 #383838,'
+      +'inset -5px 0 0 #383838!important;'
     +'height:340px!important;'
+    +'min-height:340px!important;'
     +'overflow:hidden!important;'
     +'border-radius:0!important;'
     +'box-sizing:border-box!important;'
@@ -414,7 +419,8 @@ function sp(el,p,v){ el.style.setProperty(p,v,'important'); }
     +'background:transparent!important;'
     +'border:none!important;box-shadow:none!important;'
     +'padding:0!important;'
-    +'max-height:340px!important;'
+    +'height:340px!important;'
+    +'min-height:340px!important;'
     +'overflow:hidden!important;}'
 
     +'#upload-wrap img{'
@@ -441,13 +447,16 @@ function styleUpload(){
   sp(el,'border-radius','0');
   sp(el,'box-sizing','border-box');
   sp(el,'position','relative');
-  sp(el,'box-shadow','none');
+  sp(el,'box-shadow',
+    'inset 0 5px 0 #c8c8c8,inset 5px 0 0 #c8c8c8,'
+    +'inset 0 -5px 0 #383838,inset -5px 0 0 #383838');
   el.querySelectorAll('label,.block,.wrap').forEach(function(c){
     sp(c,'background','transparent');
     sp(c,'border','none');
     sp(c,'box-shadow','none');
     sp(c,'padding','0');
-    sp(c,'max-height','340px');
+    sp(c,'height','340px');
+    sp(c,'min-height','340px');
     sp(c,'overflow','hidden');
   });
   el.querySelectorAll('img').forEach(function(img){
