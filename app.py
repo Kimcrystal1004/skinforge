@@ -54,8 +54,8 @@ footer, .built-with { display: none !important; }
 #upload-wrap .source-selection,
 #upload-wrap [data-testid="source-select"] { display: none !important; }
 
-/* Gradio 기본 버튼 숨김 */
-#gen-btn { display: none !important; }
+/* Gradio 기본 버튼: DOM 유지, 화면 밖 이동 → 프로그래밍적 클릭 가능 */
+#gen-btn { position: absolute !important; left: -9999px !important; opacity: 0 !important; pointer-events: none !important; height: 0 !important; overflow: hidden !important; }
 
 /* 구분선 제거 */
 #gen-html, #gen-html > div,
@@ -65,7 +65,8 @@ footer, .built-with { display: none !important; }
 /* 레이아웃 정렬: 업로드박스 왼쪽 = 헤더 왼쪽 */
 .gradio-container .main { padding-left: 0 !important; padding-right: 0 !important; }
 .gradio-container .main .wrap { padding-left: 0 !important; padding-right: 0 !important; }
-.gradio-container .main .wrap > .gap { padding: 0 !important; gap: 8px !important; }
+.gradio-container .main .wrap > .gap { padding: 0 !important; gap: 8px !important; align-items: flex-start !important; }
+#result-box, #upload-wrap { margin: 0 !important; padding-top: 0 !important; }
 
 /* 페이지 배경 */
 body, .gradio-container {
@@ -253,7 +254,7 @@ def make_result_html(view_imgs: list, skin_img: Image.Image) -> str:
 
   <!-- 캐러셀 -->
   <div id="sfwrap" data-idx="0"
-       style="position:relative;border-style:solid;border-width:5px;border-color:#b8b8b8 #444 #444 #b8b8b8;border-radius:0;box-shadow:0 0 0 2px #111;background:#181818;overflow:hidden;user-select:none;">
+       style="position:relative;border-style:solid;border-width:5px;border-color:#b8b8b8 #444 #444 #b8b8b8;border-radius:0;box-shadow:0 0 0 2px #111;background:#181818;overflow:hidden;user-select:none;height:340px;box-sizing:content-box;">
 
     <!-- 방향 라벨 -->
     <div id="sflbl"
@@ -409,18 +410,15 @@ function sp(el,p,v){ el.style.setProperty(p,v,'important'); }
   s.textContent=
     '#upload-wrap{'
     +'background:#181818!important;'
-    +'border:none!important;'
-    +'box-shadow:'
-      +'inset 0 5px 0 #b8b8b8,'
-      +'inset 5px 0 0 #b8b8b8,'
-      +'inset 0 -5px 0 #444,'
-      +'inset -5px 0 0 #444,'
-      +'0 0 0 2px #111!important;'
+    +'border-style:solid!important;'
+    +'border-width:5px!important;'
+    +'border-color:#b8b8b8 #444 #444 #b8b8b8!important;'
+    +'box-shadow:0 0 0 2px #111!important;'
     +'height:340px!important;'
     +'min-height:340px!important;'
     +'overflow:hidden!important;'
     +'border-radius:0!important;'
-    +'box-sizing:border-box!important;'
+    +'box-sizing:content-box!important;'
     +'position:relative!important;}'
 
     +'#upload-wrap label,'
@@ -455,16 +453,16 @@ function styleUpload(){
   var el=document.getElementById('upload-wrap');
   if(!el) return;
   sp(el,'background','#181818');
-  sp(el,'border','none');
+  sp(el,'border-style','solid');
+  sp(el,'border-width','5px');
+  sp(el,'border-color','#b8b8b8 #444 #444 #b8b8b8');
+  sp(el,'box-shadow','0 0 0 2px #111');
   sp(el,'height','340px');
+  sp(el,'min-height','340px');
   sp(el,'overflow','hidden');
   sp(el,'border-radius','0');
-  sp(el,'box-sizing','border-box');
+  sp(el,'box-sizing','content-box');
   sp(el,'position','relative');
-  sp(el,'box-shadow',
-    'inset 0 5px 0 #b8b8b8,inset 5px 0 0 #b8b8b8,'
-    +'inset 0 -5px 0 #444,inset -5px 0 0 #444,'
-    +'0 0 0 2px #111');
   el.querySelectorAll('label,.block,.wrap').forEach(function(c){
     sp(c,'background','transparent');
     sp(c,'border','none');
