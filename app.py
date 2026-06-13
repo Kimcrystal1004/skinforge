@@ -45,110 +45,59 @@ theme = gr.themes.Base(
 CSS = """
 footer, .built-with { display: none !important; }
 
-/* ── 바깥 흰 박스 제거 ── */
-#upload-wrap,
-#upload-wrap > .block,
-#upload-wrap > div > .block,
-.gradio-image { background: transparent !important; border: none !important; padding: 0 !important; box-shadow: none !important; }
+/* ── 전체 Gradio 블록 배경 제거 ── */
+#upload-wrap, #upload-wrap > .block, #upload-wrap > div > .block,
+.gradio-image { background: transparent !important; border: none !important;
+  padding: 0 !important; box-shadow: none !important; }
+.gradio-container > .main > .wrap > .gap > div > .block {
+    background: transparent !important; border: none !important;
+    box-shadow: none !important; padding: 0 !important; }
 
-/* ── 업로드 드롭존 (민트 테두리만) ── */
+/* ── 업로드 드롭존 — 마인크래프트 베벨 패널 ── */
 #upload-wrap .wrap {
-    border: 2px dashed #00C9A7 !important;
-    border-radius: 16px !important;
-    background: #0d0d0d !important;
-    min-height: 340px !important;
-    height: 340px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-#upload-wrap .wrap:hover { background: #111 !important; }
-#upload-wrap svg { color: #00C9A7 !important; }
-#upload-wrap .upload-text span { color: #aaa !important; }
+    background: #181818 !important;
+    border-style: solid !important; border-width: 5px !important;
+    border-color: #b8b8b8 #444 #444 #b8b8b8 !important;
+    border-radius: 0 !important;
+    box-shadow: 0 0 0 2px #111 !important;
+    min-height: 340px !important; height: 340px !important;
+    width: 100% !important; box-sizing: border-box !important; }
+#upload-wrap .wrap:hover { filter: brightness(1.1) !important; }
+#upload-wrap svg { color: rgba(255,255,255,.65) !important; }
+#upload-wrap .upload-text span {
+    color: rgba(255,255,255,.55) !important;
+    text-shadow: 1px 1px 0 #000 !important; }
 
-/* ── 안쪽 폰모양 네모 제거 ── */
-#upload-wrap .wrap > .upload-container,
-#upload-wrap .wrap > div:first-child:not(.upload-text),
-.svelte-ozuaqz, .svelte-1ipelgc { display: none !important; }
-
-/* ── 카메라·클립보드 아이콘 제거 ── */
+/* ── 불필요 UI 제거 ── */
 #upload-wrap .source-selection,
 #upload-wrap [data-testid="source-select"] { display: none !important; }
-
-/* ── 업로드 영역 이미지 맞춤 ── */
-#upload-wrap img {
-    width: 100% !important; height: 100% !important;
-    object-fit: contain !important; max-height: 340px !important;
-}
-#upload-wrap .preview-image,
-#upload-wrap [data-testid="image"] {
-    height: 340px !important; max-height: 340px !important; overflow: hidden !important;
-}
+#upload-wrap img { width:100%!important; height:100%!important;
+    object-fit:contain!important; max-height:340px!important; }
+#upload-wrap .preview-image, #upload-wrap [data-testid="image"] {
+    height:340px!important; max-height:340px!important; overflow:hidden!important; }
 
 /* ── 스킨 생성하기 버튼 ── */
 #gen-btn button {
-    display: block !important;
-    width: 100% !important;
-    height: 48px !important;
-    line-height: 48px !important;
-    padding: 0 !important;
-    border-radius: 10px !important;
-    font-size: 15px !important;
-    font-weight: 700 !important;
-    background: #00C9A7 !important;
-    color: #000 !important;
-    border: none !important;
-    box-shadow: 0 4px 20px rgba(0,201,167,.35) !important;
-    cursor: pointer !important;
-    transition: all .2s !important;
-}
+    display: block !important; width: 100% !important;
+    height: 48px !important; line-height: 48px !important; padding: 0 !important;
+    background: #868686 !important;
+    background-image: radial-gradient(circle, rgba(0,0,0,0.28) 1px, transparent 1px) !important;
+    background-size: 8px 8px !important;
+    border-style: solid !important; border-width: 3px !important;
+    border-color: #d0d0d0 #3a3a3a #3a3a3a #d0d0d0 !important;
+    border-radius: 0 !important;
+    box-shadow: 0 0 0 2px #5d9020, 0 0 0 4px #111 !important;
+    color: #fff !important; font-size: 15px !important; font-weight: 700 !important;
+    text-shadow: 2px 2px 0 #333 !important; cursor: pointer !important;
+    transition: none !important; box-sizing: border-box !important; }
 #gen-btn button:hover {
-    background: #00ddb8 !important;
-    box-shadow: 0 6px 28px rgba(0,201,167,.55) !important;
-    transform: translateY(-1px) !important;
-}
+    filter: brightness(1.1) !important; transform: none !important; }
 
-/* ── 상태 박스 완전 숨김 ── */
+/* ── 상태 박스 숨김 ── */
 #status-box { display: none !important; }
 
-/* ── 결과 박스 ── */
+/* ── 결과 박스 외부 투명 ── */
 #result-box { background: transparent !important; padding: 0 !important; border: none !important; }
-
-/* ── 전체 블록 배경 투명 ── */
-.gradio-container > .main > .wrap > .gap > div > .block {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-}
-"""
-
-CSS += """
-
-/* ══ Minecraft UI ══ */
-#upload-wrap .wrap {
-    background-image: url('data:image/png;base64,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') !important;
-    background-size: 32px 32px !important; image-rendering: pixelated !important;
-    border: 4px solid #222 !important; border-radius: 0 !important;
-    box-shadow: 0 0 0 2px #111, inset 5px 5px 0 rgba(255,255,255,.32), inset -5px -5px 0 rgba(0,0,0,.4) !important;
-    min-height: 340px !important; height: 340px !important;
-}
-#upload-wrap .wrap:hover { filter: brightness(1.08) !important; }
-#upload-wrap svg { color: rgba(255,255,255,.85) !important; }
-#upload-wrap .upload-text span { color: rgba(255,255,255,.75) !important; text-shadow: 1px 1px 0 #000 !important; }
-#gen-btn button {
-    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAACkUlEQVR4nCWOzU6rQABGYaADgbZCxwKW/i5aSaMx0Ufxpdz4Orp26cbEjUkrxlhk2mqBwvAzLVBurj3LL19ODnt3dycIwufnJ6W02+2+vr62Wi3TNDmOgxCGYSjL8vv7uyRJsixTSoHneev1WhTFoigYhhmPx41GQxCEOI5t21YUxfO85h8IobIseUrpYDAoy7LVakEI8zxXFAVjnCRJVVVBEOR5ruv6drvNsmwwGPDcH9/f37IsHw6HIAhWqxUAQBAEVVXLslQUpaqqzWZDCDFNE5ydnTmO47ouQijLMsuyWJat1+uapvm+H0URz/+XsiyrKEoYhgBjTAiZTqcAAEqp7/s8zyOEPM87Pz8/jhzHDYdDSul8Pgenp6dfX1/NZvPh4WG/32OMBUFYLpej0SiO46P74+MjSZJms6lpGoAQ3tzczGazyWQCIWw0GoQQTdPyPLdtezQabbdbwzA4jvM8r91ugziOEUK9Xg8hJElSFEVpmj4/PxdFcXzPZjOMcZqmnU4HYwxWq9VutwvD0Pd9AICmaVdXV5ZlPT4+QggxxtPplOf5JEkIIf1+n72/vy+KgmXZ9XpNCAEAHA4HjuN6vV4QBAghSqnjOIZhPD09XVxcAMdxCCFhGMZxPJlMoihSVZVhGNu2Pc9zXVeSpOFwWFXV7e2tIAggz3PXdff7PUKI4zhd19vt9m63q9frpmmyLMswTBRFPz8/i8VCVVWg6zrDMHmev7y8ZFl2LOn3+5qmua4bRRGltNPpiKJICEmSBIiieHl5qSjK9fU1hHA+n5+cnMiyvFwuj22/v79pmoqiaBiGLMt8rVZ7e3sbj8dJkvA8L8vyYrFI07Tb7WKMLcuq1WpRFCVJstlsIIT/AHCucYJvhx0nAAAAAElFTkSuQmCC') !important;
-    background-size: 16px 16px !important; background-color: #8a8a8a !important;
-    image-rendering: pixelated !important; color: #fff !important;
-    text-shadow: 2px 2px 0 #333 !important; border: 4px solid #5d9020 !important;
-    border-radius: 0 !important; height: 52px !important; transition: none !important;
-    box-shadow: 0 0 0 2px #111, inset 0 0 0 2px rgba(0,0,0,.4),
-                inset 4px 4px 0 rgba(255,255,255,.32), inset -4px -4px 0 rgba(0,0,0,.4) !important;
-}
-#gen-btn button:hover {
-    background-color: #9e9e9e !important; transform: none !important;
-    box-shadow: 0 0 0 2px #111, inset 0 0 0 2px rgba(0,0,0,.4),
-                inset 4px 4px 0 rgba(255,255,255,.45), inset -4px -4px 0 rgba(0,0,0,.28) !important;
-}
 """
 
 HEADER_HTML = """
@@ -247,18 +196,15 @@ def make_2d_preview(skin_img: Image.Image) -> list:
 
 
 _RESULT_EMPTY = """
-<div style="background-image:url('data:image/png;base64,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');background-size:32px 32px;image-rendering:pixelated;background-color:#8a8a8a;border:4px solid #222;padding:12px;display:flex;flex-direction:column;gap:10px;box-shadow:0 0 0 2px #111,inset 5px 5px 0 rgba(255,255,255,.3),inset -5px -5px 0 rgba(0,0,0,.38);">
-  <div style="background:rgba(0,0,0,.45);height:300px;display:flex;align-items:center;justify-content:center;box-shadow:inset 3px 3px 0 rgba(0,0,0,.4),inset -3px -3px 0 rgba(255,255,255,.08);">
-    <div style="text-align:center;">
-      <div style="font-size:36px;opacity:.2;">🧱</div>
-      <p style="color:#444;font-size:13px;margin:8px 0 0;">
-        스킨을 생성하면 미리보기가 표시됩니다
-      </p>
-    </div>
+<div style="border-style:solid;border-width:5px;border-color:#b8b8b8 #444 #444 #b8b8b8;border-radius:0;box-shadow:0 0 0 2px #111;background:#181818;overflow:hidden;height:340px;display:flex;align-items:center;justify-content:center;">
+  <div style="text-align:center;">
+    <div style="font-size:36px;opacity:.25;">🧱</div>
+    <p style="color:rgba(255,255,255,.5);font-size:13px;margin:8px 0 0;
+        text-shadow:1px 1px 0 #000;">스킨을 생성하면 미리보기가 표시됩니다</p>
   </div>
-  <span style="display:block;background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAACkUlEQVR4nCWOzU6rQABGYaADgbZCxwKW/i5aSaMx0Ufxpdz4Orp26cbEjUkrxlhk2mqBwvAzLVBurj3LL19ODnt3dycIwufnJ6W02+2+vr62Wi3TNDmOgxCGYSjL8vv7uyRJsixTSoHneev1WhTFoigYhhmPx41GQxCEOI5t21YUxfO85h8IobIseUrpYDAoy7LVakEI8zxXFAVjnCRJVVVBEOR5ruv6drvNsmwwGPDcH9/f37IsHw6HIAhWqxUAQBAEVVXLslQUpaqqzWZDCDFNE5ydnTmO47ouQijLMsuyWJat1+uapvm+H0URz/+XsiyrKEoYhgBjTAiZTqcAAEqp7/s8zyOEPM87Pz8/jhzHDYdDSul8Pgenp6dfX1/NZvPh4WG/32OMBUFYLpej0SiO46P74+MjSZJms6lpGoAQ3tzczGazyWQCIWw0GoQQTdPyPLdtezQabbdbwzA4jvM8r91ugziOEUK9Xg8hJElSFEVpmj4/PxdFcXzPZjOMcZqmnU4HYwxWq9VutwvD0Pd9AICmaVdXV5ZlPT4+QggxxtPplOf5JEkIIf1+n72/vy+KgmXZ9XpNCAEAHA4HjuN6vV4QBAghSqnjOIZhPD09XVxcAMdxCCFhGMZxPJlMoihSVZVhGNu2Pc9zXVeSpOFwWFXV7e2tIAggz3PXdff7PUKI4zhd19vt9m63q9frpmmyLMswTBRFPz8/i8VCVVWg6zrDMHmev7y8ZFl2LOn3+5qmua4bRRGltNPpiKJICEmSBIiieHl5qSjK9fU1hHA+n5+cnMiyvFwuj22/v79pmoqiaBiGLMt8rVZ7e3sbj8dJkvA8L8vyYrFI07Tb7WKMLcuq1WpRFCVJstlsIIT/AHCucYJvhx0nAAAAAElFTkSuQmCC');background-size:16px 16px;image-rendering:pixelated;background-color:#5a5a5a;color:rgba(255,255,255,.4);text-shadow:1px 1px 0 #222;border:4px solid #3a5a10;box-shadow:0 0 0 2px #111,inset 4px 4px 0 rgba(255,255,255,.18),inset -4px -4px 0 rgba(0,0,0,.38);font-size:15px;font-weight:700;height:52px;line-height:52px;text-align:center;box-sizing:border-box;cursor:not-allowed;">
-    ⬇️ PNG 다운로드
-  </span>
+</div>
+<div style="margin-top:8px;">
+  <span style="display:block;width:100%;height:48px;line-height:48px;padding:0;background:#868686;background-image:radial-gradient(circle,rgba(0,0,0,.28) 1px,transparent 1px);background-size:8px 8px;border-style:solid;border-width:3px;border-color:#d0d0d0 #3a3a3a #3a3a3a #d0d0d0;border-radius:0;box-shadow:0 0 0 2px #5d9020,0 0 0 4px #111;color:#fff;font-size:15px;font-weight:700;text-shadow:2px 2px 0 #333;box-sizing:border-box;text-align:center;font-family:Inter,sans-serif;cursor:not-allowed;opacity:.45;">⬇️ PNG 다운로드</span>
 </div>
 """
 
@@ -304,12 +250,11 @@ def make_result_html(view_imgs: list, skin_img: Image.Image) -> str:
         )
 
     return f"""
-<div style="background-image:url('data:image/png;base64,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');background-size:32px 32px;image-rendering:pixelated;background-color:#8a8a8a;border:4px solid #222;padding:12px;display:flex;flex-direction:column;gap:10px;box-shadow:0 0 0 2px #111,inset 5px 5px 0 rgba(255,255,255,.3),inset -5px -5px 0 rgba(0,0,0,.38);">
   {hidden_imgs}
 
   <!-- 캐러셀 -->
   <div id="sfwrap" data-idx="0"
-       style="position:relative;background:rgba(0,0,0,.45);overflow:hidden;user-select:none;box-shadow:inset 3px 3px 0 rgba(0,0,0,.4),inset -3px -3px 0 rgba(255,255,255,.08);">
+       style="position:relative;border-style:solid;border-width:5px;border-color:#b8b8b8 #444 #444 #b8b8b8;border-radius:0;box-shadow:0 0 0 2px #111;background:#181818;overflow:hidden;user-select:none;">
 
     <!-- 방향 라벨 -->
     <div id="sflbl"
@@ -345,14 +290,12 @@ def make_result_html(view_imgs: list, skin_img: Image.Image) -> str:
   </div>
 
   <!-- 다운로드 버튼 -->
+<div style="margin-top:8px;">
   <a href="data:image/png;base64,{skin_b64}"
      download="skinforge_skin.png"
-     style="display:block;background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAACkUlEQVR4nCWOzU6rQABGYaADgbZCxwKW/i5aSaMx0Ufxpdz4Orp26cbEjUkrxlhk2mqBwvAzLVBurj3LL19ODnt3dycIwufnJ6W02+2+vr62Wi3TNDmOgxCGYSjL8vv7uyRJsixTSoHneev1WhTFoigYhhmPx41GQxCEOI5t21YUxfO85h8IobIseUrpYDAoy7LVakEI8zxXFAVjnCRJVVVBEOR5ruv6drvNsmwwGPDcH9/f37IsHw6HIAhWqxUAQBAEVVXLslQUpaqqzWZDCDFNE5ydnTmO47ouQijLMsuyWJat1+uapvm+H0URz/+XsiyrKEoYhgBjTAiZTqcAAEqp7/s8zyOEPM87Pz8/jhzHDYdDSul8Pgenp6dfX1/NZvPh4WG/32OMBUFYLpej0SiO46P74+MjSZJms6lpGoAQ3tzczGazyWQCIWw0GoQQTdPyPLdtezQabbdbwzA4jvM8r91ugziOEUK9Xg8hJElSFEVpmj4/PxdFcXzPZjOMcZqmnU4HYwxWq9VutwvD0Pd9AICmaVdXV5ZlPT4+QggxxtPplOf5JEkIIf1+n72/vy+KgmXZ9XpNCAEAHA4HjuN6vV4QBAghSqnjOIZhPD09XVxcAMdxCCFhGMZxPJlMoihSVZVhGNu2Pc9zXVeSpOFwWFXV7e2tIAggz3PXdff7PUKI4zhd19vt9m63q9frpmmyLMswTBRFPz8/i8VCVVWg6zrDMHmev7y8ZFl2LOn3+5qmua4bRRGltNPpiKJICEmSBIiieHl5qSjK9fU1hHA+n5+cnMiyvFwuj22/v79pmoqiaBiGLMt8rVZ7e3sbj8dJkvA8L8vyYrFI07Tb7WKMLcuq1WpRFCVJstlsIIT/AHCucYJvhx0nAAAAAElFTkSuQmCC');background-size:16px 16px;image-rendering:pixelated;background-color:#8a8a8a;color:#fff;text-decoration:none;text-shadow:2px 2px 0 #333;font-size:15px;font-weight:700;height:52px;line-height:52px;border:4px solid #5d9020;text-align:center;box-sizing:border-box;cursor:pointer;box-shadow:0 0 0 2px #111,inset 0 0 0 2px rgba(0,0,0,.4),inset 4px 4px 0 rgba(255,255,255,.32),inset -4px -4px 0 rgba(0,0,0,.4);"
-     onmouseover="this.style.backgroundColor='#9e9e9e'"
-     onmouseout="this.style.backgroundColor='#8a8a8a'">
-    ⬇️ PNG 다운로드
-  </a>
-</div>
+     style="display:block;text-decoration:none;width:100%;height:48px;line-height:48px;padding:0;background:#868686;background-image:radial-gradient(circle,rgba(0,0,0,.28) 1px,transparent 1px);background-size:8px 8px;border-style:solid;border-width:3px;border-color:#d0d0d0 #3a3a3a #3a3a3a #d0d0d0;border-radius:0;box-shadow:0 0 0 2px #5d9020,0 0 0 4px #111;color:#fff;font-size:15px;font-weight:700;text-shadow:2px 2px 0 #333;box-sizing:border-box;text-align:center;font-family:Inter,sans-serif;cursor:pointer;"
+     onmouseover="this.style.filter='brightness(1.12)'"
+     onmouseout="this.style.filter=''">⬇️ PNG 다운로드</a>
 """
 
 
