@@ -169,8 +169,6 @@ _BTN_GEN = (
     ' style="'
     'display:block;width:100%;height:48px;line-height:48px;'
     'background-color:#868686;'
-    'background-image:radial-gradient(circle,rgba(0,0,0,.45) 1.5px,transparent 1.5px);'
-    'background-size:6px 6px;'
     'border:none;border-radius:0;'
     'box-shadow:'
     'inset 0 3px 0 #d8d8d8,inset 3px 0 0 #d8d8d8,'
@@ -399,12 +397,7 @@ function sp(el,p,v){ el.style.setProperty(p,v,'important'); }
     '#upload-wrap{'
     +'background:#181818!important;'
     +'border:none!important;'
-    +'box-shadow:'
-      +'inset 0 5px 0 #c8c8c8,'
-      +'inset 5px 0 0 #c8c8c8,'
-      +'inset 0 -5px 0 #383838,'
-      +'inset -5px 0 0 #383838,'
-      +'0 0 0 2px #111!important;'
+    +'box-shadow:none!important;'
     +'height:340px!important;'
     +'overflow:hidden!important;'
     +'border-radius:0!important;'
@@ -448,9 +441,7 @@ function styleUpload(){
   sp(el,'border-radius','0');
   sp(el,'box-sizing','border-box');
   sp(el,'position','relative');
-  sp(el,'box-shadow',
-    'inset 0 5px 0 #c8c8c8,inset 5px 0 0 #c8c8c8,'
-    +'inset 0 -5px 0 #383838,inset -5px 0 0 #383838,0 0 0 2px #111');
+  sp(el,'box-shadow','none');
   el.querySelectorAll('label,.block,.wrap').forEach(function(c){
     sp(c,'background','transparent');
     sp(c,'border','none');
