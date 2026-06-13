@@ -54,15 +54,8 @@ footer, .built-with { display: none !important; }
 #upload-wrap .source-selection,
 #upload-wrap [data-testid="source-select"] { display: none !important; }
 
-/* 스킨 생성하기 버튼 (CSS 기본값 — JS가 위에서 덮어씀) */
-#gen-btn button {
-  background: #868686 !important;
-  border-style: solid !important; border-width: 3px !important;
-  border-color: #d0d0d0 #3a3a3a #3a3a3a #d0d0d0 !important;
-  border-radius: 0 !important; box-shadow: 0 0 0 2px #111 !important;
-  color: #fff !important; font-size: 15px !important; font-weight: 700 !important;
-  text-shadow: 2px 2px 0 #333 !important; height: 48px !important;
-  cursor: pointer !important; transition: none !important; }
+/* Gradio 기본 버튼 + 구분선 완전 숨김 (커스텀 HTML 버튼으로 대체) */
+#gen-btn { display: none !important; }
 
 /* 페이지 배경 */
 body, .gradio-container {
@@ -167,6 +160,29 @@ def make_2d_preview(skin_img: Image.Image) -> list:
         import traceback; traceback.print_exc()
         return [skin_img.convert("RGB").resize((320, 320), Image.NEAREST)]
 
+
+_BTN_GEN = (
+    '<button id="sf-gen-btn" type="button"'
+    ' onclick="document.querySelector(\'#gen-btn button\').click()"'
+    ' onmouseover="this.style.filter=\'brightness(1.12)\'"'
+    ' onmouseout="this.style.filter=\'\'"'
+    ' style="'
+    'display:block;width:100%;height:48px;line-height:48px;'
+    'background-color:#868686;'
+    'background-image:radial-gradient(circle,rgba(0,0,0,.45) 1.5px,transparent 1.5px);'
+    'background-size:6px 6px;'
+    'border:none;border-radius:0;'
+    'box-shadow:'
+    'inset 0 3px 0 #d8d8d8,inset 3px 0 0 #d8d8d8,'
+    'inset 0 -3px 0 #363636,inset -3px 0 0 #363636,'
+    '0 0 0 2px #111;'
+    'color:#fff;font-size:15px;font-weight:700;'
+    'text-shadow:2px 2px 0 #333;'
+    'cursor:pointer;transition:none;'
+    'box-sizing:border-box;font-family:Inter,sans-serif;margin:8px 0 0;">'
+    '스킨 생성하기'
+    '</button>'
+)
 
 _RESULT_EMPTY = """
 <div style="border-style:solid;border-width:5px;border-color:#b8b8b8 #444 #444 #b8b8b8;border-radius:0;box-shadow:0 0 0 2px #111;background:#181818;overflow:hidden;height:340px;display:flex;align-items:center;justify-content:center;">
@@ -333,6 +349,7 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme, js=_CTRL_ENTER_JS) as
                 type="pil", label="사진 업로드",
                 elem_id="upload-wrap", show_label=False,
             )
+            gr.HTML(value=_BTN_GEN)
             generate_btn = gr.Button(
                 "스킨 생성하기", variant="primary", elem_id="gen-btn",
             )
@@ -416,26 +433,7 @@ function sp(el,p,v){ el.style.setProperty(p,v,'important'); }
     +'position:relative!important;'
     +'margin:15px auto!important;}'
 
-    +'#gen-btn button{'
-    +'background-color:#868686!important;'
-    +'background-image:radial-gradient(circle,rgba(0,0,0,.45) 1.5px,transparent 1.5px)!important;'
-    +'background-size:6px 6px!important;'
-    +'border:none!important;'
-    +'box-shadow:'
-      +'inset 0 3px 0 #d8d8d8,'
-      +'inset 3px 0 0 #d8d8d8,'
-      +'inset 0 -3px 0 #363636,'
-      +'inset -3px 0 0 #363636,'
-      +'0 0 0 2px #111!important;'
-    +'border-radius:0!important;'
-    +'color:#fff!important;font-size:15px!important;font-weight:700!important;'
-    +'text-shadow:2px 2px 0 #333!important;'
-    +'height:48px!important;line-height:48px!important;'
-    +'text-align:center!important;cursor:pointer!important;'
-    +'transition:none!important;width:100%!important;'
-    +'display:block!important;box-sizing:border-box!important;}'
-
-    +'#gen-btn button:hover{filter:brightness(1.12)!important;}';
+    +'#gen-btn{display:none!important;}';
   document.head.appendChild(s);
 })();
 
