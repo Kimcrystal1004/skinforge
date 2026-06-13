@@ -369,93 +369,128 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme, js=_CTRL_ENTER_JS) as
     gr.HTML(value="""<script>
 (function(){
 
-/* ═══ 업로드 패널: 인라인 !important로 Gradio 스타일 완전 덮어씀 ═══ */
-function sp(el, prop, val){ el.style.setProperty(prop, val, 'important'); }
+/* ─ helper ─ */
+function sp(el,p,v){ el.style.setProperty(p,v,'important'); }
 
+/* ─ <style> 태그 한 번만 주입 ─
+   border 대신 inset box-shadow로 베벨 구현
+   (border는 부모 overflow:hidden에 잘림) */
+(function injectCSS(){
+  if(document.getElementById('sf-css')) return;
+  var s=document.createElement('style'); s.id='sf-css';
+  s.textContent=
+    '#upload-wrap{'
+    +'background:#181818!important;'
+    +'border:none!important;'
+    +'box-shadow:'
+      +'inset 0 5px 0 #c8c8c8,'
+      +'inset 5px 0 0 #c8c8c8,'
+      +'inset 0 -5px 0 #383838,'
+      +'inset -5px 0 0 #383838,'
+      +'0 0 0 2px #111!important;'
+    +'height:340px!important;'
+    +'overflow:hidden!important;'
+    +'border-radius:0!important;'
+    +'box-sizing:border-box!important;'
+    +'position:relative!important;}'
+
+    +'#upload-wrap label,'
+    +'#upload-wrap .block,'
+    +'#upload-wrap .wrap,'
+    +'#upload-wrap .upload-container,'
+    +'#upload-wrap [class*="image"],'
+    +'#upload-wrap [class*="preview"],'
+    +'#upload-wrap [class*="frame"]{'
+    +'background:transparent!important;'
+    +'border:none!important;box-shadow:none!important;'
+    +'padding:0!important;'
+    +'max-height:340px!important;'
+    +'overflow:hidden!important;}'
+
+    +'#upload-wrap img{'
+    +'max-height:310px!important;'
+    +'max-width:calc(100% - 20px)!important;'
+    +'width:auto!important;height:auto!important;'
+    +'object-fit:contain!important;'
+    +'display:block!important;'
+    +'position:relative!important;'
+    +'margin:15px auto!important;}'
+
+    +'#gen-btn button{'
+    +'background-color:#868686!important;'
+    +'background-image:radial-gradient(circle,rgba(0,0,0,.45) 1.5px,transparent 1.5px)!important;'
+    +'background-size:6px 6px!important;'
+    +'border:none!important;'
+    +'box-shadow:'
+      +'inset 0 3px 0 #d8d8d8,'
+      +'inset 3px 0 0 #d8d8d8,'
+      +'inset 0 -3px 0 #363636,'
+      +'inset -3px 0 0 #363636,'
+      +'0 0 0 2px #111!important;'
+    +'border-radius:0!important;'
+    +'color:#fff!important;font-size:15px!important;font-weight:700!important;'
+    +'text-shadow:2px 2px 0 #333!important;'
+    +'height:48px!important;line-height:48px!important;'
+    +'text-align:center!important;cursor:pointer!important;'
+    +'transition:none!important;width:100%!important;'
+    +'display:block!important;box-sizing:border-box!important;}'
+
+    +'#gen-btn button:hover{filter:brightness(1.12)!important;}';
+  document.head.appendChild(s);
+})();
+
+/* ─ setProperty: Gradio 재렌더 후 스타일 복구 (300ms) ─ */
 function styleUpload(){
-  var el = document.getElementById('upload-wrap');
+  var el=document.getElementById('upload-wrap');
   if(!el) return;
-
-  /* 패널 외곽 — 베벨 테두리 + 어두운 배경 */
   sp(el,'background','#181818');
-  sp(el,'border-style','solid');
-  sp(el,'border-width','5px');
-  sp(el,'border-color','#b8b8b8 #444 #444 #b8b8b8');
-  sp(el,'box-shadow','0 0 0 2px #111');
+  sp(el,'border','none');
   sp(el,'height','340px');
   sp(el,'overflow','hidden');
   sp(el,'border-radius','0');
   sp(el,'box-sizing','border-box');
-
-  /* 내부 Gradio 요소들 투명화 */
-  el.querySelectorAll('.block,.wrap,label').forEach(function(c){
+  sp(el,'position','relative');
+  sp(el,'box-shadow',
+    'inset 0 5px 0 #c8c8c8,inset 5px 0 0 #c8c8c8,'
+    +'inset 0 -5px 0 #383838,inset -5px 0 0 #383838,0 0 0 2px #111');
+  el.querySelectorAll('label,.block,.wrap').forEach(function(c){
     sp(c,'background','transparent');
     sp(c,'border','none');
     sp(c,'box-shadow','none');
     sp(c,'padding','0');
-    sp(c,'height','100%');
-    sp(c,'width','100%');
+    sp(c,'max-height','340px');
+    sp(c,'overflow','hidden');
   });
-
-  /* 업로드된 이미지: contain으로 여백 살리기 */
   el.querySelectorAll('img').forEach(function(img){
-    sp(img,'max-width','100%');
-    sp(img,'max-height','320px');
+    sp(img,'max-height','310px');
+    sp(img,'max-width','calc(100% - 20px)');
+    sp(img,'width','auto');
+    sp(img,'height','auto');
     sp(img,'object-fit','contain');
     sp(img,'display','block');
-    sp(img,'margin','10px auto');
+    sp(img,'margin','15px auto');
     sp(img,'position','relative');
   });
 }
+setInterval(styleUpload,300);
+setTimeout(styleUpload,100);
 
-/* 300ms마다 재적용 — Gradio 재렌더 후에도 유지 */
-setInterval(styleUpload, 300);
-setTimeout(styleUpload, 200);
-
-/* ═══ 버튼: 한 번 찾으면 인라인 스타일 주입 ═══ */
-function styleButton(){
-  var btn = document.querySelector('#gen-btn button');
-  if(!btn){ setTimeout(styleButton,300); return; }
-  sp(btn,'background','#868686');
-  sp(btn,'background-image','radial-gradient(circle,rgba(0,0,0,.28) 1px,transparent 1px)');
-  sp(btn,'background-size','8px 8px');
-  sp(btn,'border-style','solid');
-  sp(btn,'border-width','3px');
-  sp(btn,'border-color','#d0d0d0 #3a3a3a #3a3a3a #d0d0d0');
-  sp(btn,'border-radius','0');
-  sp(btn,'box-shadow','0 0 0 2px #111');
-  sp(btn,'color','#fff');
-  sp(btn,'font-size','15px');
-  sp(btn,'font-weight','700');
-  sp(btn,'text-shadow','2px 2px 0 #333');
-  sp(btn,'height','48px');
-  sp(btn,'line-height','48px');
-  sp(btn,'text-align','center');
-  sp(btn,'cursor','pointer');
-  sp(btn,'transition','none');
-  sp(btn,'width','100%');
-  sp(btn,'display','block');
-  sp(btn,'box-sizing','border-box');
-}
-setTimeout(styleButton, 400);
-setInterval(styleButton, 2000);
-
-/* ═══ 화살표 애니메이션 ═══ */
+/* ─ 화살표 애니메이션 ─ */
 function initArrow(){
-  var btn = document.querySelector('#gen-btn button');
-  if(!btn){ setTimeout(initArrow,400); return; }
-  var raf=null, startT=0, running=false;
+  var btn=document.querySelector('#gen-btn button');
+  if(!btn){setTimeout(initArrow,400);return;}
+  var raf=null,startT=0,running=false;
   function step(){
-    var r=document.getElementById('arr-fill'); if(!r) return;
+    var r=document.getElementById('arr-fill');if(!r)return;
     var pct=Math.min((Date.now()-startT)/28000,0.95);
     r.setAttribute('width',String(Math.round(pct*62)));
-    if(pct<0.95) raf=requestAnimationFrame(step);
+    if(pct<0.95)raf=requestAnimationFrame(step);
   }
   function startAnim(){
-    if(running) return; running=true;
-    var r=document.getElementById('arr-fill'); if(r) r.setAttribute('width','0');
+    if(running)return;running=true;
+    var r=document.getElementById('arr-fill');if(r)r.setAttribute('width','0');
     startT=Date.now();
-    if(raf) cancelAnimationFrame(raf);
+    if(raf)cancelAnimationFrame(raf);
     raf=requestAnimationFrame(step);
     var box=document.querySelector('#result-box');
     if(box){
@@ -463,19 +498,19 @@ function initArrow(){
         if(box.querySelector('#sfimg')){
           cancelAnimationFrame(raf);
           var r2=document.getElementById('arr-fill');
-          if(r2) r2.setAttribute('width','62');
-          running=false; obs.disconnect();
+          if(r2)r2.setAttribute('width','62');
+          running=false;obs.disconnect();
         }
       });
       obs.observe(box,{childList:true,subtree:true});
     }
   }
   new MutationObserver(function(){
-    if(btn.disabled) startAnim(); else running=false;
+    if(btn.disabled)startAnim();else running=false;
   }).observe(btn,{attributes:true,attributeFilter:['disabled']});
-  btn.addEventListener('click',function(){ setTimeout(startAnim,80); });
+  btn.addEventListener('click',function(){setTimeout(startAnim,80);});
 }
-setTimeout(initArrow, 600);
+setTimeout(initArrow,600);
 
 })();
 </script>""")
