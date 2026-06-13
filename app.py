@@ -45,63 +45,51 @@ theme = gr.themes.Base(
 CSS = """
 footer, .built-with { display: none !important; }
 
-/* ── Gradio 블록 배경·테두리 제거 ── */
-#upload-wrap > .block,
-#upload-wrap > div > .block,
-.gradio-image > .block {
-  background: transparent !important; border: none !important;
-  padding: 0 !important; box-shadow: none !important; }
-.gradio-container > .main > .wrap > .gap > div > .block {
-  background: transparent !important; border: none !important;
-  box-shadow: none !important; padding: 0 !important; }
-
-/* ── 업로드 드롭존 — 기능 유지하면서 베벨 테두리 ── */
-#upload-wrap .wrap {
+/* ── 업로드 패널: #upload-wrap 자체에 베벨 테두리·배경 ── */
+#upload-wrap {
   background: #181818 !important;
   border-style: solid !important; border-width: 5px !important;
   border-color: #b8b8b8 #444 #444 #b8b8b8 !important;
   border-radius: 0 !important;
   box-shadow: 0 0 0 2px #111 !important;
-  min-height: 340px !important; height: 340px !important;
-  width: 100% !important; box-sizing: border-box !important; }
-#upload-wrap .wrap:hover { filter: brightness(1.08) !important; }
+  height: 340px !important; overflow: hidden !important; }
+
+/* ── 업로드 내부 Gradio 기본 스타일 초기화 ── */
+#upload-wrap .block, #upload-wrap .wrap,
+#upload-wrap label, #upload-wrap > div {
+  background: transparent !important; border: none !important;
+  box-shadow: none !important; padding: 0 !important;
+  height: 100% !important; width: 100% !important; }
+#upload-wrap img {
+  max-width: 100% !important; max-height: 330px !important;
+  object-fit: contain !important; display: block !important; margin: auto !important; }
 #upload-wrap svg { color: rgba(255,255,255,.65) !important; }
 #upload-wrap .upload-text span {
   color: rgba(255,255,255,.55) !important; text-shadow: 1px 1px 0 #000 !important; }
 #upload-wrap .source-selection,
 #upload-wrap [data-testid="source-select"] { display: none !important; }
-/* 이미지: contain 으로 여백 살려 어두운 배경 보이게 — 기능 방해 없이 */
-#upload-wrap img {
-  max-width: 100% !important; max-height: 330px !important;
-  object-fit: contain !important; display: block !important; margin: auto !important; }
-#upload-wrap .preview-image,
-#upload-wrap [data-testid="image"] {
-  height: 340px !important; max-height: 340px !important; }
 
-/* ── 스킨 생성하기 버튼 — Minecraft 명확한 베벨 ── */
+/* ── 스킨 생성하기 버튼: PNG 다운로드 버튼과 완전 동일 스타일 ── */
 #gen-btn button {
   display: block !important; width: 100% !important;
-  height: 52px !important; padding: 0 !important;
-  background: #8b8b8b !important;
-  border-style: solid !important; border-width: 4px !important;
-  border-top-color: #d0d0d0 !important;
-  border-left-color: #c4c4c4 !important;
-  border-bottom-color: #3a3a3a !important;
-  border-right-color: #3a3a3a !important;
+  height: 48px !important; line-height: 48px !important; padding: 0 !important;
+  background: #868686 !important;
+  background-image: radial-gradient(circle, rgba(0,0,0,.28) 1px, transparent 1px) !important;
+  background-size: 8px 8px !important;
+  border-style: solid !important; border-width: 3px !important;
+  border-color: #d0d0d0 #3a3a3a #3a3a3a #d0d0d0 !important;
   border-radius: 0 !important;
-  outline: 2px solid #111 !important;
-  color: #fff !important; font-size: 16px !important; font-weight: 700 !important;
-  text-shadow: 2px 2px 0 #222 !important; letter-spacing: .5px !important;
-  cursor: pointer !important; transition: none !important;
-  box-sizing: border-box !important; }
-#gen-btn button:hover {
-  background: #999 !important;
-  border-top-color: #bbb !important; border-left-color: #b0b0b0 !important;
-  border-bottom-color: #555 !important; border-right-color: #555 !important; }
-#gen-btn button:active {
-  background: #787878 !important;
-  border-top-color: #3a3a3a !important; border-left-color: #3a3a3a !important;
-  border-bottom-color: #d0d0d0 !important; border-right-color: #d0d0d0 !important; }
+  box-shadow: 0 0 0 2px #111 !important;
+  color: #fff !important; font-size: 15px !important; font-weight: 700 !important;
+  text-shadow: 2px 2px 0 #333 !important; cursor: pointer !important;
+  box-sizing: border-box !important; text-align: center !important;
+  transition: none !important; font-family: Inter, sans-serif !important; }
+#gen-btn button:hover { filter: brightness(1.12) !important; }
+
+/* ── 전체 Gradio 블록 배경 제거 ── */
+.gradio-container > .main > .wrap > .gap > div > .block {
+  background: transparent !important; border: none !important;
+  box-shadow: none !important; padding: 0 !important; }
 
 /* ── 페이지 전체 배경 ── */
 body, .gradio-container {
