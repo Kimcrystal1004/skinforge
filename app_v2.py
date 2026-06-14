@@ -92,10 +92,11 @@ def make_2d_preview(skin_img: Image.Image) -> list:
 # 결과 HTML
 # ══════════════════════════════════════════════════════════════════════
 _RESULT_EMPTY = f"""<div id="result-inner"
-  style="width:100%;height:100%;
+  style="width:360px;height:360px;max-width:100%;
+    background-image:url('{IMG_BG}');background-size:100% 100%;
     display:flex;flex-direction:column;
     align-items:center;justify-content:center;
-    background:transparent;box-sizing:border-box;">
+    position:relative;overflow:hidden;box-sizing:border-box;">
   <img src="{LEVELS[0]}" style="width:56px;opacity:0.5;image-rendering:pixelated;">
   <p style="color:#aaa;font-size:13px;margin:12px 0 0;text-align:center;
     text-shadow:1px 1px 0 #000;">스킨을 생성하면 미리보기가 표시됩니다</p>
@@ -129,7 +130,10 @@ def make_result_html(view_imgs: list, skin_img: Image.Image) -> str:
         for i in range(n)
     )
 
-    return f"""<div id="result-inner" style="width:100%;height:100%;position:relative;box-sizing:border-box;">
+    return f"""<div id="result-inner"
+  style="width:360px;height:360px;max-width:100%;
+    background-image:url('{IMG_BG}');background-size:100% 100%;
+    position:relative;overflow:hidden;box-sizing:border-box;">
   {hidden}
   <span id="sf-skin-b64" style="display:none">{skin_b64}</span>
   <span id="sf-n-slides" style="display:none">{n}</span>
@@ -200,14 +204,15 @@ body, .gradio-container {{
   background-repeat: no-repeat !important;
 }}
 
-/* ── 블록 투명화 ── */
-.gradio-container .block {{
+/* ── 모든 Gradio 블록 크롬 제거 ── */
+.gradio-container .block,
+.gradio-container .form {{
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
+  margin: 0 !important;
 }}
-.gradio-container .gap {{ gap: 0 !important; }}
 
 /* ── 헤더 ── */
 #sf-header {{
@@ -221,99 +226,88 @@ body, .gradio-container {{
   justify-content: space-between;
 }}
 
-/* ── 메인 컨테이너 ── */
-#sf-main {{
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 0;
-  padding: 24px 16px 0;
-  width: 100%;
-  box-sizing: border-box;
+/* ── 메인 행 (gr.Row) ── */
+#sf-main-row {{
+  justify-content: center !important;
+  align-items: flex-start !important;
+  flex-wrap: nowrap !important;
+  gap: 16px !important;
+  padding: 24px 20px 0 !important;
 }}
 
-/* ── 업로드/결과 박스 컬럼 ── */
-.sf-col {{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+/* ── 왼쪽/오른쪽 컬럼 ── */
+#sf-left-col, #sf-right-col {{
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  max-width: 460px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
 }}
 
-/* ── 이미지 박스 (업로드 & 결과) ── */
-.sf-box {{
-  width: 360px;
-  height: 360px;
-  background-image: var(--img-bg);
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  position: relative;
-  box-sizing: border-box;
-  overflow: hidden;
-  flex-shrink: 0;
+/* ── 중앙 화살표 컬럼 ── */
+#sf-center-col {{
+  flex: 0 0 80px !important;
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding-top: 148px !important;
 }}
 
-/* ── gr.Image 스타일링 ── */
+/* ── 업로드 박스 (gr.Image) ── */
 #upload-wrap {{
-  width: 100% !important;
-  height: 100% !important;
+  width: 360px !important;
+  height: 360px !important;
+  background-image: var(--img-bg) !important;
+  background-size: 100% 100% !important;
+  background-repeat: no-repeat !important;
+  position: relative !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}}
+/* 모든 자식: 배경 투명 */
+#upload-wrap * {{
   background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
   border: none !important;
   box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  position: absolute !important;
-  top: 0 !important; left: 0 !important;
 }}
-#upload-wrap > div, #upload-wrap .wrap,
-#upload-wrap .upload-container, #upload-wrap [data-testid="image"] {{
+/* 드롭 영역 테두리 힌트 */
+#upload-wrap [data-testid="dropzone"],
+#upload-wrap .wrap {{
+  border: 2px dashed rgba(255,255,255,0.18) !important;
   width: 100% !important;
   height: 100% !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
 }}
-/* 업로드 전: 드롭 영역 투명 */
-#upload-wrap .upload-container > label,
-#upload-wrap .drop-target {{
-  background: transparent !important;
-  border: 2px dashed rgba(255,255,255,0.2) !important;
-  box-shadow: none !important;
-}}
-/* 업로드 후: 이미지 비율 유지하며 박스 안에 맞춤 */
-#upload-wrap img:not(.sf-placeholder) {{
-  max-width: 100% !important;
-  max-height: 100% !important;
+/* 업로드된 이미지: 비율 유지 + 중앙 정렬 */
+#upload-wrap img {{
+  max-width: 90% !important;
+  max-height: 90% !important;
   width: auto !important;
   height: auto !important;
   object-fit: contain !important;
   position: absolute !important;
-  top: 50% !important; left: 50% !important;
+  top: 50% !important;
+  left: 50% !important;
   transform: translate(-50%, -50%) !important;
-  image-rendering: auto !important;
 }}
-/* 소스 선택 버튼 숨김 */
 #upload-wrap .source-selection,
 #upload-wrap [data-testid="source-select"] {{ display: none !important; }}
 
-/* ── 결과 박스 ── */
-#result-box {{
-  width: 100% !important; height: 100% !important;
+/* ── 결과 박스 (gr.HTML) ── */
+#result-box, #result-box > div {{
+  padding: 0 !important;
+  margin: 0 !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  position: absolute !important;
-  top: 0 !important; left: 0 !important;
-}}
-#result-box > div {{
-  width: 100% !important;
-  height: 100% !important;
-  padding: 0 !important;
-  margin: 0 !important;
+  overflow: visible !important;
 }}
 
 /* ── 액션 버튼 ── */
@@ -337,17 +331,6 @@ body, .gradio-container {{
 }}
 .sf-btn:hover  {{ filter: brightness(1.15); }}
 .sf-btn:active {{ filter: brightness(0.75); }}
-
-/* ── 화살표 컬럼 ── */
-#sf-arrow-col {{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  flex-shrink: 0;
-  align-self: center;
-  margin-top: -44px; /* 버튼 높이 절반만큼 올림 */
-}}
 
 /* ── 숨겨진 Gradio 버튼 ── */
 #gen-btn {{
@@ -687,43 +670,32 @@ with gr.Blocks(css=CSS, title="SkinForge AI", js=JS) as demo:
     # 헤더
     gr.HTML(HEADER_HTML)
 
-    # 메인 영역 (커스텀 HTML로 레이아웃 제어)
-    gr.HTML(f"""<div id="sf-main">
+    # 메인 3컬럼 레이아웃
+    with gr.Row(elem_id="sf-main-row", equal_height=False):
 
-  <!-- 왼쪽: 업로드 컬럼 -->
-  <div class="sf-col">
-    <div class="sf-box">""")
+        # 왼쪽: 업로드 + 생성 버튼
+        with gr.Column(scale=1, min_width=460, elem_id="sf-left-col"):
+            photo_input = gr.Image(
+                type="pil", show_label=False,
+                elem_id="upload-wrap",
+                height=360, width=360,
+            )
+            gr.HTML(GEN_BTN_HTML)
 
-    photo_input = gr.Image(
-        type="pil", show_label=False,
-        elem_id="upload-wrap",
-        height=360, width=360,
-    )
+        # 가운데: 화살표
+        with gr.Column(scale=0, min_width=80, elem_id="sf-center-col"):
+            gr.HTML(ARROW_HTML)
 
-    gr.HTML("""    </div>""")
-    gr.HTML(GEN_BTN_HTML)
-    gr.HTML("""  </div>""")
-
-    # 가운데: 화살표
-    gr.HTML(ARROW_HTML)
-
-    # 오른쪽: 결과 컬럼
-    gr.HTML("""  <div class="sf-col">
-    <div class="sf-box">""")
-
-    result_html = gr.HTML(
-        value=_RESULT_EMPTY,
-        elem_id="result-box",
-    )
-
-    gr.HTML("""    </div>""")
-    gr.HTML(DL_BTN_HTML)
-    gr.HTML("""  </div>
-
-</div>""")  # /sf-main
+        # 오른쪽: 결과 + 다운로드 버튼
+        with gr.Column(scale=1, min_width=460, elem_id="sf-right-col"):
+            result_html = gr.HTML(
+                value=_RESULT_EMPTY,
+                elem_id="result-box",
+            )
+            gr.HTML(DL_BTN_HTML)
 
     # 하단: 사용 가이드
-    gr.HTML(f"""<div id="sf-bottom">{GUIDE_BTN_HTML}</div>""")
+    gr.HTML(f'<div id="sf-bottom">{GUIDE_BTN_HTML}</div>')
 
     # 모달
     gr.HTML(MODAL_HTML)
