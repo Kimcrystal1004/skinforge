@@ -583,12 +583,11 @@ function constrainUploadParent(){
   if(!el) return;
   var par=el.parentElement;
   if(!par) return;
-  sp(par,'overflow','hidden');
-  sp(par,'max-height','420px');
+  /* 부모 배경만 투명화 — overflow/max-height 미적용 (버튼 잘림 방지) */
   sp(par,'background','transparent');
   sp(par,'border','none');
   sp(par,'box-shadow','none');
-  /* drag-drop 형제 요소 숨김 */
+  /* drag-drop 형제 요소만 숨김 */
   Array.prototype.forEach.call(par.children,function(c){
     if(c===el) return;
     var t=c.textContent||'';
