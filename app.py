@@ -487,6 +487,37 @@ function styleUpload(){
 setInterval(styleUpload,300);
 setTimeout(styleUpload,100);
 
+/* ─ 업로드 박스 베벨 테두리 오버레이 ─ */
+function ensureOverlay(){
+  var el=document.getElementById('upload-wrap');
+  if(!el) return;
+  sp(el,'position','relative');
+  var ov=document.getElementById('uf-bevel');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.id='uf-bevel';
+    el.appendChild(ov);
+  }
+  sp(ov,'position','absolute');
+  sp(ov,'top','0');sp(ov,'right','0');sp(ov,'bottom','0');sp(ov,'left','0');
+  sp(ov,'pointer-events','none');
+  sp(ov,'z-index','9999');
+  sp(ov,'box-shadow',
+    'inset 0 5px 0 #b8b8b8,'+
+    'inset 5px 0 0 #b8b8b8,'+
+    'inset 0 -5px 0 #444,'+
+    'inset -5px 0 0 #444');
+}
+function initOverlay(){
+  var el=document.getElementById('upload-wrap');
+  if(!el){setTimeout(initOverlay,300);return;}
+  ensureOverlay();
+  new MutationObserver(function(){ensureOverlay();})
+    .observe(el,{childList:true,subtree:true});
+}
+setInterval(ensureOverlay,300);
+setTimeout(initOverlay,200);
+
 /* ─ 화살표 애니메이션 ─ */
 function initArrow(){
   var btn=document.querySelector('#gen-btn button');
