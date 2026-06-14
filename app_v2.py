@@ -30,6 +30,7 @@ BG_NIGHT = _b64(_D / "background_n.png")
 IMG_BG   = _b64(_D / "img_background.png")
 BTN_BG   = _b64(_D / "button_background.png")
 GRASS    = _b64(_D / "grass_block.png")
+EXPLAIN  = _b64(_D / "explain.png")
 LEVELS   = [_b64(_D / f"level{i}.png") for i in range(5)]
 
 # ══════════════════════════════════════════════════════════════════════
@@ -196,12 +197,25 @@ footer, .built-with {{ display:none !important; }}
   --img-bg: url('{IMG_BG}');
   --btn-bg: url('{BTN_BG}');
 }}
-body, .gradio-container {{
+
+/* html 요소에 배경 설정 (Gradio가 body/.gradio-container를 덮더라도 html은 안 덮음) */
+html {{
   background-image: var(--sf-bg) !important;
   background-size: cover !important;
   background-position: center !important;
   background-attachment: fixed !important;
   background-repeat: no-repeat !important;
+}}
+
+/* body / Gradio 컨테이너는 모두 투명하게 */
+body,
+.gradio-container,
+.gradio-container > .main,
+.gradio-container > .main > .wrap,
+.app, #root {{
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
 }}
 
 /* ── 모든 Gradio 블록 크롬 제거 ── */
@@ -404,7 +418,7 @@ DL_BTN_HTML  = f"""<button id="sf-dl-btn" class="sf-btn">PNG 저장하기</butto
 GUIDE_BTN_HTML = f"""<button id="sf-guide-btn"
   style="background:none;border:none;cursor:pointer;
     display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;">
-  <img src="{GRASS}" style="width:48px;image-rendering:pixelated;">
+  <img src="{EXPLAIN}" style="width:54px;image-rendering:pixelated;">
   <span style="color:#fff;font-size:14px;font-weight:700;
     text-shadow:2px 2px 0 #000;">사용 가이드</span>
 </button>"""
