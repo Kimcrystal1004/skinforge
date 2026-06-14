@@ -67,7 +67,7 @@ footer, .built-with { display: none !important; }
 .gradio-container .main .wrap { padding-left: 0 !important; padding-right: 0 !important; }
 .gradio-container .main .wrap > .gap { padding: 0 !important; gap: 8px !important; align-items: flex-start !important; }
 #result-box { margin: 0 !important; padding-top: 0 !important; }
-#upload-wrap { margin: 14px 0 0 6px !important; padding: 0 !important; }
+#upload-wrap { margin: 17px 0 0 6px !important; padding: 0 !important; }
 
 /* 페이지 배경 */
 body, .gradio-container {
@@ -487,36 +487,35 @@ function styleUpload(){
 setInterval(styleUpload,300);
 setTimeout(styleUpload,100);
 
-/* ─ 업로드 박스 베벨 테두리 오버레이 ─ */
-function ensureOverlay(){
+/* ─ 업로드 박스 베벨 테두리 (body fixed — overflow:hidden 완전 우회) ─ */
+function ensureBorder(){
   var el=document.getElementById('upload-wrap');
   if(!el) return;
-  sp(el,'position','relative');
-  var ov=document.getElementById('uf-bevel');
-  if(!ov){
-    ov=document.createElement('div');
-    ov.id='uf-bevel';
-    el.appendChild(ov);
+  var bd=document.getElementById('uf-border-frame');
+  if(!bd){
+    bd=document.createElement('div');
+    bd.id='uf-border-frame';
+    document.body.appendChild(bd);
   }
-  sp(ov,'position','absolute');
-  sp(ov,'top','0');sp(ov,'right','0');sp(ov,'bottom','0');sp(ov,'left','0');
-  sp(ov,'pointer-events','none');
-  sp(ov,'z-index','9999');
-  sp(ov,'box-shadow',
-    'inset 0 5px 0 #b8b8b8,'+
-    'inset 5px 0 0 #b8b8b8,'+
-    'inset 0 -5px 0 #444,'+
-    'inset -5px 0 0 #444');
+  var r=el.getBoundingClientRect();
+  sp(bd,'position','fixed');
+  sp(bd,'top',r.top+'px');
+  sp(bd,'left',r.left+'px');
+  sp(bd,'width',r.width+'px');
+  sp(bd,'height',r.height+'px');
+  sp(bd,'border-style','solid');
+  sp(bd,'border-width','5px');
+  sp(bd,'border-color','#b8b8b8 #444 #444 #b8b8b8');
+  sp(bd,'box-shadow','0 0 0 2px #111');
+  sp(bd,'pointer-events','none');
+  sp(bd,'z-index','999');
+  sp(bd,'background','transparent');
+  sp(bd,'box-sizing','border-box');
 }
-function initOverlay(){
-  var el=document.getElementById('upload-wrap');
-  if(!el){setTimeout(initOverlay,300);return;}
-  ensureOverlay();
-  new MutationObserver(function(){ensureOverlay();})
-    .observe(el,{childList:true,subtree:true});
-}
-setInterval(ensureOverlay,300);
-setTimeout(initOverlay,200);
+setInterval(ensureBorder,100);
+setTimeout(ensureBorder,500);
+window.addEventListener('scroll',ensureBorder);
+window.addEventListener('resize',ensureBorder);
 
 /* ─ 화살표 애니메이션 ─ */
 function initArrow(){
