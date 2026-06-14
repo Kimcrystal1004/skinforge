@@ -10,4 +10,4 @@ COPY . .
 EXPOSE 7860
 
 ENV PYTHONUNBUFFERED=1
-CMD ["python", "-u", "app.py"]
+CMD ["python", "-u", "app_v2.py"]
