@@ -67,7 +67,7 @@ footer, .built-with { display: none !important; }
 .gradio-container .main .wrap { padding-left: 0 !important; padding-right: 0 !important; }
 .gradio-container .main .wrap > .gap { padding: 0 !important; gap: 8px !important; align-items: flex-start !important; }
 #result-box { margin: 0 !important; padding-top: 0 !important; }
-#upload-wrap { margin: 17px 0 0 6px !important; padding: 0 !important; }
+#upload-wrap { margin: 0 0 0 6px !important; padding: 0 !important; }
 
 /* 페이지 배경 */
 body, .gradio-container {
@@ -464,6 +464,7 @@ function styleUpload(){
   sp(el,'border-radius','0');
   sp(el,'box-sizing','border-box');
   sp(el,'position','relative');
+  sp(el,'margin','0 0 0 6px');
   el.querySelectorAll('label,.block,.wrap').forEach(function(c){
     sp(c,'background','transparent');
     sp(c,'border','none');
