@@ -190,32 +190,22 @@ footer, .built-with {{ display:none !important; }}
 .gradio-container > .main {{ padding:0 !important; }}
 .gradio-container > .main > .wrap {{ padding:0 !important; gap:0 !important; }}
 
-/* ── 배경 ── */
+/* ── 배경 변수 (업로드박스/버튼 용) ── */
 :root {{
-  --sf-bg: url('{BG_DAY}');
-  --sf-bg-night: url('{BG_NIGHT}');
   --img-bg: url('{IMG_BG}');
   --btn-bg: url('{BTN_BG}');
 }}
 
-/* html 요소에 배경 설정 (Gradio가 body/.gradio-container를 덮더라도 html은 안 덮음) */
-html {{
-  background-image: var(--sf-bg) !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-attachment: fixed !important;
-  background-repeat: no-repeat !important;
-}}
+/* 배경 fallback (JS가 덮어씀) */
+html, body {{ background-color: #111 !important; }}
 
-/* body / Gradio 컨테이너는 모두 투명하게 */
-body,
+/* Gradio 컨테이너 투명화 */
 .gradio-container,
 .gradio-container > .main,
 .gradio-container > .main > .wrap,
 .app, #root {{
   background: transparent !important;
   background-color: transparent !important;
-  background-image: none !important;
 }}
 
 /* ── 모든 Gradio 블록 크롬 제거 ── */
@@ -487,6 +477,48 @@ JS = f"""
 () => {{
 
 /* ─────────────────────────────────────────
+   배경 이미지 (CSS 변수 없이 직접 inline !important 주입)
+   — CSS cascade 최우선: author !important < inline !important
+───────────────────────────────────────── */
+var _sfBgDay   = '{BG_DAY}';
+var _sfBgNight = '{BG_NIGHT}';
+
+function _sfApplyBg(url) {{
+  ['html','body'].forEach(function(tag) {{
+    var el = document.querySelector(tag);
+    if (!el) return;
+    el.style.setProperty('background-image',    'url("' + url + '")', 'important');
+    el.style.setProperty('background-size',     'cover',              'important');
+    el.style.setProperty('background-position', 'center',             'important');
+    el.style.setProperty('background-attachment','fixed',             'important');
+    el.style.setProperty('background-repeat',   'no-repeat',          'important');
+    el.style.setProperty('background-color',    'transparent',        'important');
+  }});
+}}
+
+/* 즉시 + Gradio 초기화 중에도 유지되도록 3초간 반복 적용 */
+_sfApplyBg(_sfBgDay);
+var _sfBgRetry = setInterval(function() {{ _sfApplyBg(_sfBgDay); }}, 200);
+setTimeout(function() {{ clearInterval(_sfBgRetry); }}, 3000);
+
+/* .gradio-container 내부도 투명하게 */
+function _sfClearContainerBg() {{
+  var sel = ['.gradio-container','.gradio-container > .main',
+             '.gradio-container > .main > .wrap','.app','#root'];
+  sel.forEach(function(s) {{
+    var el = document.querySelector(s);
+    if (el) {{
+      el.style.setProperty('background','transparent','important');
+      el.style.setProperty('background-color','transparent','important');
+    }}
+  }});
+}}
+_sfClearContainerBg();
+setTimeout(_sfClearContainerBg, 500);
+setTimeout(_sfClearContainerBg, 1500);
+
+
+/* ─────────────────────────────────────────
    낮 / 밤 배경 전환
 ───────────────────────────────────────── */
 function initTheme() {{
@@ -497,12 +529,12 @@ function initTheme() {{
   d._sfBound = true;
 
   function setDay() {{
-    document.documentElement.style.removeProperty('--sf-bg');
+    _sfApplyBg(_sfBgDay);
     d.style.cssText = 'background:#00C9A7;color:#000;border:none;padding:4px 14px;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;';
     n.style.cssText = 'background:rgba(255,255,255,.1);color:#fff;border:1px solid #555;padding:4px 14px;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;';
   }}
   function setNight() {{
-    document.documentElement.style.setProperty('--sf-bg', 'var(--sf-bg-night)');
+    _sfApplyBg(_sfBgNight);
     n.style.cssText = 'background:#00C9A7;color:#000;border:none;padding:4px 14px;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;';
     d.style.cssText = 'background:rgba(255,255,255,.1);color:#fff;border:1px solid #555;padding:4px 14px;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;';
   }}
