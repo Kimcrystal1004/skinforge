@@ -417,9 +417,9 @@ function sp(el,p,v){ el.style.setProperty(p,v,'important'); }
     +'box-shadow:0 0 0 2px #111!important;'
     +'height:340px!important;'
     +'min-height:340px!important;'
-    +'overflow:hidden!important;'
+    +'overflow:visible!important;'
     +'border-radius:0!important;'
-    +'box-sizing:content-box!important;'
+    +'box-sizing:border-box!important;'
     +'position:relative!important;}'
 
     +'#upload-wrap label,'
@@ -432,8 +432,8 @@ function sp(el,p,v){ el.style.setProperty(p,v,'important'); }
     +'background:transparent!important;'
     +'border:none!important;box-shadow:none!important;'
     +'padding:0!important;'
-    +'height:340px!important;'
-    +'min-height:340px!important;'
+    +'height:330px!important;'
+    +'min-height:330px!important;'
     +'overflow:hidden!important;}'
 
     +'#upload-wrap img{'
@@ -460,17 +460,17 @@ function styleUpload(){
   sp(el,'box-shadow','0 0 0 2px #111');
   sp(el,'height','340px');
   sp(el,'min-height','340px');
-  sp(el,'overflow','hidden');
+  sp(el,'overflow','visible');
   sp(el,'border-radius','0');
-  sp(el,'box-sizing','content-box');
+  sp(el,'box-sizing','border-box');
   sp(el,'position','relative');
   el.querySelectorAll('label,.block,.wrap').forEach(function(c){
     sp(c,'background','transparent');
     sp(c,'border','none');
     sp(c,'box-shadow','none');
     sp(c,'padding','0');
-    sp(c,'height','340px');
-    sp(c,'min-height','340px');
+    sp(c,'height','330px');
+    sp(c,'min-height','330px');
     sp(c,'overflow','hidden');
   });
   el.querySelectorAll('img').forEach(function(img){
@@ -487,35 +487,6 @@ function styleUpload(){
 setInterval(styleUpload,300);
 setTimeout(styleUpload,100);
 
-/* ─ 업로드 박스 베벨 테두리 (body fixed — overflow:hidden 완전 우회) ─ */
-function ensureBorder(){
-  var el=document.getElementById('upload-wrap');
-  if(!el) return;
-  var bd=document.getElementById('uf-border-frame');
-  if(!bd){
-    bd=document.createElement('div');
-    bd.id='uf-border-frame';
-    document.body.appendChild(bd);
-  }
-  var r=el.getBoundingClientRect();
-  sp(bd,'position','fixed');
-  sp(bd,'top',r.top+'px');
-  sp(bd,'left',r.left+'px');
-  sp(bd,'width',r.width+'px');
-  sp(bd,'height',r.height+'px');
-  sp(bd,'border-style','solid');
-  sp(bd,'border-width','5px');
-  sp(bd,'border-color','#b8b8b8 #444 #444 #b8b8b8');
-  sp(bd,'box-shadow','0 0 0 2px #111');
-  sp(bd,'pointer-events','none');
-  sp(bd,'z-index','999');
-  sp(bd,'background','transparent');
-  sp(bd,'box-sizing','border-box');
-}
-setInterval(ensureBorder,100);
-setTimeout(ensureBorder,500);
-window.addEventListener('scroll',ensureBorder);
-window.addEventListener('resize',ensureBorder);
 
 /* ─ 화살표 애니메이션 ─ */
 function initArrow(){
