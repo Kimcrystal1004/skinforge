@@ -67,6 +67,7 @@ footer, .built-with { display: none !important; }
 .gradio-container .main .wrap { padding-left: 0 !important; padding-right: 0 !important; }
 .gradio-container .main .wrap > .gap { padding: 0 !important; gap: 8px !important; align-items: flex-start !important; }
 #result-box { margin: 0 !important; padding-top: 0 !important; }
+#upload-wrap, #gen-html, [id="result-box"] { margin-top: 0 !important; }
 #upload-wrap { padding: 0 !important; }
 
 /* 페이지 배경 */
@@ -346,13 +347,60 @@ CSS += """
 
 _CTRL_ENTER_JS = """
 () => {
+    /* Ctrl+Enter */
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && e.key === 'Enter') {
             e.preventDefault();
-            var btn = document.querySelector('#gen-btn button');
+            var btn = document.querySelector('#gen-btn button') || document.querySelector('#gen-btn');
             if (btn) btn.click();
         }
     });
+
+    /* sf-gen-btn 클릭 핸들러 백업 (sanitize_html=False 보완) */
+    function attachGenBtn() {
+        var btn = document.getElementById('sf-gen-btn');
+        if (!btn) { setTimeout(attachGenBtn, 400); return; }
+        if (btn._grBound) return;
+        btn._grBound = true;
+        btn.addEventListener('click', function() {
+            var b = document.querySelector('#gen-btn button') || document.querySelector('#gen-btn');
+            if (b) b.click();
+        });
+        btn.addEventListener('mouseover', function() { btn.style.filter = 'brightness(1.12)'; });
+        btn.addEventListener('mouseout',  function() { btn.style.filter = ''; });
+    }
+    setTimeout(attachGenBtn, 600);
+
+    /* 배경 테마 버튼 백업 */
+    function attachTheme() {
+        var d = document.getElementById('sf-theme-day');
+        var n = document.getElementById('sf-theme-night');
+        if (!d || !n) { setTimeout(attachTheme, 400); return; }
+        if (d._grBound) return;
+        d._grBound = true;
+        function setTheme(mode) {
+            if (window.sfSetBG) { window.sfSetBG(mode); return; }
+            /* sfSetBG 미정의 시 직접 처리 */
+            if (mode === 'night' && window._SFBG_N) {
+                document.documentElement.style.setProperty('--sf-bg', 'url(' + window._SFBG_N + ')');
+            } else {
+                document.documentElement.style.removeProperty('--sf-bg');
+            }
+        }
+        function setActive(el) {
+            [d, n].forEach(function(b) {
+                b.style.background = 'rgba(255,255,255,.1)';
+                b.style.color = '#fff';
+                b.style.border = '1px solid #555';
+            });
+            el.style.background = '#00C9A7';
+            el.style.color = '#000';
+            el.style.border = 'none';
+        }
+        d.addEventListener('click', function() { setTheme('day');   setActive(d); });
+        n.addEventListener('click', function() { setTheme('night'); setActive(n); });
+    }
+    setTimeout(attachTheme, 600);
 }
 """
 
@@ -401,7 +449,7 @@ with gr.Blocks(css=CSS, title="SkinForge AI", theme=theme, js=_CTRL_ENTER_JS) as
 </div>
 """)
 
-    gr.HTML(value="""<script>
+    gr.HTML(sanitize_html=False, value="""<script>
 (function(){
 
 /* ─ helper ─ */
@@ -585,7 +633,7 @@ function initSfGenBtn(){
     var b=document.querySelector('#gen-btn button');
     if(!b) b=document.querySelector('#gen-btn');
     if(!b) return;
-    b.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true,view:window}));
+    b.click();
   });
   btn.addEventListener('mouseover',function(){btn.style.filter='brightness(1.12)';});
   btn.addEventListener('mouseout',function(){btn.style.filter='';});
