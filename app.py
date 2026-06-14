@@ -428,20 +428,26 @@ function sp(el,p,v){ el.style.setProperty(p,v,'important'); }
     +'background:transparent!important;'
     +'border:none!important;'
     +'box-shadow:none!important;'
-    +'width:100%!important;'
+    +'width:min(420px,100%)!important;'
     +'max-width:100%!important;'
     +'overflow:hidden!important;'
     +'border-radius:0!important;'
     +'box-sizing:border-box!important;'
     +'position:relative!important;'
+    +'margin:0 auto!important;'
+    +'aspect-ratio:1/1!important;'
     +'z-index:1!important;}'
 
-    +'#sf-upload-group{'
-    +'position:relative!important;'
-    +'width:min(420px,100%)!important;'
-    +'aspect-ratio:1/1!important;'
-    +'margin:0 auto!important;'
-    +'overflow:hidden!important;}'
+    +'#upload-wrap::before{'
+    +'content:""!important;'
+    +'position:absolute!important;'
+    +'top:0!important;left:0!important;'
+    +'width:100%!important;height:100%!important;'
+    +'background-image:var(--sf-upload-bg-img,none)!important;'
+    +'background-size:100% 100%!important;'
+    +'background-repeat:no-repeat!important;'
+    +'z-index:0!important;'
+    +'pointer-events:none!important;}'
 
     +'#result-box{'
     +'display:flex!important;'
@@ -487,7 +493,6 @@ function sp(el,p,v){ el.style.setProperty(p,v,'important'); }
 function styleUpload(){
   var el=document.getElementById('upload-wrap');
   if(!el) return;
-  var inGroup=el.parentElement&&el.parentElement.id==='sf-upload-group';
   sp(el,'background','transparent');
   sp(el,'background-color','transparent');
   sp(el,'background-image','none');
@@ -498,19 +503,12 @@ function styleUpload(){
   sp(el,'box-sizing','border-box');
   sp(el,'position','relative');
   sp(el,'z-index','1');
-  sp(el,'margin','0');
-  if(inGroup){
-    sp(el,'width','100%');
-    sp(el,'height','100%');
-    sp(el,'min-height','unset');
-    sp(el,'aspect-ratio','unset');
-  } else {
-    sp(el,'width','min(420px,100%)');
-    sp(el,'max-width','100%');
-    sp(el,'aspect-ratio','1/1');
-    sp(el,'height','auto');
-    sp(el,'min-height','unset');
-  }
+  sp(el,'margin','0 auto');
+  sp(el,'width','min(420px,100%)');
+  sp(el,'max-width','100%');
+  sp(el,'aspect-ratio','1/1');
+  sp(el,'height','auto');
+  sp(el,'min-height','unset');
   el.querySelectorAll('*').forEach(function(c){
     sp(c,'background','transparent');
     sp(c,'background-color','transparent');
@@ -536,24 +534,18 @@ function styleUpload(){
 setInterval(styleUpload,300);
 setTimeout(styleUpload,100);
 
-/* ─ 업로드박스 오버레이 그룹핑 ─ */
-function fixUploadOverlay(){
-  var el=document.getElementById('upload-wrap');
+/* ─ 업로드 배경 이미지 → CSS 변수 주입 (::before 방식) ─ */
+function initUploadBg(){
   var bg=document.getElementById('upload-bg-frame');
-  if(!el||!bg){setTimeout(fixUploadOverlay,500);return;}
-  if(el.parentElement&&el.parentElement.id==='sf-upload-group') return;
-  var group=document.createElement('div');
-  group.id='sf-upload-group';
-  group.style.cssText='position:relative;width:min(420px,100%);aspect-ratio:1/1;margin:0 auto;overflow:hidden;';
-  el.parentElement.insertBefore(group,el);
-  bg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;overflow:hidden;display:block;';
-  var bgi=bg.querySelector('img');
-  if(bgi) bgi.style.cssText='width:100%;height:100%;display:block;image-rendering:pixelated;';
-  group.appendChild(bg);
-  group.appendChild(el);
-  styleUpload();
+  if(!bg){setTimeout(initUploadBg,300);return;}
+  var bi=bg.querySelector('img');
+  if(!bi||!bi.src){setTimeout(initUploadBg,300);return;}
+  document.documentElement.style.setProperty('--sf-upload-bg-img','url('+bi.src+')');
+  /* bg-frame은 데이터 소스 역할 완료 — 숨김 처리 */
+  var wp=bg.parentElement;
+  if(wp) sp(wp,'display','none');
 }
-setTimeout(fixUploadOverlay,1000);
+setTimeout(initUploadBg,400);
 
 
 /* ─ 화살표 진행도 이미지 ─ */
