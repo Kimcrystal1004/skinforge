@@ -98,8 +98,7 @@ _RESULT_EMPTY = f"""<div id="result-inner"
     display:flex;flex-direction:column;
     align-items:center;justify-content:center;
     position:relative;overflow:hidden;box-sizing:border-box;">
-  <img src="{LEVELS[0]}" style="width:56px;opacity:0.5;image-rendering:pixelated;">
-  <p style="color:#aaa;font-size:13px;margin:12px 0 0;text-align:center;
+  <p style="color:#aaa;font-size:13px;margin:0;text-align:center;
     text-shadow:1px 1px 0 #000;">스킨을 생성하면 미리보기가 표시됩니다</p>
 </div>"""
 
@@ -266,6 +265,7 @@ html, body {{ background-color: #111 !important; }}
 #upload-wrap {{
   width: 360px !important;
   height: 360px !important;
+  margin: 0 auto !important;
   background-image: var(--img-bg) !important;
   background-size: 100% 100% !important;
   background-repeat: no-repeat !important;
@@ -312,6 +312,16 @@ html, body {{ background-color: #111 !important; }}
   border: none !important;
   box-shadow: none !important;
   overflow: visible !important;
+  display: flex !important;
+  justify-content: center !important;
+  width: 100% !important;
+}}
+
+/* ── 헤더 낮/밤 버튼: 높이 통일 ── */
+#sf-btn-day, #sf-btn-night {{
+  height: 28px !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
 }}
 
 /* ── 액션 버튼 ── */
@@ -327,7 +337,7 @@ html, body {{ background-color: #111 !important; }}
   color: #fff;
   font-size: 16px;
   font-weight: 700;
-  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.9);
   letter-spacing: 1px;
   transition: filter 0.1s;
   display: block;
@@ -528,15 +538,16 @@ function initTheme() {{
   if (d._sfBound) return;
   d._sfBound = true;
 
+  var _btnBase = 'padding:4px 14px;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;height:28px;box-sizing:border-box;line-height:1;';
   function setDay() {{
     _sfApplyBg(_sfBgDay);
-    d.style.cssText = 'background:#00C9A7;color:#000;border:none;padding:4px 14px;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;';
-    n.style.cssText = 'background:rgba(255,255,255,.1);color:#fff;border:1px solid #555;padding:4px 14px;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;';
+    d.style.cssText = _btnBase + 'background:#00C9A7;color:#000;border:1px solid #00C9A7;';
+    n.style.cssText = _btnBase + 'background:rgba(255,255,255,.1);color:#fff;border:1px solid #555;';
   }}
   function setNight() {{
     _sfApplyBg(_sfBgNight);
-    n.style.cssText = 'background:#00C9A7;color:#000;border:none;padding:4px 14px;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;';
-    d.style.cssText = 'background:rgba(255,255,255,.1);color:#fff;border:1px solid #555;padding:4px 14px;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;';
+    n.style.cssText = _btnBase + 'background:#00C9A7;color:#000;border:1px solid #00C9A7;';
+    d.style.cssText = _btnBase + 'background:rgba(255,255,255,.1);color:#fff;border:1px solid #555;';
   }}
   d.addEventListener('click', setDay);
   n.addEventListener('click', setNight);
