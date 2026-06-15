@@ -107,8 +107,8 @@ _RESULT_EMPTY = f"""<div id="result-inner"
     display:flex;flex-direction:column;
     align-items:center;justify-content:center;
     position:relative;overflow:hidden;box-sizing:border-box;">
-  <p style="color:#aaa;font-size:13px;margin:0;text-align:center;
-    text-shadow:1px 1px 0 #000;">스킨을 생성하면 미리보기가 표시됩니다</p>
+  <p style="color:var(--body-text-color-subdued);font-size:var(--text-sm);
+    margin:0;text-align:center;line-height:var(--line-sm);">스킨을 생성하면 미리보기가 표시됩니다</p>
 </div>"""
 
 def make_result_html(view_imgs: list, skin_img: Image.Image) -> str:
