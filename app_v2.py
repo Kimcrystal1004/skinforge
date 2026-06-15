@@ -204,11 +204,14 @@ footer, .built-with {{ display:none !important; }}
   --btn-bg: url('{BTN_BG}');
 }}
 
-/* 배경 fallback (JS가 덮어씀) */
-html, body {{ background-color: #111 !important; }}
+/* 배경: body 투명 + gradio-container z-index 1로 bg-div(z-index:0) 위에 오게 */
+html, body {{ background: transparent !important; background-color: transparent !important; }}
+.gradio-container {{
+  position: relative !important;
+  z-index: 1 !important;
+}}
 
 /* Gradio 컨테이너 투명화 */
-.gradio-container,
 .gradio-container > .main,
 .gradio-container > .main > .wrap,
 .app, #root {{
@@ -313,17 +316,26 @@ html, body {{ background-color: #111 !important; }}
 #upload-wrap .source-selection,
 #upload-wrap [data-testid="source-select"] {{ display: none !important; }}
 
-/* ── 결과 박스 (gr.HTML) ── */
-#result-box, #result-box > div {{
+/* ── 결과 박스 (gr.HTML) — 업로드 박스와 동일 크기로 버튼 행 정렬 ── */
+#result-box {{
+  width: 360px !important;
+  height: 360px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  display: block !important;
+}}
+#result-box > div {{
   padding: 0 !important;
   margin: 0 !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  overflow: visible !important;
-  display: flex !important;
-  justify-content: center !important;
   width: 100% !important;
+  height: 100% !important;
 }}
 
 /* ── 헤더 낮/밤 버튼: 높이 통일 ── */
@@ -352,8 +364,9 @@ html, body {{ background-color: #111 !important; }}
   display: block;
   flex-shrink: 0;
 }}
-.sf-btn:hover  {{ filter: brightness(1.15); }}
-.sf-btn:active {{ filter: brightness(0.75); }}
+.sf-btn         {{ filter: brightness(1.7); }}
+.sf-btn:hover  {{ filter: brightness(2.0); }}
+.sf-btn:active {{ filter: brightness(1.3); }}
 
 /* ── 숨겨진 Gradio 버튼 ── */
 #gen-btn {{
@@ -498,45 +511,34 @@ JS = f"""
 () => {{
 
 /* ─────────────────────────────────────────
-   배경 이미지 (CSS 변수 없이 직접 inline !important 주입)
-   — CSS cascade 최우선: author !important < inline !important
+   배경 이미지 — body 직접 div 삽입 (z-index:0)
+   gradio-container는 CSS z-index:1 → div 위에 렌더링
 ───────────────────────────────────────── */
 var _sfBgDay   = '{BG_DAY}';
 var _sfBgNight = '{BG_NIGHT}';
 
 function _sfApplyBg(url) {{
-  ['html','body'].forEach(function(tag) {{
-    var el = document.querySelector(tag);
-    if (!el) return;
-    el.style.setProperty('background-image',    'url("' + url + '")', 'important');
-    el.style.setProperty('background-size',     'cover',              'important');
-    el.style.setProperty('background-position', 'center',             'important');
-    el.style.setProperty('background-attachment','fixed',             'important');
-    el.style.setProperty('background-repeat',   'no-repeat',          'important');
-    el.style.setProperty('background-color',    'transparent',        'important');
-  }});
+  var bg = document.getElementById('sf-bg-div');
+  if (!bg) {{
+    bg = document.createElement('div');
+    bg.id = 'sf-bg-div';
+    bg.style.cssText = [
+      'position:fixed','top:0','left:0','width:100vw','height:100vh',
+      'z-index:0','pointer-events:none',
+      'background-size:cover','background-position:center center',
+      'background-repeat:no-repeat','background-attachment:fixed'
+    ].join(';') + ';';
+    document.body.insertBefore(bg, document.body.firstChild);
+  }}
+  bg.style.backgroundImage = 'url("' + url + '")';
 }}
 
-/* 즉시 + Gradio 초기화 중에도 유지되도록 3초간 반복 적용 */
-_sfApplyBg(_sfBgDay);
-var _sfBgRetry = setInterval(function() {{ _sfApplyBg(_sfBgDay); }}, 200);
-setTimeout(function() {{ clearInterval(_sfBgRetry); }}, 3000);
-
-/* .gradio-container 내부도 투명하게 */
-function _sfClearContainerBg() {{
-  var sel = ['.gradio-container','.gradio-container > .main',
-             '.gradio-container > .main > .wrap','.app','#root'];
-  sel.forEach(function(s) {{
-    var el = document.querySelector(s);
-    if (el) {{
-      el.style.setProperty('background','transparent','important');
-      el.style.setProperty('background-color','transparent','important');
-    }}
-  }});
+/* 즉시 적용 + DOM 준비될 때까지 재시도 */
+function _sfBgInit() {{
+  if (!document.body) {{ setTimeout(_sfBgInit, 50); return; }}
+  _sfApplyBg(_sfBgDay);
 }}
-_sfClearContainerBg();
-setTimeout(_sfClearContainerBg, 500);
-setTimeout(_sfClearContainerBg, 1500);
+_sfBgInit();
 
 
 /* ─────────────────────────────────────────
