@@ -38,6 +38,7 @@ BG_DAY   = _b64_bg(_D / "background_d.png")
 BG_NIGHT = _b64_bg(_D / "background_n.png")
 IMG_BG   = _b64(_D / "img_background.png")
 BTN_BG   = _b64(_D / "button_background.png")
+TITLE_BG = _b64(_D / "title_background.png")
 GRASS    = _b64(_D / "grass_block.png")
 EXPLAIN  = _b64(_D / "explain.png")
 LEVELS   = [_b64(_D / f"level{i}.png") for i in range(5)]
@@ -232,7 +233,9 @@ html, body {{ background: transparent !important; background-color: transparent 
 /* ── 헤더 ── */
 #sf-header {{
   width: 100%;
-  background: #c2c2c2;
+  background-image: url('{TITLE_BG}');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   border: 2px solid #000;
   box-sizing: border-box;
   padding: 10px 20px;
