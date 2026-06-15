@@ -415,7 +415,7 @@ html, body {{ background: transparent !important; background-color: transparent 
 # ══════════════════════════════════════════════════════════════════════
 HEADER_HTML = f"""<div id="sf-header">
   <div style="display:flex;align-items:center;gap:12px;">
-    <img src="{GRASS}" style="width:52px;height:52px;image-rendering:pixelated;flex-shrink:0;">
+    <img src="{GRASS}" style="width:39px;height:39px;image-rendering:pixelated;flex-shrink:0;">
     <span style="color:#222;font-size:22px;font-weight:900;
       text-shadow:1px 1px 0 rgba(255,255,255,0.4);letter-spacing:1px;">SkinForge AI</span>
   </div>
@@ -423,7 +423,7 @@ HEADER_HTML = f"""<div id="sf-header">
     background:rgba(0,0,0,0.4);padding:6px 12px;border:1px solid #444;border-radius:3px;">
     <span style="color:#333;font-size:12px;font-weight:700;margin-right:4px;">배경</span>
     <button id="sf-btn-day"
-      style="background:#888;color:#fff;border:1px solid #888;padding:0 14px;
+      style="background:#b5b5b5;color:#fff;border:1px solid #b5b5b5;padding:0 14px;
         font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;
         height:28px;box-sizing:border-box;line-height:28px;">낮</button>
     <button id="sf-btn-night"
