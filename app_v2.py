@@ -232,9 +232,7 @@ html, body {{ background: transparent !important; background-color: transparent 
 /* ── 헤더 ── */
 #sf-header {{
   width: 100%;
-  background-image: var(--btn-bg);
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
+  background: rgba(20,20,20,0.85);
   border-bottom: 2px solid #111;
   box-sizing: border-box;
   padding: 10px 20px;
