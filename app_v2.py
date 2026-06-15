@@ -232,8 +232,8 @@ html, body {{ background: transparent !important; background-color: transparent 
 /* ── 헤더 ── */
 #sf-header {{
   width: 100%;
-  background: rgba(20,20,20,0.85);
-  border-bottom: 2px solid #111;
+  background: #c2c2c2;
+  border: 2px solid #000;
   box-sizing: border-box;
   padding: 10px 20px;
   display: flex;
@@ -413,12 +413,12 @@ html, body {{ background: transparent !important; background-color: transparent 
 HEADER_HTML = f"""<div id="sf-header">
   <div style="display:flex;align-items:center;gap:12px;">
     <img src="{GRASS}" style="width:52px;height:52px;image-rendering:pixelated;flex-shrink:0;">
-    <span style="color:#fff;font-size:22px;font-weight:900;
-      text-shadow:3px 3px 0 #000,-1px -1px 0 #333;letter-spacing:1px;">SkinForge AI</span>
+    <span style="color:#222;font-size:22px;font-weight:900;
+      text-shadow:1px 1px 0 rgba(255,255,255,0.4);letter-spacing:1px;">SkinForge AI</span>
   </div>
   <div style="display:flex;align-items:center;gap:6px;
     background:rgba(0,0,0,0.4);padding:6px 12px;border:1px solid #444;border-radius:3px;">
-    <span style="color:#aaa;font-size:12px;font-weight:700;margin-right:4px;">배경</span>
+    <span style="color:#333;font-size:12px;font-weight:700;margin-right:4px;">배경</span>
     <button id="sf-btn-day"
       style="background:#888;color:#fff;border:1px solid #888;padding:0 14px;
         font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;
