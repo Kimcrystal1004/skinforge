@@ -25,8 +25,17 @@ def _b64(p: Path) -> str:
     if ext == 'jpg': ext = 'jpeg'
     return f"data:image/{ext};base64," + base64.b64encode(p.read_bytes()).decode()
 
-BG_DAY   = _b64(_D / "background_d.png")
-BG_NIGHT = _b64(_D / "background_n.png")
+def _b64_bg(p: Path, max_dim: int = 1280, quality: int = 78) -> str:
+    """배경 이미지를 JPEG으로 압축 (2MB+ PNG → ~200KB JPEG base64 가능)"""
+    img = Image.open(p).convert("RGB")
+    if img.width > max_dim or img.height > max_dim:
+        img.thumbnail((max_dim, max_dim), Image.LANCZOS)
+    buf = io.BytesIO()
+    img.save(buf, "JPEG", quality=quality, optimize=True)
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+
+BG_DAY   = _b64_bg(_D / "background_d.png")
+BG_NIGHT = _b64_bg(_D / "background_n.png")
 IMG_BG   = _b64(_D / "img_background.png")
 BTN_BG   = _b64(_D / "button_background.png")
 GRASS    = _b64(_D / "grass_block.png")
@@ -399,11 +408,13 @@ HEADER_HTML = f"""<div id="sf-header">
     background:rgba(0,0,0,0.4);padding:6px 12px;border:1px solid #444;border-radius:3px;">
     <span style="color:#aaa;font-size:12px;font-weight:700;margin-right:4px;">배경</span>
     <button id="sf-btn-day"
-      style="background:#00C9A7;color:#000;border:none;padding:4px 14px;
-        font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;">낮</button>
+      style="background:#00C9A7;color:#000;border:1px solid #00C9A7;padding:0 14px;
+        font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;
+        height:28px;box-sizing:border-box;line-height:28px;">낮</button>
     <button id="sf-btn-night"
       style="background:rgba(255,255,255,.1);color:#fff;border:1px solid #555;
-        padding:4px 14px;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;">밤</button>
+        padding:0 14px;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;
+        height:28px;box-sizing:border-box;line-height:28px;">밤</button>
   </div>
 </div>"""
 
@@ -444,27 +455,27 @@ MODAL_HTML = f"""<div id="sf-modal-overlay">
         <div style="display:flex;align-items:flex-start;gap:10px;background:#2a2a2a;padding:9px 12px;">
           <span style="background:#555;color:#fff;font-weight:700;font-size:11px;
             padding:2px 7px;border-radius:2px;flex-shrink:0;">1</span>
-          <span><b style="color:#fff;">전신이 잘 보이는 사진</b>을 준비하세요.</span>
+          <span style="color:#ddd;"><b style="color:#fff;">전신이 잘 보이는 사진</b>을 준비하세요.</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:10px;background:#2a2a2a;padding:9px 12px;">
           <span style="background:#555;color:#fff;font-weight:700;font-size:11px;
             padding:2px 7px;border-radius:2px;flex-shrink:0;">2</span>
-          <span><b style="color:#fff;">왼쪽 업로드 영역</b>에 사진을 드래그하거나 클릭해 업로드하세요.</span>
+          <span style="color:#ddd;"><b style="color:#fff;">왼쪽 업로드 영역</b>에 사진을 드래그하거나 클릭해 업로드하세요.</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:10px;background:#2a2a2a;padding:9px 12px;">
           <span style="background:#555;color:#fff;font-weight:700;font-size:11px;
             padding:2px 7px;border-radius:2px;flex-shrink:0;">3</span>
-          <span><b style="color:#fff;">스킨 생성하기</b> 버튼을 클릭하세요. AI 분석에 약 20~40초 소요됩니다.</span>
+          <span style="color:#ddd;"><b style="color:#fff;">스킨 생성하기</b> 버튼을 클릭하세요. AI 분석에 약 20~40초 소요됩니다.</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:10px;background:#2a2a2a;padding:9px 12px;">
           <span style="background:#555;color:#fff;font-weight:700;font-size:11px;
             padding:2px 7px;border-radius:2px;flex-shrink:0;">4</span>
-          <span>미리보기 확인 후 &#11015; <b style="color:#fff;">PNG 저장하기</b>. 마음에 안 들면 다시 생성해보세요!</span>
+          <span style="color:#ddd;">미리보기 확인 후 &#11015; <b style="color:#fff;">PNG 저장하기</b>. 마음에 안 들면 다시 생성해보세요!</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:10px;background:#2a2a2a;padding:9px 12px;">
           <span style="background:#555;color:#fff;font-weight:700;font-size:11px;
             padding:2px 7px;border-radius:2px;flex-shrink:0;">5</span>
-          <span>마인크래프트 &#8594; <b style="color:#fff;">스킨 변경</b>에서 다운로드한 PNG를 적용하면 완료!</span>
+          <span style="color:#ddd;">마인크래프트 &#8594; <b style="color:#fff;">스킨 변경</b>에서 다운로드한 PNG를 적용하면 완료!</span>
         </div>
       </div>
       <p style="margin:14px 0 0;padding:10px 12px;
@@ -573,7 +584,7 @@ function arrowStart() {{
   if (_arrowTimer) clearInterval(_arrowTimer);
   _arrowTimer = setInterval(function() {{
     if (_arrowStep < 4) arrowSet(_arrowStep + 1);
-  }}, 6000); // 6초마다 한 단계씩 (총 ~30초)
+  }}, 2000); // 2초마다 한 단계씩 (총 ~8초)
 }}
 
 function arrowDone() {{
