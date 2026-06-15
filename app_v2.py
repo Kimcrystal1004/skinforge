@@ -364,9 +364,8 @@ html, body {{ background: transparent !important; background-color: transparent 
   display: block;
   flex-shrink: 0;
 }}
-.sf-btn         {{ filter: brightness(1.7); }}
-.sf-btn:hover  {{ filter: brightness(2.0); }}
-.sf-btn:active {{ filter: brightness(1.3); }}
+.sf-btn:hover  {{ filter: brightness(1.15); }}
+.sf-btn:active {{ filter: brightness(0.75); }}
 
 /* ── 숨겨진 Gradio 버튼 ── */
 #gen-btn {{
@@ -421,7 +420,7 @@ HEADER_HTML = f"""<div id="sf-header">
     background:rgba(0,0,0,0.4);padding:6px 12px;border:1px solid #444;border-radius:3px;">
     <span style="color:#aaa;font-size:12px;font-weight:700;margin-right:4px;">배경</span>
     <button id="sf-btn-day"
-      style="background:#00C9A7;color:#000;border:1px solid #00C9A7;padding:0 14px;
+      style="background:#888;color:#fff;border:1px solid #888;padding:0 14px;
         font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;
         height:28px;box-sizing:border-box;line-height:28px;">낮</button>
     <button id="sf-btn-night"
@@ -551,16 +550,18 @@ function initTheme() {{
   if (d._sfBound) return;
   d._sfBound = true;
 
-  var _btnBase = 'padding:4px 14px;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;height:28px;box-sizing:border-box;line-height:1;';
+  var _btnBase = 'padding:0 14px;font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;height:28px;box-sizing:border-box;line-height:28px;color:#fff;';
+  var _btnActive = _btnBase + 'background:#888;border:1px solid #888;';
+  var _btnInactive = _btnBase + 'background:rgba(255,255,255,.1);border:1px solid #555;';
   function setDay() {{
     _sfApplyBg(_sfBgDay);
-    d.style.cssText = _btnBase + 'background:#00C9A7;color:#000;border:1px solid #00C9A7;';
-    n.style.cssText = _btnBase + 'background:rgba(255,255,255,.1);color:#fff;border:1px solid #555;';
+    d.style.cssText = _btnActive;
+    n.style.cssText = _btnInactive;
   }}
   function setNight() {{
     _sfApplyBg(_sfBgNight);
-    n.style.cssText = _btnBase + 'background:#00C9A7;color:#000;border:1px solid #00C9A7;';
-    d.style.cssText = _btnBase + 'background:rgba(255,255,255,.1);color:#fff;border:1px solid #555;';
+    n.style.cssText = _btnActive;
+    d.style.cssText = _btnInactive;
   }}
   d.addEventListener('click', setDay);
   n.addEventListener('click', setNight);
