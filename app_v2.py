@@ -578,6 +578,7 @@ setTimeout(initTheme, 400);
 var LEVELS = {_LEVELS_JS};
 var _arrowTimer = null;
 var _arrowStep  = 0;
+var _generating = false;
 
 function arrowSet(step) {{
   var img = document.getElementById('sf-arrow-img');
@@ -586,14 +587,19 @@ function arrowSet(step) {{
 }}
 
 function arrowStart() {{
+  _generating = true;
+  // 이전 생성 결과 마커 제거 — 남아 있으면 watchResult가 즉시 arrowDone 호출
+  var old = document.getElementById('sf-skin-b64');
+  if (old) old.parentNode && old.parentNode.removeChild(old);
   arrowSet(0);
   if (_arrowTimer) clearInterval(_arrowTimer);
   _arrowTimer = setInterval(function() {{
     if (_arrowStep < 4) arrowSet(_arrowStep + 1);
-  }}, 2000); // 2초마다 한 단계씩 (총 ~8초)
+  }}, 2000);
 }}
 
 function arrowDone() {{
+  _generating = false;
   if (_arrowTimer) {{ clearInterval(_arrowTimer); _arrowTimer = null; }}
   arrowSet(4);
   setTimeout(function() {{ arrowSet(0); }}, 2500);
@@ -625,12 +631,10 @@ setTimeout(initGenBtn, 500);
 function watchResult() {{
   var box = document.getElementById('result-box');
   if (!box) {{ setTimeout(watchResult, 400); return; }}
-  var _generating = false;
 
   new MutationObserver(function() {{
-    if (document.getElementById('sf-skin-b64')) {{
+    if (_generating && document.getElementById('sf-skin-b64')) {{
       arrowDone();
-      _generating = false;
     }}
   }}).observe(box, {{ childList: true, subtree: true }});
 }}
