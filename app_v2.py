@@ -417,8 +417,9 @@ HEADER_HTML = f"""<div id="sf-header">
       text-shadow:3px 3px 0 #000,-1px -1px 0 #333;letter-spacing:1px;">SkinForge AI</span>
   </div>
   <div style="display:flex;align-items:center;gap:6px;
-    background:rgba(0,0,0,0.4);padding:6px 12px;border:1px solid #444;border-radius:3px;">
-    <span style="color:#aaa;font-size:12px;font-weight:700;margin-right:4px;">배경</span>
+    background-image:url('{BTN_BG}');background-size:100% 100%;background-repeat:no-repeat;
+    padding:6px 16px;border:none;border-radius:3px;">
+    <span style="color:#fff;font-size:12px;font-weight:700;margin-right:4px;text-shadow:1px 1px 0 #000;">배경</span>
     <button id="sf-btn-day"
       style="background:#888;color:#fff;border:1px solid #888;padding:0 14px;
         font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;
