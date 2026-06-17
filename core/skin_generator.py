@@ -282,13 +282,13 @@ _STYLE_REF_MAP = [
     # (상의 키워드, 하의 키워드, 레퍼런스 파일)
     (["교복", "school uniform", "세일러", "교복치마"],      [],   "reference (10).png"),
     (["정장", "suit", "비즈니스", "포멀", "자켓", "블레이저", "jacket"], ["슬랙스", "정장", ""], "reference (22).png"),
-    (["한복", "저고리", "치마저고리"],                      [],   "reference (62).png"),
+    (["한복", "저고리", "치마저고리"],                      [],   "reference (65).png"),
     (["경찰", "police", "군복", "유니폼", "제복"],          [],   "reference (5).png"),
     (["웨딩", "웨딩드레스", "wedding"],                     [],   "reference (33).png"),
     (["드레스", "원피스", "dress"],                          [],   "reference (58).png"),
     ([], ["드레스", "원피스", "dress"],                            "reference (58).png"),
     (["수영복", "비키니", "swimsuit"],                       [],   "reference (35).png"),
-    (["스포츠", "운동복", "트레이닝", "sport", "gym"],      [],   "reference (66).png"),
+    (["스포츠", "운동복", "트레이닝", "sport", "gym"],      [],   "reference (62).png"),
     (["후드", "hoodie", "sweatshirt"],                      [],   "reference (56).png"),
 ]
 _REF_FALLBACK = "reference (14).png"
@@ -642,6 +642,13 @@ def _select_ref_components(features: dict) -> dict:
 
     all_refs = sorted(BASESKIN_DIR.glob("reference (*).png"))
 
+    # 한복/전통의상 레퍼런스(59~66)는 관련 키워드 없으면 후보 제외
+    _HANBOK_REF_NUMS = frozenset(range(59, 67))
+    _HANBOK_KWS = {"한복", "저고리", "치마저고리", "유카타", "기모노", "치파오",
+                   "전통의상", "hanbok", "yukata", "kimono", "cheongsam", "아시안"}
+    _input_text = top_style + " " + bot_style
+    _is_hanbok_input = any(k in _input_text for k in _HANBOK_KWS)
+
     best_body = (_REF_FALLBACK, -1.0)
     best_arm  = (_REF_FALLBACK, -1.0)
     best_leg  = (_REF_FALLBACK, -1.0)
@@ -649,6 +656,10 @@ def _select_ref_components(features: dict) -> dict:
 
     for p in all_refs:
         fname = p.name
+        _m = re.search(r'reference \((\d+)\)', fname)
+        if _m and int(_m.group(1)) in _HANBOK_REF_NUMS and not _is_hanbok_input:
+            continue  # 한복 레퍼런스는 관련 입력 없으면 스킵
+
         t_score = _score_ref_top(fname, features)
         a_score = _score_ref_arm(fname, features)
         b_score = _score_ref_bot(fname, features)
@@ -658,9 +669,8 @@ def _select_ref_components(features: dict) -> dict:
         if b_score > best_leg[1]:  best_leg  = (fname, b_score)
 
         if _COMP_INDEX:
-            m = re.search(r'reference \((\d+)\)', fname)
-            if m:
-                ref_num = m.group(1)
+            if _m:
+                ref_num = _m.group(1)
                 h_score = _score_ref_hair(ref_num, features)
                 if h_score > best_hair[1]:
                     best_hair = (ref_num, h_score)
