@@ -1392,8 +1392,10 @@ _EYE_ELDER_FILE  = "base_eyes (7).png"   # 노인 (좁은눈)
 _EYE_BOOST_PROB  = 0.75
 
 def draw_eyes(arr: np.ndarray, eye_shape: str, eye_rgb: tuple,
-              gender: str = "중성적", age_group: str = "성인"):
-    """눈 형태 적용 + 홍채 색상 재채색 (성별·나이별 눈 선택)"""
+              gender: str = "중성적", age_group: str = "성인",
+              shift_up: int = 0):
+    """눈 형태 적용 + 홍채 색상 재채색 (성별·나이별 눈 선택)
+    shift_up: 눈 위치를 위로 올릴 픽셀 수 (대머리 시 1)"""
     import random
     fname = EYE_SHAPE_MAP.get((eye_shape or "").strip(), EYE_FALLBACK)
 
@@ -1422,6 +1424,12 @@ def draw_eyes(arr: np.ndarray, eye_shape: str, eye_rgb: tuple,
             result[y, x, 0] = min(255, int(er * factor))
             result[y, x, 1] = min(255, int(eg * factor))
             result[y, x, 2] = min(255, int(eb * factor))
+
+    if shift_up > 0:
+        shifted = np.zeros_like(result)
+        shifted[:64 - shift_up, :] = result[shift_up:, :]
+        result = shifted
+
     _composite_layer(arr, result)
 
 
@@ -1473,8 +1481,9 @@ def generate_skin(features: dict) -> Image.Image:
     if body_type in ("athletic", "muscular"):
         draw_muscle(arr)
 
-    # 2. 눈 (피부 위, 성별·나이 반영)
-    draw_eyes(arr, eye_shape, eye_rgb, gender=gender, age_group=age_group)
+    # 2. 눈 (피부 위, 성별·나이 반영 / 대머리면 1픽셀 위로)
+    draw_eyes(arr, eye_shape, eye_rgb, gender=gender, age_group=age_group,
+              shift_up=1 if is_bald else 0)
 
     # 눈 적용 후 백업 — draw_hair_from_ref가 face 복원 시 눈 픽셀도 보존됨
     skin_base = arr.copy()
