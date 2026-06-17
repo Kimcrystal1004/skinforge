@@ -762,8 +762,11 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
         elif zone in _TOP_ZONES:
             # 팔 UV: sleeve 색이 별도로 있으면 그것 사용, 없으면 target_rgb
             sleeve_rgb = zone_colors.get("sleeve", target_rgb)
-            _paint_zone_pixels(zmask & _ARM_UV_MASK,  arm_v,  arm_valid,  sleeve_rgb, mv)
-            _paint_zone_pixels(zmask & ~_ARM_UV_MASK, body_v, body_valid, target_rgb, mv)
+            # 팔 ref V<0.05 픽셀(레퍼런스 UV 경계 검정)은 has_ref 제외 → shade맵 경로로
+            # 처리. 재채색 시 pure-black 아티팩트(배경에 묻혀 단색처럼 보이는 버그) 방지.
+            arm_valid_clean = arm_valid & (arm_v > 0.05)
+            _paint_zone_pixels(zmask & _ARM_UV_MASK,  arm_v,  arm_valid_clean, sleeve_rgb, mv)
+            _paint_zone_pixels(zmask & ~_ARM_UV_MASK, body_v, body_valid,      target_rgb, mv)
         else:
             _paint_zone_pixels(zmask, body_v, body_valid, target_rgb, mv)
 
