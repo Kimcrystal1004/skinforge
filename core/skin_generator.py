@@ -973,6 +973,35 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
     _DENIM_KWS = ["청바지", "청반바지", "데님", "denim", "jean", "jeans"]
     is_denim = any(k in bot_style_raw for k in _DENIM_KWS)
 
+    # 넥 액세서리(넥타이/리본/나비넥타이) 준비 — 자켓이면 자켓 전, 아니면 acc 단계
+    _neck_acc_style = (features.get("neck_accessory") or "").strip().lower()
+    _neck_acc_color = parse_color(features.get("neck_accessory_color") or "#000000")
+    _NECK_ACC_FILES = {
+        "넥타이":    "mask_acc_necktie.png",
+        "나비넥타이": "mask_acc_bowtie.png",
+        "리본":      "mask_acc_ribbon.png",
+    }
+    _neck_acc_path = None
+    for _kw, _fn in _NECK_ACC_FILES.items():
+        if _kw in _neck_acc_style:
+            _p = BASESKIN_DIR / _fn
+            if _p.exists():
+                _neck_acc_path = _p
+            break
+
+    def _paint_neck_acc():
+        if _neck_acc_path is None:
+            return
+        nacc_arr = np.array(Image.open(_neck_acc_path).convert("RGBA"), dtype=np.uint8)
+        neck_zone_colors = {**zone_colors, "acc": _neck_acc_color}
+        nacc_maxv = _zone_stats_split(body_ref, leg_ref, nacc_arr, arm_ref)
+        _paint_mask(arr, nacc_arr, body_ref, leg_ref, neck_zone_colors, nacc_maxv, arm_ref,
+                    is_skirt=is_skirt, skirt_shade_map=skirt_shade_map)
+
+    # 자켓 마스크: 넥타이를 자켓 pass 전에 삽입 (겉옷 아래, 상의 위)
+    if "jacket" in mask_path.name:
+        _paint_neck_acc()
+
     _paint_mask(arr, mask_arr, body_ref, leg_ref, zone_colors, zone_maxv, arm_ref,
                 is_skirt=is_skirt, skirt_shade_map=skirt_shade_map, is_denim=is_denim)
 
@@ -989,6 +1018,10 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
         acc_maxv = _zone_stats_split(body_ref, leg_ref, acc_arr, arm_ref)
         _paint_mask(arr, acc_arr, body_ref, leg_ref, zone_colors, acc_maxv, arm_ref,
                     is_skirt=is_skirt, skirt_shade_map=skirt_shade_map)
+
+    # 비자켓 outfit: 넥타이를 상의 위(acc 단계)에 적용
+    if "jacket" not in mask_path.name:
+        _paint_neck_acc()
 
 
 def _trim_ref_for_shorts(leg_ref: np.ndarray) -> np.ndarray:
