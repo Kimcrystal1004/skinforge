@@ -718,9 +718,11 @@ _TOP_ZONES = {"top", "jacket", "acc"}
 _BOT_ZONES = {"bottom", "shoes"}
 
 # 팔 UV 영역 — top/jacket 존 중 팔에 속하는 픽셀 구분용
-_ARM_UV_MASK = np.zeros((64, 64), dtype=bool)
-_ARM_UV_MASK[16:32, 40:56] = True   # 오른팔 레이어1
-_ARM_UV_MASK[48:64, 32:48] = True   # 왼팔 레이어1
+_RARM_UV_MASK = np.zeros((64, 64), dtype=bool)
+_RARM_UV_MASK[16:32, 40:56] = True  # 오른팔 레이어1
+_LARM_UV_MASK = np.zeros((64, 64), dtype=bool)
+_LARM_UV_MASK[48:64, 32:48] = True  # 왼팔 레이어1
+_ARM_UV_MASK  = _RARM_UV_MASK | _LARM_UV_MASK  # 양팔 합산 (하위 호환)
 
 # 다리 UV 영역 — BOT 존 중 실제 다리에 속하는 픽셀 구분용
 # (몸통 하단 픽셀은 body_ref V, 다리 픽셀은 leg_ref V 사용 → 색 연결 일관성)
@@ -894,10 +896,12 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
                                      use_pleat=(is_skirt and zone == "bottom"),
                                      skirt_shade_map=skirt_shade_map if (is_skirt and zone == "bottom") else None)
         elif zone in _TOP_ZONES:
-            # 팔 UV: sleeve 색이 별도로 있으면 그것 사용, 없으면 target_rgb
-            # (V<0.05 검정 픽셀 필터는 _paint_zone_pixels 내부에서 일괄 처리)
+            # 팔 UV: 오른팔/왼팔 소매 색이 별도로 있으면 그것 사용, 없으면 공통 sleeve 사용
             sleeve_rgb = zone_colors.get("sleeve", target_rgb)
-            _paint_zone_pixels(zmask & _ARM_UV_MASK,  arm_v,  arm_valid,  sleeve_rgb, mv)
+            r_sleeve   = zone_colors.get("sleeve_right", sleeve_rgb)
+            l_sleeve   = zone_colors.get("sleeve_left",  sleeve_rgb)
+            _paint_zone_pixels(zmask & _RARM_UV_MASK, arm_v,  arm_valid,  r_sleeve,   mv)
+            _paint_zone_pixels(zmask & _LARM_UV_MASK, arm_v,  arm_valid,  l_sleeve,   mv)
             _paint_zone_pixels(zmask & ~_ARM_UV_MASK, body_v, body_valid, target_rgb, mv)
         else:
             _paint_zone_pixels(zmask, body_v, body_valid, target_rgb, mv)
@@ -913,16 +917,21 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
     bottom_rgb = parse_color(features.get("bottom_color", "네이비"))
     shoes_rgb  = parse_color(features.get("shoes_color",  "검정"))
     # 소매 색 (몸통과 다를 경우 — 검정 소매, 장갑, 암워머 등)
-    sleeve_raw = features.get("sleeve_color") or features.get("top_color") or "흰색"
-    sleeve_rgb = parse_color(sleeve_raw)
+    sleeve_raw       = features.get("sleeve_color") or features.get("top_color") or "흰색"
+    sleeve_rgb       = parse_color(sleeve_raw)
+    # 비대칭 소매 색: 없으면 공통 sleeve_rgb 사용
+    r_sleeve_rgb = parse_color(features.get("right_sleeve_color") or sleeve_raw)
+    l_sleeve_rgb = parse_color(features.get("left_sleeve_color")  or sleeve_raw)
 
     zone_colors = {
-        "top":    top_rgb,
-        "sleeve": sleeve_rgb,   # 팔 UV에 별도 적용 (_paint_mask 참조)
-        "bottom": bottom_rgb,
-        "shoes":  shoes_rgb,
-        "jacket": top_rgb,
-        "acc":    parse_color(features.get("accessories", "") or "검정"),
+        "top":           top_rgb,
+        "sleeve":        sleeve_rgb,
+        "sleeve_right":  r_sleeve_rgb,
+        "sleeve_left":   l_sleeve_rgb,
+        "bottom":        bottom_rgb,
+        "shoes":         shoes_rgb,
+        "jacket":        top_rgb,
+        "acc":           parse_color(features.get("accessories", "") or "검정"),
     }
 
     mask_path = pick_mask(features)
@@ -1491,9 +1500,11 @@ _EYE_ELDER_FILE  = "base_eyes (7).png"   # 노인 (좁은눈)
 _EYE_BOOST_PROB  = 0.75
 
 def draw_eyes(arr: np.ndarray, eye_shape: str, eye_rgb: tuple,
+              left_eye_rgb: tuple = None, right_eye_rgb: tuple = None,
               gender: str = "중성적", age_group: str = "성인",
               shift_up: int = 0):
-    """눈 형태 적용 + 홍채 색상 재채색 (성별·나이별 눈 선택)
+    """눈 형태 적용 + 홍채 색상 재채색 (성별·나이별 눈 선택).
+    left_eye_rgb / right_eye_rgb: 오드아이 지원. 이미지 기준 좌(x<12)/우(x>=12).
     shift_up: 눈 위치를 위로 올릴 픽셀 수 (대머리 시 1).
     반환: 이동 후 비워진 (orphaned_ys, orphaned_xs) — 호출자가 피부색으로 복원."""
     import random
@@ -1512,6 +1523,7 @@ def draw_eyes(arr: np.ndarray, eye_shape: str, eye_rgb: tuple,
         p = BASESKIN_DIR / EYE_FALLBACK
     base = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
     er, eg, eb = eye_rgb
+    _odd = left_eye_rgb is not None and right_eye_rgb is not None
     result = base.copy()
     valid = base[:, :, 3] > 10
     ys, xs = np.where(valid)
@@ -1524,10 +1536,15 @@ def draw_eyes(arr: np.ndarray, eye_shape: str, eye_rgb: tuple,
             continue
         # 홍채 범위 (윤곽·하이라이트 제외)
         if 15 < gray < 160:
+            # 오드아이: 얼굴 앞면(y=8..16, x=8..16)에서 x<12=이미지 좌측눈, x>=12=이미지 우측눈
+            if _odd and 8 <= y < 16 and 8 <= x < 16:
+                _er, _eg, _eb = left_eye_rgb if x < 12 else right_eye_rgb
+            else:
+                _er, _eg, _eb = er, eg, eb
             factor = max(0.3, gray / 80.0)
-            result[y, x, 0] = min(255, int(er * factor))
-            result[y, x, 1] = min(255, int(eg * factor))
-            result[y, x, 2] = min(255, int(eb * factor))
+            result[y, x, 0] = min(255, int(_er * factor))
+            result[y, x, 1] = min(255, int(_eg * factor))
+            result[y, x, 2] = min(255, int(_eb * factor))
 
     if shift_up > 0:
         original_mask = result[:, :, 3] > 10
@@ -1578,7 +1595,12 @@ def generate_skin(features: dict) -> Image.Image:
     hair_rgb    = parse_color(features.get("hair_color", "검정"))
     hair_style  = features.get("hair_style", "")
     hair_bangs  = features.get("hair_bangs", "")
-    eye_rgb     = parse_color(features.get("eye_color") or "#2c2c2c")
+    eye_rgb       = parse_color(features.get("eye_color") or "#2c2c2c")
+    _l_eye_raw    = features.get("left_eye_color")  or features.get("eye_color") or "#2c2c2c"
+    _r_eye_raw    = features.get("right_eye_color") or features.get("eye_color") or "#2c2c2c"
+    left_eye_rgb  = parse_color(_l_eye_raw)
+    right_eye_rgb = parse_color(_r_eye_raw)
+    _odd_eye      = left_eye_rgb != right_eye_rgb
     eye_shape   = features.get("eye_shape", "일반")
     body_type   = (features.get("body_type") or "normal").lower()
     gender      = (features.get("gender_expression") or "중성적").strip()
@@ -1594,7 +1616,10 @@ def generate_skin(features: dict) -> Image.Image:
     # pre_eyes: 눈 그리기 전 상태 — shift_up 시 잔여 픽셀 복원용
     pre_eyes = arr.copy() if is_bald else None
     orphaned_ys, orphaned_xs = draw_eyes(
-        arr, eye_shape, eye_rgb, gender=gender, age_group=age_group,
+        arr, eye_shape, eye_rgb,
+        left_eye_rgb=left_eye_rgb   if _odd_eye else None,
+        right_eye_rgb=right_eye_rgb if _odd_eye else None,
+        gender=gender, age_group=age_group,
         shift_up=1 if is_bald else 0)
     # 대머리 눈 shift: 비워진 맨 아래 행을 피부색으로 복원
     if is_bald and len(orphaned_ys) > 0:
@@ -1609,6 +1634,22 @@ def generate_skin(features: dict) -> Image.Image:
     # 4. 의상 (비재킷 넥타이는 뒷면 복사 후 칠하도록 deferred)
     _neck_painter = apply_mask_clothing(arr, features, _comps=comps,
                                         _return_neck_painter=True)
+
+    # 4-0. 소매 길이 비대칭 처리 — 한쪽 소매가 짧으면 그 부분을 피부 복원
+    # 반팔=어깨~팔 중간(5행 유지), 민소매=팔 UV 전체 복원
+    _right_sl = (features.get("right_sleeve_length") or "").strip()
+    _left_sl  = (features.get("left_sleeve_length")  or "").strip()
+    _SL_KEEP  = {"반팔": 5}   # 오른팔 y=20기준, 왼팔 y=52기준으로 남길 행 수
+    if _right_sl == "민소매":
+        arr[16:32, 40:56] = skin_base[16:32, 40:56]
+    elif _right_sl in _SL_KEEP:
+        k = _SL_KEEP[_right_sl]
+        arr[20 + k : 32, 40:56] = skin_base[20 + k : 32, 40:56]
+    if _left_sl == "민소매":
+        arr[48:64, 32:48] = skin_base[48:64, 32:48]
+    elif _left_sl in _SL_KEEP:
+        k = _SL_KEEP[_left_sl]
+        arr[52 + k : 64, 32:48] = skin_base[52 + k : 64, 32:48]
 
     # 4-1. 뒷면 텍스처 보강 (목파임 전에 실행 — 앞면 복사 시 목파임 픽셀 미포함)
     _fill_back_faces(arr)
