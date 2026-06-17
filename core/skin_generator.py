@@ -469,6 +469,23 @@ def _score_ref_bot(fname: str, features: dict) -> float:
     b = np.array(bot_rgb, dtype=np.float32)
     color_dist = float(np.sum((ref_bot_rgb - b) ** 2))
     score += max(0.0, 10.0 - color_dist / 3000.0)
+
+    # 청바지 입력 시 다리 UV 텍스처 풍부도(std) 보너스 — 디테일 많은 레퍼런스 우선
+    _JEANS_KWS = ["청바지", "데님", "denim", "jean", "jeans"]
+    if any(k in bot_style for k in _JEANS_KWS):
+        ref_arr = _load_ref(fname)
+        rleg = ref_arr[20:32, 0:16]
+        lleg = ref_arr[52:64, 16:32]
+        all_px: list = []
+        if (rleg[:, :, 3] > 10).any():
+            all_px.append(rleg[rleg[:, :, 3] > 10, :3].astype(float))
+        if (lleg[:, :, 3] > 10).any():
+            all_px.append(lleg[lleg[:, :, 3] > 10, :3].astype(float))
+        if all_px:
+            px = np.concatenate(all_px)
+            leg_std = float(px.max(axis=1).std() / 255.0)
+            score += leg_std * 25.0
+
     return score
 
 
