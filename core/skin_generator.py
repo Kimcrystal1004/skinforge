@@ -904,9 +904,11 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
 
 
 def apply_mask_clothing(arr: np.ndarray, features: dict,
-                        _comps: dict = None):
+                        _comps: dict = None, _return_neck_painter: bool = False):
     """스타일별 레퍼런스 스킨 텍스처 + HSV 색조 변환으로 의상 적용.
-    _comps: _select_ref_components() 결과를 외부에서 전달 (캐싱용)"""
+    _comps: _select_ref_components() 결과를 외부에서 전달 (캐싱용)
+    _return_neck_painter: True면 비재킷 넥 액세서리를 바로 칠하지 않고
+        callable을 반환 — _fill_back_faces 이후에 호출해 뒷면 복사를 막는다."""
     top_rgb    = parse_color(features.get("top_color",    "흰색"))
     bottom_rgb = parse_color(features.get("bottom_color", "네이비"))
     shoes_rgb  = parse_color(features.get("shoes_color",  "검정"))
@@ -1020,8 +1022,12 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
                     is_skirt=is_skirt, skirt_shade_map=skirt_shade_map)
 
     # 비자켓 outfit: 넥타이를 상의 위(acc 단계)에 적용
+    # _return_neck_painter=True면 호출을 미루고 callable 반환 (뒷면 복사 후 실행용)
     if "jacket" not in mask_path.name:
+        if _return_neck_painter:
+            return _paint_neck_acc
         _paint_neck_acc()
+    return None
 
 
 def _trim_ref_for_shorts(leg_ref: np.ndarray) -> np.ndarray:
@@ -1587,11 +1593,16 @@ def generate_skin(features: dict) -> Image.Image:
     # 3. 레퍼런스 컴포넌트 선택 (body/arm/leg/head_comp)
     comps = _select_ref_components(features)
 
-    # 4. 의상
-    apply_mask_clothing(arr, features, _comps=comps)
+    # 4. 의상 (비재킷 넥타이는 뒷면 복사 후 칠하도록 deferred)
+    _neck_painter = apply_mask_clothing(arr, features, _comps=comps,
+                                        _return_neck_painter=True)
 
     # 4-1. 뒷면 텍스처 보강 (목파임 전에 실행 — 앞면 복사 시 목파임 픽셀 미포함)
     _fill_back_faces(arr)
+
+    # 4-1a. 넥타이/리본: 뒷면 복사 완료 후 앞면에만 칠함 → 뒷면에 넥타이 전파 방지
+    if _neck_painter is not None:
+        _neck_painter()
 
     # 4-2. 목선 파임 (뒷면 복사 후 앞면만 처리 → 뒷면에 목파임 전파 방지)
     if neck_style in _NECKLINE_PIXELS:
