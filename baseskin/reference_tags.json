@@ -480,7 +480,7 @@
     "formality": "캐주얼"
   },
   "reference (34).png": {
-    "top_style": "자켓",
+    "top_style": "긴팔티 가디건",
     "bottom_style": "슬랙스",
     "top_color": "#A1927D",
     "bottom_color": "#2F2E28",
@@ -490,7 +490,9 @@
       "자켓",
       "슬랙스",
       "긴머리",
-      "심플"
+      "심플",
+      "가디건",
+      "카디건"
     ],
     "gender": "여성",
     "formality": "세미포멀"
@@ -677,16 +679,17 @@
     "formality": "캐주얼"
   },
   "reference (47).png": {
-    "top_style": "검정 긴 가디건",
-    "bottom_style": "검정 사이하이 삭스",
+    "top_style": "원피스",
+    "bottom_style": "원피스",
     "top_color": "#2C2C2C",
     "bottom_color": "#2C2C2C",
     "style_tags": [
+      "원피스",
       "캐주얼",
       "여성적",
+      "드레스",
       "다크",
       "레이어드",
-      "가디건",
       "사이하이 삭스"
     ],
     "gender": "여성",
@@ -1733,7 +1736,7 @@
     "formality": "캐주얼"
   },
   "reference (93).png": {
-    "top_style": "오버핏 캐주얼 재킷",
+    "top_style": "긴팔티 가디건",
     "bottom_style": "캐주얼 긴 바지",
     "top_color": "#6C6B64",
     "bottom_color": "#796D63",
@@ -1743,7 +1746,9 @@
       "편안한",
       "심플한",
       "어스톤",
-      "내추럴"
+      "내추럴",
+      "가디건",
+      "카디건"
     ],
     "gender": "남성",
     "formality": "캐주얼"
