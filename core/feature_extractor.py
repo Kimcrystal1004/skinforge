@@ -13,7 +13,7 @@ from PIL import Image
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
 EXTRACT_PROMPT = """
-주어진 인물·캐릭터 사진을 분석해 다음 항목을 JSON으로만 반환하세요. 설명 없이 JSON만 출력.
+주어진 인물·캐릭터 이미지(사진, 그림, 캐릭터, 인형 등)를 분석해 다음 항목을 JSON으로만 반환하세요. 설명 없이 JSON만 출력.
 ⚠️ 배경은 완전히 무시하고, 인물/캐릭터의 신체·의상·헤어·눈만 분석하세요.
 ⚠️ 색상 필드(hair_color, eye_color, top_color, shirt_color, bottom_color, shoes_color)는 반드시 HTML hex 코드(예: #2b1a0e)로만 반환하세요.
 
