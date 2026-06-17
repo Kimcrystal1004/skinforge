@@ -526,14 +526,14 @@
   },
   "reference (37).png": {
     "top_style": "크롭탑",
-    "bottom_style": "치마",
+    "bottom_style": "청반바지",
     "top_color": "#D04040",
-    "bottom_color": "#F8F8F8",
+    "bottom_color": "#5B8FC4",
     "style_tags": [
       "여성적",
       "캐주얼",
       "크롭",
-      "치마"
+      "청반바지"
     ],
     "gender": "여성",
     "formality": "캐주얼"
@@ -763,14 +763,14 @@
   },
   "reference (53).png": {
     "top_style": "교복 블라우스",
-    "bottom_style": "회색 치마",
+    "bottom_style": "청바지",
     "top_color": "#8D8D8D",
-    "bottom_color": "#8D8D8D",
+    "bottom_color": "#4A7FB5",
     "style_tags": [
       "교복",
       "여성적",
-      "치마",
-      "블라우스"
+      "블라우스",
+      "청바지"
     ],
     "gender": "여성",
     "formality": "유니폼"
@@ -937,7 +937,6 @@
       "캐주얼",
       "여성적",
       "긴팔",
-      "바지",
       "집업",
       "하이넥",
       "별무늬"
