@@ -860,33 +860,35 @@ def _trim_ref_for_shorts(leg_ref: np.ndarray) -> np.ndarray:
 
 
 def _fill_back_faces(arr: np.ndarray):
-    """뒷면·측면 UV가 단색(std<22)이면 앞면 패턴을 좌우반전+어둡게 복사.
-    팔 내측/외측/뒷면 모두 커버. slim 포맷 레퍼런스의 단색 줄무늬 문제 포함 처리."""
-    # (앞면 x,y,w,h), (대상면 x,y,w,h), 어둡기 배율
+    """앞면 패턴을 좌우반전+어둡게 다른 면에 복사.
+    팔(뒤/내측/외측)은 force=True → 무조건 앞면 복사 (단색 버그 근본 차단).
+    몸통·다리 뒷면은 force=False → 단색(std<22)일 때만 복사 (정상 텍스처 보존)."""
+    # (앞면 x,y,w,h), (대상면 x,y,w,h), 어둡기 배율, 강제복사 여부
     PAIRS = [
-        ((20, 20, 8, 12), (32, 20, 8, 12), 0.68),   # 몸통 앞→뒤
-        ((44, 20, 4, 12), (52, 20, 4, 12), 0.68),   # 오른팔 앞→뒤
-        ((44, 20, 4, 12), (40, 20, 4, 12), 0.80),   # 오른팔 앞→내측(오른면)
-        ((44, 20, 4, 12), (48, 20, 4, 12), 0.80),   # 오른팔 앞→외측(왼면)
-        ((36, 52, 4, 12), (44, 52, 4, 12), 0.68),   # 왼팔  앞→뒤
-        ((36, 52, 4, 12), (32, 52, 4, 12), 0.80),   # 왼팔  앞→내측
-        ((36, 52, 4, 12), (40, 52, 4, 12), 0.80),   # 왼팔  앞→외측
-        (( 4, 20, 4, 12), (12, 20, 4, 12), 0.72),   # 오른다리 앞→뒤
-        ((20, 52, 4, 12), (28, 52, 4, 12), 0.72),   # 왼다리  앞→뒤
+        ((20, 20, 8, 12), (32, 20, 8, 12), 0.68, False),  # 몸통 앞→뒤
+        ((44, 20, 4, 12), (52, 20, 4, 12), 0.68, True),   # 오른팔 앞→뒤
+        ((44, 20, 4, 12), (40, 20, 4, 12), 0.80, True),   # 오른팔 앞→내측(오른면)
+        ((44, 20, 4, 12), (48, 20, 4, 12), 0.80, True),   # 오른팔 앞→외측(왼면)
+        ((36, 52, 4, 12), (44, 52, 4, 12), 0.68, True),   # 왼팔  앞→뒤
+        ((36, 52, 4, 12), (32, 52, 4, 12), 0.80, True),   # 왼팔  앞→내측
+        ((36, 52, 4, 12), (40, 52, 4, 12), 0.80, True),   # 왼팔  앞→외측
+        (( 4, 20, 4, 12), (12, 20, 4, 12), 0.72, False),  # 오른다리 앞→뒤
+        ((20, 52, 4, 12), (28, 52, 4, 12), 0.72, False),  # 왼다리  앞→뒤
     ]
-    for (fx, fy, fw, fh), (bx, by, bw, bh), shade in PAIRS:
+    for (fx, fy, fw, fh), (bx, by, bw, bh), shade, force in PAIRS:
         back = arr[by:by+bh, bx:bx+bw, :]
         valid_back = back[:, :, 3] > 10
         if not valid_back.any():
             continue
-        back_rgb = back[:, :, :3].astype(float)
-        spatial_std = float(max(
-            back_rgb[:, :, 0][valid_back].std(),
-            back_rgb[:, :, 1][valid_back].std(),
-            back_rgb[:, :, 2][valid_back].std(),
-        ))
-        if spatial_std >= 22:
-            continue  # 충분한 텍스처 있음
+        if not force:
+            back_rgb = back[:, :, :3].astype(float)
+            spatial_std = float(max(
+                back_rgb[:, :, 0][valid_back].std(),
+                back_rgb[:, :, 1][valid_back].std(),
+                back_rgb[:, :, 2][valid_back].std(),
+            ))
+            if spatial_std >= 22:
+                continue  # 충분한 텍스처 있음 → 보존
         # 앞면 좌우반전 + shade 적용
         front = arr[fy:fy+fh, fx:fx+fw, :].copy()
         front_flip = front[:, ::-1, :]
