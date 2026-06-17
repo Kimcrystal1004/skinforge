@@ -885,8 +885,15 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
                 is_skirt=is_skirt, skirt_shade_map=skirt_shade_map)
 
     # 악세서리 오버레이 적용
+    # 벨트는 상의(셔츠/재킷)가 덮는 위치에선 가려지는 게 자연스럽다.
+    # 일반 길이 셔츠 → 벨트 안 보임, 크롭탑처럼 짧으면 → 벨트 노출.
+    _main_top = _build_zone_masks(mask_arr)
+    _cover = _main_top["top"] | _main_top["jacket"]
     for acc_path in pick_acc_overlays(features):
         acc_arr  = np.array(Image.open(acc_path).convert("RGBA"), dtype=np.uint8)
+        if "belt" in acc_path.name:
+            acc_arr = acc_arr.copy()
+            acc_arr[_cover, 3] = 0   # 셔츠가 덮는 벨트 픽셀 제거
         acc_maxv = _zone_stats_split(body_ref, leg_ref, acc_arr, arm_ref)
         _paint_mask(arr, acc_arr, body_ref, leg_ref, zone_colors, acc_maxv, arm_ref,
                     is_skirt=is_skirt, skirt_shade_map=skirt_shade_map)
