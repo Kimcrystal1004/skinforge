@@ -285,6 +285,8 @@ _STYLE_REF_MAP = [
     (["한복", "저고리", "치마저고리"],                      [],   "reference (62).png"),
     (["경찰", "police", "군복", "유니폼", "제복"],          [],   "reference (5).png"),
     (["웨딩", "웨딩드레스", "wedding"],                     [],   "reference (33).png"),
+    (["드레스", "원피스", "dress"],                          [],   "reference (58).png"),
+    ([], ["드레스", "원피스", "dress"],                            "reference (58).png"),
     (["수영복", "비키니", "swimsuit"],                       [],   "reference (35).png"),
     (["스포츠", "운동복", "트레이닝", "sport", "gym"],      [],   "reference (66).png"),
     (["후드", "hoodie", "sweatshirt"],                      [],   "reference (56).png"),
@@ -382,10 +384,17 @@ def _score_ref_top(fname: str, features: dict) -> float:
     score += max(0.0, 10.0 - color_dist / 3000.0)
 
     # 패턴 회피: 입력이 민무늬인데 레퍼런스가 체크·줄무늬 등 패턴이면 큰 페널티.
-    # (입력에도 패턴 키워드가 있으면 정상 매칭이므로 페널티 없음)
-    ref_has_pattern = _has_pattern(ref_top) or any(_has_pattern(rt) for rt in ref_tags)
-    if ref_has_pattern and not _has_pattern(top_style):
-        score -= 30.0
+    input_has_pattern = _has_pattern(top_style)
+    ref_has_pattern   = _has_pattern(ref_top) or any(_has_pattern(rt) for rt in ref_tags)
+    if ref_has_pattern and not input_has_pattern:
+        score -= 50.0  # 민무늬 입력에 패턴 레퍼런스 강력 억제
+
+    # 민무늬 보너스: 입력이 민무늬이고 레퍼런스도 민무늬면 +10
+    _PLAIN_KWS = ["티셔츠", "tshirt", "t-shirt", "tee", "민무늬", "plain", "단색", "솔리드",
+                  "solid", "기본", "베이직", "basic"]
+    input_is_plain = (not input_has_pattern) and any(k in top_style for k in _PLAIN_KWS)
+    if input_is_plain and not ref_has_pattern:
+        score += 10.0
     return score
 
 
@@ -962,14 +971,9 @@ def _fill_back_faces(arr: np.ndarray):
     팔(뒤/내측/외측)은 force=True → 무조건 앞면 복사 (단색 버그 근본 차단).
     몸통·다리 뒷면은 force=False → 단색(std<22)일 때만 복사 (정상 텍스처 보존)."""
     # (앞면 x,y,w,h), (대상면 x,y,w,h), 어둡기 배율, 강제복사 여부
+    # 팔 뒷면/옆면: 레퍼런스 텍스처 + shade_map으로 처리하므로 강제복사 제거
     PAIRS = [
         ((20, 20, 8, 12), (32, 20, 8, 12), 0.68, False),  # 몸통 앞→뒤
-        ((44, 20, 4, 12), (52, 20, 4, 12), 0.68, True),   # 오른팔 앞→뒤
-        ((44, 20, 4, 12), (40, 20, 4, 12), 0.80, True),   # 오른팔 앞→내측(오른면)
-        ((44, 20, 4, 12), (48, 20, 4, 12), 0.80, True),   # 오른팔 앞→외측(왼면)
-        ((36, 52, 4, 12), (44, 52, 4, 12), 0.68, True),   # 왼팔  앞→뒤
-        ((36, 52, 4, 12), (32, 52, 4, 12), 0.80, True),   # 왼팔  앞→내측
-        ((36, 52, 4, 12), (40, 52, 4, 12), 0.80, True),   # 왼팔  앞→외측
         (( 4, 20, 4, 12), (12, 20, 4, 12), 0.72, False),  # 오른다리 앞→뒤
         ((20, 52, 4, 12), (28, 52, 4, 12), 0.72, False),  # 왼다리  앞→뒤
     ]
@@ -1161,6 +1165,21 @@ def _stamp_eyes_last(arr: np.ndarray, skin_base: np.ndarray) -> None:
         return
     arr[_DEL_YS, _DEL_XS]        = 0                               # layer2 투명화
     arr[_DEL_YS, _DEL_XS - 32]   = skin_base[_DEL_YS, _DEL_XS - 32]  # layer1 복원
+
+
+# 목선 파임 픽셀 좌표 (body front UV: x=20..28, y=20..32)
+_NECKLINE_PIXELS = {
+    "브이넥":   [(20, 23), (20, 24), (21, 22), (21, 25), (22, 22), (22, 25)],
+    "스퀘어넥": [(20, 22), (20, 23), (20, 24), (20, 25), (21, 22), (21, 25)],
+    "홀터넥":   [(20, 22), (20, 23), (20, 24), (20, 25)],
+    "라운드넥": [(20, 23), (20, 24)],
+}
+
+def _apply_neckline(arr: np.ndarray, skin_base: np.ndarray, neck_style: str):
+    """목선 파임 — 몸통 앞면 상단 중앙에 베이스 스킨 복원"""
+    pixels = _NECKLINE_PIXELS.get((neck_style or "").strip(), [])
+    for (y, x) in pixels:
+        arr[y, x] = skin_base[y, x]
 
 
 def draw_hair_bangs_only(arr: np.ndarray, hair_rgb: tuple, hair_bangs: str):
@@ -1367,15 +1386,25 @@ EYE_SHAPE_MAP = {
 EYE_FALLBACK = "base_eyes (3).png"
 
 
-_EYE_BOOST_FILE = "base_eyes (4).png"
-_EYE_BOOST_PROB = 0.75  # 다른 눈 형태가 감지돼도 base_eyes(4) 사용 확률
+_EYE_BOOST_FILE  = "base_eyes (4).png"   # 여성 기본 부스트 (아몬드눈)
+_EYE_MALE_FILE   = "base_eyes (8).png"   # 남성 기본 (작은눈)
+_EYE_ELDER_FILE  = "base_eyes (7).png"   # 노인 (좁은눈)
+_EYE_BOOST_PROB  = 0.75
 
-def draw_eyes(arr: np.ndarray, eye_shape: str, eye_rgb: tuple):
-    """눈 형태 적용 + 홍채 색상 재채색"""
+def draw_eyes(arr: np.ndarray, eye_shape: str, eye_rgb: tuple,
+              gender: str = "중성적", age_group: str = "성인"):
+    """눈 형태 적용 + 홍채 색상 재채색 (성별·나이별 눈 선택)"""
     import random
     fname = EYE_SHAPE_MAP.get((eye_shape or "").strip(), EYE_FALLBACK)
-    if fname != _EYE_BOOST_FILE and random.random() < _EYE_BOOST_PROB:
-        fname = _EYE_BOOST_FILE
+
+    if (age_group or "").strip() == "노인":
+        fname = _EYE_ELDER_FILE                         # 할아버지/할머니 → 좁은눈
+    elif (gender or "").strip() == "남성적":
+        if fname != _EYE_MALE_FILE and random.random() < _EYE_BOOST_PROB:
+            fname = _EYE_MALE_FILE                      # 남성 → 작은눈
+    elif (gender or "").strip() == "여성적":
+        if fname != _EYE_BOOST_FILE and random.random() < _EYE_BOOST_PROB:
+            fname = _EYE_BOOST_FILE                     # 여성 → 아몬드눈 (기존 유지)
     p = BASESKIN_DIR / fname
     if not p.exists():
         p = BASESKIN_DIR / EYE_FALLBACK
@@ -1429,19 +1458,23 @@ def generate_skin(features: dict) -> Image.Image:
 
     arr = np.array(apply_skin_tone(load_base(tone_key), tone_key), dtype=np.uint8).copy()
 
-    hair_rgb   = parse_color(features.get("hair_color", "검정"))
-    hair_style = features.get("hair_style", "")
-    hair_bangs = features.get("hair_bangs", "")
-    eye_rgb    = parse_color(features.get("eye_color") or "#2c2c2c")
-    eye_shape  = features.get("eye_shape", "일반")
-    body_type  = (features.get("body_type") or "normal").lower()
+    hair_rgb    = parse_color(features.get("hair_color", "검정"))
+    hair_style  = features.get("hair_style", "")
+    hair_bangs  = features.get("hair_bangs", "")
+    eye_rgb     = parse_color(features.get("eye_color") or "#2c2c2c")
+    eye_shape   = features.get("eye_shape", "일반")
+    body_type   = (features.get("body_type") or "normal").lower()
+    gender      = (features.get("gender_expression") or "중성적").strip()
+    age_group   = (features.get("age_group") or "성인").strip()
+    is_bald     = str(features.get("is_bald", "false")).lower() in ("true", "1", "yes")
+    neck_style  = (features.get("neck_style") or "").strip()
 
     # 1. 근육 오버레이 (피부 위, 의상 아래)
     if body_type in ("athletic", "muscular"):
         draw_muscle(arr)
 
-    # 2. 눈 (피부 위)
-    draw_eyes(arr, eye_shape, eye_rgb)
+    # 2. 눈 (피부 위, 성별·나이 반영)
+    draw_eyes(arr, eye_shape, eye_rgb, gender=gender, age_group=age_group)
 
     # 눈 적용 후 백업 — draw_hair_from_ref가 face 복원 시 눈 픽셀도 보존됨
     skin_base = arr.copy()
@@ -1452,19 +1485,21 @@ def generate_skin(features: dict) -> Image.Image:
     # 4. 의상
     apply_mask_clothing(arr, features, _comps=comps)
 
-    # 4-1. 뒷면 텍스처 보강 (단색 → 앞면 패턴 미러링)
+    # 4-1. 목선 파임 (의상 위에 베이스 스킨 복원)
+    if neck_style in _NECKLINE_PIXELS:
+        _apply_neckline(arr, skin_base, neck_style)
+
+    # 4-2. 뒷면 텍스처 보강 (단색 → 앞면 패턴 미러링)
     _fill_back_faces(arr)
 
-    # 5. 머리카락
-    head_comp = comps.get("head_comp")
-    if head_comp is not None:
-        # 레퍼런스 헤드 컴포넌트 기반 — 헤드 UV 전체 처리
-        draw_hair_from_ref(arr, head_comp, hair_rgb, skin_base, hair_style)
+    # 5. 머리카락 (대머리면 모든 헤어 레이어 스킵)
+    if not is_bald:
+        head_comp = comps.get("head_comp")
+        if head_comp is not None:
+            draw_hair_from_ref(arr, head_comp, hair_rgb, skin_base, hair_style)
+        draw_hair_body_only(arr, hair_rgb, hair_style)
+        draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
 
-    # 몸통 연장 (장발만) — 단발/숏컷은 HAIR_BODY_MAP[key]=None 이라 자동 스킵
-    draw_hair_body_only(arr, hair_rgb, hair_style)
-    # 앞머리 레이어는 항상 최상단 (대머리 방지)
-    draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
     # 눈/눈썹: 모든 헤어 완료 후 마지막으로 layer2 face에 stamp (항상 최상위 렌더링)
     _stamp_eyes_last(arr, skin_base)
 
@@ -1571,9 +1606,11 @@ def generate_skin_from_photo(photo: Image.Image, features: dict) -> Image.Image:
     hair_rgb   = parse_color(features.get("hair_color", "검정"))
     hair_style = features.get("hair_style", "")
     hair_bangs = features.get("hair_bangs", "")
+    is_bald    = str(features.get("is_bald", "false")).lower() in ("true", "1", "yes")
     skin_base_photo = arr.copy()
-    draw_hair_body_only(arr, hair_rgb, hair_style)
-    draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
+    if not is_bald:
+        draw_hair_body_only(arr, hair_rgb, hair_style)
+        draw_hair_bangs_only(arr, hair_rgb, hair_bangs)
     _stamp_eyes_last(arr, skin_base_photo)
     _mirror_clothing_to_layer2(arr)
 
