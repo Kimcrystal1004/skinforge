@@ -1407,18 +1407,19 @@ def draw_eyes(arr: np.ndarray, eye_shape: str, eye_rgb: tuple,
               gender: str = "중성적", age_group: str = "성인",
               shift_up: int = 0):
     """눈 형태 적용 + 홍채 색상 재채색 (성별·나이별 눈 선택)
-    shift_up: 눈 위치를 위로 올릴 픽셀 수 (대머리 시 1)"""
+    shift_up: 눈 위치를 위로 올릴 픽셀 수 (대머리 시 1).
+    반환: 이동 후 비워진 (orphaned_ys, orphaned_xs) — 호출자가 피부색으로 복원."""
     import random
     fname = EYE_SHAPE_MAP.get((eye_shape or "").strip(), EYE_FALLBACK)
 
     if (age_group or "").strip() == "노인":
-        fname = _EYE_ELDER_FILE                         # 할아버지/할머니 → 좁은눈
+        fname = _EYE_ELDER_FILE
     elif (gender or "").strip() == "남성적":
         if fname != _EYE_MALE_FILE and random.random() < _EYE_BOOST_PROB:
-            fname = _EYE_MALE_FILE                      # 남성 → 작은눈
+            fname = _EYE_MALE_FILE
     elif (gender or "").strip() == "여성적":
         if fname != _EYE_BOOST_FILE and random.random() < _EYE_BOOST_PROB:
-            fname = _EYE_BOOST_FILE                     # 여성 → 아몬드눈 (기존 유지)
+            fname = _EYE_BOOST_FILE
     p = BASESKIN_DIR / fname
     if not p.exists():
         p = BASESKIN_DIR / EYE_FALLBACK
@@ -1430,6 +1431,10 @@ def draw_eyes(arr: np.ndarray, eye_shape: str, eye_rgb: tuple,
     for y, x in zip(ys, xs):
         r, g, b = int(base[y, x, 0]), int(base[y, x, 1]), int(base[y, x, 2])
         gray = int(r * 0.299 + g * 0.587 + b * 0.114)
+        # 홍조 픽셀(핑크/살구빛) → 투명 처리
+        if r > 150 and (r - g) > 18 and (r - b) > 15 and gray > 60:
+            result[y, x, 3] = 0
+            continue
         # 홍채 범위 (윤곽·하이라이트 제외)
         if 15 < gray < 160:
             factor = max(0.3, gray / 80.0)
@@ -1438,11 +1443,16 @@ def draw_eyes(arr: np.ndarray, eye_shape: str, eye_rgb: tuple,
             result[y, x, 2] = min(255, int(eb * factor))
 
     if shift_up > 0:
+        original_mask = result[:, :, 3] > 10
         shifted = np.zeros_like(result)
         shifted[:64 - shift_up, :] = result[shift_up:, :]
         result = shifted
+        orphaned_ys, orphaned_xs = np.where(original_mask & (result[:, :, 3] == 0))
+    else:
+        orphaned_ys = orphaned_xs = np.array([], dtype=int)
 
     _composite_layer(arr, result)
+    return orphaned_ys, orphaned_xs
 
 
 def draw_muscle(arr: np.ndarray):
@@ -1494,8 +1504,14 @@ def generate_skin(features: dict) -> Image.Image:
         draw_muscle(arr)
 
     # 2. 눈 (피부 위, 성별·나이 반영 / 대머리면 1픽셀 위로)
-    draw_eyes(arr, eye_shape, eye_rgb, gender=gender, age_group=age_group,
-              shift_up=1 if is_bald else 0)
+    # pre_eyes: 눈 그리기 전 상태 — shift_up 시 잔여 픽셀 복원용
+    pre_eyes = arr.copy() if is_bald else None
+    orphaned_ys, orphaned_xs = draw_eyes(
+        arr, eye_shape, eye_rgb, gender=gender, age_group=age_group,
+        shift_up=1 if is_bald else 0)
+    # 대머리 눈 shift: 비워진 맨 아래 행을 피부색으로 복원
+    if is_bald and len(orphaned_ys) > 0:
+        arr[orphaned_ys, orphaned_xs] = pre_eyes[orphaned_ys, orphaned_xs]
 
     # 눈 적용 후 백업 — draw_hair_from_ref가 face 복원 시 눈 픽셀도 보존됨
     skin_base = arr.copy()
@@ -1506,12 +1522,12 @@ def generate_skin(features: dict) -> Image.Image:
     # 4. 의상
     apply_mask_clothing(arr, features, _comps=comps)
 
-    # 4-1. 목선 파임 (의상 위에 베이스 스킨 복원)
+    # 4-1. 뒷면 텍스처 보강 (목파임 전에 실행 — 앞면 복사 시 목파임 픽셀 미포함)
+    _fill_back_faces(arr)
+
+    # 4-2. 목선 파임 (뒷면 복사 후 앞면만 처리 → 뒷면에 목파임 전파 방지)
     if neck_style in _NECKLINE_PIXELS:
         _apply_neckline(arr, skin_base, neck_style)
-
-    # 4-2. 뒷면 텍스처 보강 (단색 → 앞면 패턴 미러링)
-    _fill_back_faces(arr)
 
     # 5. 머리카락 (대머리면 모든 헤어 레이어 스킵)
     if not is_bald:
