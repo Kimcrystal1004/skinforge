@@ -105,6 +105,16 @@ _SHADE_REGIONS = [
     # 가랑이 그림자: 다리 안쪽 면 상단 3행 (앞면은 건드리지 않음)
     ( 8, 20,  4,  3, 0.55),  # 오른 다리 안쪽(좌면) 상단
     (24, 52,  4,  3, 0.55),  # 왼 다리 안쪽(우면) 상단
+    # 의상 앞면 가장자리 AO — 텍스처가 평평한 레퍼런스(민무늬)도 모서리 음영으로
+    # 입체감을 갖도록. 몸통·팔 앞면의 좌우 끝열을 살짝 어둡게.
+    (20, 20,  1, 12, 0.80),  # 몸통 앞면 좌단
+    (27, 20,  1, 12, 0.80),  # 몸통 앞면 우단
+    (21, 20,  1, 12, 0.91),  # 몸통 앞면 좌 안쪽
+    (26, 20,  1, 12, 0.91),  # 몸통 앞면 우 안쪽
+    (44, 20,  1, 12, 0.84),  # 오른팔 앞면 좌단
+    (47, 20,  1, 12, 0.84),  # 오른팔 앞면 우단
+    (36, 52,  1, 12, 0.84),  # 왼팔 앞면 좌단
+    (39, 52,  1, 12, 0.84),  # 왼팔 앞면 우단
 ]
 
 def _build_shade_map() -> np.ndarray:
@@ -764,7 +774,7 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
         if has_ref.any():
             rgb_out = _np_hsv_recolor(arr[:, :, :3], arr[:, :, 3],
                                       t_h, t_s, ref_v_map, mv, t_v,
-                                      shade_map=_SHADE_MAP, v_floor=0.45)
+                                      shade_map=_SHADE_MAP, v_floor=0.30)
             ys, xs = np.where(has_ref)
             arr[ys, xs, :3] = rgb_out[ys, xs]
             arr[ys, xs, 3]  = 255
