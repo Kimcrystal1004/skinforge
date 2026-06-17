@@ -20,10 +20,15 @@ BRIGHTNESS_BOOST = 1.30  # 의상·머리 밝기 배율 (1.0 = 원본, 높을수
 def _np_hsv_recolor(rgb_u8: np.ndarray, alpha: np.ndarray,
                     t_h: float, t_s: float,
                     ref_v: np.ndarray, max_v: float,
-                    t_v: float) -> np.ndarray:
-    """ref_v 밝기를 유지하며 HSV 색조를 (t_h, t_s)로 교체. (H,W,3) uint8 반환"""
+                    t_v: float, shade_map: np.ndarray = None) -> np.ndarray:
+    """ref_v 밝기를 유지하며 HSV 색조를 (t_h, t_s)로 교체. (H,W,3) uint8 반환.
+    shade_map: 면별 음영 배율 (None이면 미적용). 밝은 의상(흰색 등)이 밝기
+    보정으로 saturate되어 음영이 사라지는 것을 면별 셰이드로 보정."""
     norm_v = np.clip(ref_v / max(max_v, 0.01), 0.0, 1.0)
-    final_v = np.clip(norm_v * max(t_v, 0.15) * BRIGHTNESS_BOOST, 0.0, 1.0)
+    final_v = norm_v * max(t_v, 0.15) * BRIGHTNESS_BOOST
+    if shade_map is not None:
+        final_v = final_v * shade_map
+    final_v = np.clip(final_v, 0.0, 1.0)
 
     v = final_v
     s = t_s
@@ -724,12 +729,17 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
         tr, tg, tb = target_rgb
         t_h, t_s, t_v = rgb_to_hsv(tr/255, tg/255, tb/255)
 
-        has_ref = zmask_sub & ref_valid
-        no_ref  = zmask_sub & ~ref_valid
+        # ref V<0.05 픽셀(레퍼런스 UV 경계 검정)은 has_ref에서 제외 → shade맵 경로로
+        # 처리. 흰색 등 밝은 의상 재채색 시 pure-black 아티팩트(배경에 묻혀 단색처럼
+        # 보이는 버그)를 팔·몸통·목 모든 존에서 일괄 차단.
+        ref_ok  = ref_valid & (ref_v_map > 0.05)
+        has_ref = zmask_sub & ref_ok
+        no_ref  = zmask_sub & ~ref_ok
 
         if has_ref.any():
             rgb_out = _np_hsv_recolor(arr[:, :, :3], arr[:, :, 3],
-                                      t_h, t_s, ref_v_map, mv, t_v)
+                                      t_h, t_s, ref_v_map, mv, t_v,
+                                      shade_map=_SHADE_MAP)
             ys, xs = np.where(has_ref)
             arr[ys, xs, :3] = rgb_out[ys, xs]
             arr[ys, xs, 3]  = 255
@@ -761,12 +771,10 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
                                  skirt_shade_map=skirt_shade_map if (is_skirt and zone == "bottom") else None)
         elif zone in _TOP_ZONES:
             # 팔 UV: sleeve 색이 별도로 있으면 그것 사용, 없으면 target_rgb
+            # (V<0.05 검정 픽셀 필터는 _paint_zone_pixels 내부에서 일괄 처리)
             sleeve_rgb = zone_colors.get("sleeve", target_rgb)
-            # 팔 ref V<0.05 픽셀(레퍼런스 UV 경계 검정)은 has_ref 제외 → shade맵 경로로
-            # 처리. 재채색 시 pure-black 아티팩트(배경에 묻혀 단색처럼 보이는 버그) 방지.
-            arm_valid_clean = arm_valid & (arm_v > 0.05)
-            _paint_zone_pixels(zmask & _ARM_UV_MASK,  arm_v,  arm_valid_clean, sleeve_rgb, mv)
-            _paint_zone_pixels(zmask & ~_ARM_UV_MASK, body_v, body_valid,      target_rgb, mv)
+            _paint_zone_pixels(zmask & _ARM_UV_MASK,  arm_v,  arm_valid,  sleeve_rgb, mv)
+            _paint_zone_pixels(zmask & ~_ARM_UV_MASK, body_v, body_valid, target_rgb, mv)
         else:
             _paint_zone_pixels(zmask, body_v, body_valid, target_rgb, mv)
 
