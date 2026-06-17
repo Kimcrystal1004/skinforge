@@ -815,9 +815,10 @@ def _paint_bot_zone_flat(arr: np.ndarray, zmask: np.ndarray,
 
 
 def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
-                arm_ref=None, is_skirt=False, skirt_shade_map=None):
+                arm_ref=None, is_skirt=False, skirt_shade_map=None, is_denim=False):
     """존별로 다른 레퍼런스 텍스처를 사용해 HSV 색조 변환 적용.
-    팔 UV 영역은 arm_ref, 몸통은 body_ref, 다리/신발은 bot_ref 사용."""
+    팔 UV 영역은 arm_ref, 몸통은 body_ref, 다리/신발은 bot_ref 사용.
+    is_denim=True: 하의 bottom 존을 레퍼런스 V맵으로 재채색 (텍스처 보존)."""
     if arm_ref is None:
         arm_ref = body_ref
 
@@ -875,9 +876,13 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
         mv = zone_maxv.get(zone, 1.0)
 
         if zone in _BOT_ZONES:
-            _paint_bot_zone_flat(arr, zmask, target_rgb,
-                                 use_pleat=(is_skirt and zone == "bottom"),
-                                 skirt_shade_map=skirt_shade_map if (is_skirt and zone == "bottom") else None)
+            if zone == "bottom" and is_denim:
+                # 청바지/청반바지: 레퍼런스 V맵으로 텍스처 재채색 (상의와 동일 방식)
+                _paint_zone_pixels(zmask, bot_v, bot_valid, target_rgb, mv)
+            else:
+                _paint_bot_zone_flat(arr, zmask, target_rgb,
+                                     use_pleat=(is_skirt and zone == "bottom"),
+                                     skirt_shade_map=skirt_shade_map if (is_skirt and zone == "bottom") else None)
         elif zone in _TOP_ZONES:
             # 팔 UV: sleeve 색이 별도로 있으면 그것 사용, 없으면 target_rgb
             # (V<0.05 검정 픽셀 필터는 _paint_zone_pixels 내부에서 일괄 처리)
@@ -955,8 +960,11 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
                 _paint_mask(arr, tmp, body_ref, leg_ref, shirt_zone_colors, base_maxv, arm_ref,
                             is_skirt=is_skirt, skirt_shade_map=skirt_shade_map)
 
+    _DENIM_KWS = ["청바지", "청반바지", "데님", "denim", "jean", "jeans"]
+    is_denim = any(k in bot_style_raw for k in _DENIM_KWS)
+
     _paint_mask(arr, mask_arr, body_ref, leg_ref, zone_colors, zone_maxv, arm_ref,
-                is_skirt=is_skirt, skirt_shade_map=skirt_shade_map)
+                is_skirt=is_skirt, skirt_shade_map=skirt_shade_map, is_denim=is_denim)
 
     # 악세서리 오버레이 적용
     # 벨트는 상의(셔츠/재킷)가 덮는 위치에선 가려지는 게 자연스럽다.
