@@ -329,6 +329,20 @@ def _hex_to_rgb(hex_str) -> np.ndarray:
     return np.array([128, 128, 128], dtype=np.float32)
 
 
+# 의상 패턴 키워드 — 민무늬 입력에 패턴 레퍼런스가 선택되는 것을 막기 위함.
+# 레퍼런스 텍스처의 체크·줄무늬는 HSV 재채색 후에도 격자 음영으로 남아
+# 흰색 등 단색 의상을 더럽힌다.
+_PATTERN_KWS = [
+    "체크", "플래드", "plaid", "check", "스트라이프", "stripe", "줄무늬",
+    "격자", "타탄", "tartan", "도트", "폴카", "물방울", "아가일", "argyle",
+    "패턴", "pattern", "꽃무늬", "floral", "레이어드",
+]
+
+def _has_pattern(text: str) -> bool:
+    t = (text or "").lower()
+    return any(k in t for k in _PATTERN_KWS)
+
+
 def _score_ref_top(fname: str, features: dict) -> float:
     """상의 기준 유사도 점수"""
     tag = _REF_TAGS.get(fname, {})
@@ -356,6 +370,12 @@ def _score_ref_top(fname: str, features: dict) -> float:
     t = np.array(top_rgb, dtype=np.float32)
     color_dist = float(np.sum((ref_top_rgb - t) ** 2))
     score += max(0.0, 10.0 - color_dist / 3000.0)
+
+    # 패턴 회피: 입력이 민무늬인데 레퍼런스가 체크·줄무늬 등 패턴이면 큰 페널티.
+    # (입력에도 패턴 키워드가 있으면 정상 매칭이므로 페널티 없음)
+    ref_has_pattern = _has_pattern(ref_top) or any(_has_pattern(rt) for rt in ref_tags)
+    if ref_has_pattern and not _has_pattern(top_style):
+        score -= 30.0
     return score
 
 
