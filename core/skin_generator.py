@@ -68,7 +68,7 @@ def detect_zone(r: int, g: int, b: int) -> str:
 _SHADE_REGIONS = [
     # 몸통
     (20, 16,  8,  4, 0.90),  # body top
-    (28, 16,  8,  4, 0.75),  # body bottom (몸통 하단면 — 다리 접합부)
+    (28, 16,  8,  4, 0.92),  # body bottom (몸통 하단면 — 다리 접합부, 엉덩이 선 최소화)
     (16, 20,  4, 12, 0.80),  # body right
     (20, 20,  8, 12, 1.00),  # body front
     (28, 20,  4, 12, 0.80),  # body left
@@ -971,9 +971,14 @@ def _fill_back_faces(arr: np.ndarray):
     팔(뒤/내측/외측)은 force=True → 무조건 앞면 복사 (단색 버그 근본 차단).
     몸통·다리 뒷면은 force=False → 단색(std<22)일 때만 복사 (정상 텍스처 보존)."""
     # (앞면 x,y,w,h), (대상면 x,y,w,h), 어둡기 배율, 강제복사 여부
-    # 팔 뒷면/옆면: 레퍼런스 텍스처 + shade_map으로 처리하므로 강제복사 제거
     PAIRS = [
         ((20, 20, 8, 12), (32, 20, 8, 12), 0.68, False),  # 몸통 앞→뒤
+        ((44, 20, 4, 12), (52, 20, 4, 12), 0.72, True),   # 오른팔 앞→뒤
+        ((44, 20, 4, 12), (40, 20, 4, 12), 0.85, True),   # 오른팔 앞→내측
+        ((44, 20, 4, 12), (48, 20, 4, 12), 0.85, True),   # 오른팔 앞→외측
+        ((36, 52, 4, 12), (44, 52, 4, 12), 0.72, True),   # 왼팔  앞→뒤
+        ((36, 52, 4, 12), (32, 52, 4, 12), 0.85, True),   # 왼팔  앞→내측
+        ((36, 52, 4, 12), (40, 52, 4, 12), 0.85, True),   # 왼팔  앞→외측
         (( 4, 20, 4, 12), (12, 20, 4, 12), 0.72, False),  # 오른다리 앞→뒤
         ((20, 52, 4, 12), (28, 52, 4, 12), 0.72, False),  # 왼다리  앞→뒤
     ]
@@ -1099,15 +1104,20 @@ def load_hair_base(hair_style: str = "", hair_bangs: str = "") -> list:
     ]
 
 
-def recolor_hair_base(hair_arr: np.ndarray, target_rgb: tuple) -> np.ndarray:
-    """numpy 벡터화: 헤어 베이스 V값으로 타겟 색상 밝기 스케일"""
+def recolor_hair_base(hair_arr: np.ndarray, target_rgb: tuple,
+                      v_floor: float = 0.0) -> np.ndarray:
+    """numpy 벡터화: 헤어 베이스 V값으로 타겟 색상 밝기 스케일.
+    v_floor: 명암 하한 (0=원본, 0.38=앞머리 권장). [v_floor, 1]로 압축해 그림자 완화."""
     valid = hair_arr[:, :, 3] > 10
     v_map = _np_rgb2v(hair_arr[:, :, :3])
     max_v = float(v_map[valid].max()) if valid.any() else 1.0
     if max_v < 0.01:
         max_v = 1.0
 
-    brightness = np.clip(v_map / max_v * BRIGHTNESS_BOOST, 0.0, 1.0)  # (64,64)
+    norm_v = np.clip(v_map / max_v, 0.0, 1.0)
+    if v_floor > 0.0:
+        norm_v = v_floor + (1.0 - v_floor) * norm_v
+    brightness = np.clip(norm_v * BRIGHTNESS_BOOST, 0.0, 1.0)
     result = hair_arr.copy()
     for c, col_val in enumerate(target_rgb):
         channel = np.clip(col_val * brightness, 0, 255).astype(np.uint8)
@@ -1182,13 +1192,15 @@ def _apply_neckline(arr: np.ndarray, skin_base: np.ndarray, neck_style: str):
         arr[y, x] = skin_base[y, x]
 
 
+_BANGS_V_FLOOR = 0.38  # 앞머리 명암 하한 — 그림자가 너무 진하지 않도록
+
 def draw_hair_bangs_only(arr: np.ndarray, hair_rgb: tuple, hair_bangs: str):
     """앞머리(뱅) 레이어만 합성 (머리카락 최상단)"""
     bangs_name = HAIR_BANGS_MAP.get((hair_bangs or "").strip(), HAIR_BANGS_FALLBACK)
     p = BASESKIN_DIR / bangs_name
     if p.exists():
         base_arr = np.array(Image.open(p).convert("RGBA"), dtype=np.uint8)
-        colored = recolor_hair_base(base_arr, hair_rgb)
+        colored = recolor_hair_base(base_arr, hair_rgb, v_floor=_BANGS_V_FLOOR)
         _composite_layer(arr, colored)
 
 
