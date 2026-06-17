@@ -1026,7 +1026,7 @@
   },
   "reference (70).png": {
     "top_style": "체크 셔츠와 베스트",
-    "bottom_style": "청바지",
+    "bottom_style": "긴 바지",
     "top_color": "#8F552C",
     "bottom_color": "#394A57",
     "style_tags": [
@@ -1720,7 +1720,7 @@
   },
   "reference (92).png": {
     "top_style": "검정 긴팔 티셔츠, 데님 재킷",
-    "bottom_style": "청바지",
+    "bottom_style": "긴 바지",
     "top_color": "#3A5172",
     "bottom_color": "#2E445E",
     "style_tags": [
@@ -1728,8 +1728,7 @@
       "데님",
       "레이어드",
       "스트릿",
-      "활동적인",
-      "청바지"
+      "활동적인"
     ],
     "gender": "남성",
     "formality": "캐주얼"
