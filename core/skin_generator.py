@@ -524,12 +524,60 @@ def _best_ref(score_fn, features: dict, fallback: str) -> str:
     return best_fname, best_score
 
 
+# 의상이 칠해지는 UV 면 (앞/뒤/좌/우) — 레퍼런스 텍스처 정규화 대상
+_CLOTH_FACES = [
+    (20, 20, 8, 12), (32, 20, 8, 12), (16, 20, 4, 12), (28, 20, 4, 12),  # 몸통
+    (44, 20, 4, 12), (52, 20, 4, 12), (40, 20, 4, 12), (48, 20, 4, 12),  # 오른팔
+    (36, 52, 4, 12), (44, 52, 4, 12), (32, 52, 4, 12), (40, 52, 4, 12),  # 왼팔(L1)
+    ( 4, 20, 4, 12), (12, 20, 4, 12), ( 0, 20, 4, 12), ( 8, 20, 4, 12),  # 오른다리
+    (20, 52, 4, 12), (28, 52, 4, 12), (16, 52, 4, 12), (24, 52, 4, 12),  # 왼다리(L1)
+]
+
+
+def _normalize_ref_clothing(arr: np.ndarray) -> np.ndarray:
+    """의상 UV 면별로 극단 이상치(가장자리 그림자·UV 경계 검정)의 밝기를 완화.
+    단색 의상 재채색 시 검정 줄·점 아티팩트를 원천 차단하되, 정상 음영·
+    체크무늬·진짜 검정 옷은 보존한다. 면별로:
+    - 면 대부분(70%+)이 순검정이면 진짜 검정 옷 → 그대로 보존
+    - 그 외엔 순검정(V<0.04) 노이즈를 정상 중앙값으로 끌어올림
+    - 면이 밝으면(중앙값≥0.15) 중앙값의 45% 미만 그림자도 62%로 완화"""
+    out = arr.copy()
+    v = arr[:, :, :3].max(axis=-1).astype(np.float32) / 255.0
+    for (x, y, w, h) in _CLOTH_FACES:
+        valid = out[y:y+h, x:x+w, 3] > 10
+        if int(valid.sum()) < 4:
+            continue
+        vv = v[y:y+h, x:x+w]
+        nonblack = valid & (vv >= 0.04)
+        if nonblack.sum() / max(int(valid.sum()), 1) < 0.30:
+            continue  # 면 대부분 검정 = 진짜 검정 옷, 보존
+        med = float(np.median(vv[nonblack]))
+        # 밝은 면이면 그림자 이상치까지, 아니면 순검정 노이즈만 대상
+        if med >= 0.15:
+            thresh, floor = med * 0.45, med * 0.62
+        else:
+            thresh, floor = 0.04, med
+        ys, xs = np.where(valid & (vv < thresh))
+        for yy, xx in zip(ys, xs):
+            gy, gx = y + yy, x + xx
+            cur = float(v[gy, gx])
+            if cur < 0.04:                      # 순검정 노이즈 → 무채색 회색
+                g = int(np.clip(floor * 255, 0, 255))
+                out[gy, gx, :3] = (g, g, g)
+            else:                               # 어두운 이상치 → floor 밝기로 스케일
+                sc = floor / cur
+                out[gy, gx, :3] = np.clip(
+                    out[gy, gx, :3].astype(np.float32) * sc, 0, 255).astype(np.uint8)
+    return out
+
+
 def _load_ref(fname: str) -> np.ndarray:
     if fname not in _REF_SKIN_CACHE:
         path = BASESKIN_DIR / fname
         if not path.exists():
             path = BASESKIN_DIR / _REF_FALLBACK
-        _REF_SKIN_CACHE[fname] = np.array(Image.open(path).convert("RGBA"), dtype=np.uint8)
+        arr = np.array(Image.open(path).convert("RGBA"), dtype=np.uint8)
+        _REF_SKIN_CACHE[fname] = _normalize_ref_clothing(arr)
     return _REF_SKIN_CACHE[fname]
 
 
