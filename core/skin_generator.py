@@ -20,11 +20,16 @@ BRIGHTNESS_BOOST = 1.30  # 의상·머리 밝기 배율 (1.0 = 원본, 높을수
 def _np_hsv_recolor(rgb_u8: np.ndarray, alpha: np.ndarray,
                     t_h: float, t_s: float,
                     ref_v: np.ndarray, max_v: float,
-                    t_v: float, shade_map: np.ndarray = None) -> np.ndarray:
+                    t_v: float, shade_map: np.ndarray = None,
+                    v_floor: float = 0.0) -> np.ndarray:
     """ref_v 밝기를 유지하며 HSV 색조를 (t_h, t_s)로 교체. (H,W,3) uint8 반환.
     shade_map: 면별 음영 배율 (None이면 미적용). 밝은 의상(흰색 등)이 밝기
-    보정으로 saturate되어 음영이 사라지는 것을 면별 셰이드로 보정."""
+    보정으로 saturate되어 음영이 사라지는 것을 면별 셰이드로 보정.
+    v_floor: 레퍼런스 명암 대비 압축 하한 (0=원본). 일부 레퍼런스의 몸통
+    양옆 깊은 그림자가 흰옷에서 검정 세로 줄로 남는 것을 [v_floor,1]로 압축해 완화."""
     norm_v = np.clip(ref_v / max(max_v, 0.01), 0.0, 1.0)
+    if v_floor > 0.0:
+        norm_v = v_floor + (1.0 - v_floor) * norm_v
     final_v = norm_v * max(t_v, 0.15) * BRIGHTNESS_BOOST
     if shade_map is not None:
         final_v = final_v * shade_map
@@ -739,7 +744,7 @@ def _paint_mask(arr, mask_arr, body_ref, bot_ref, zone_colors, zone_maxv,
         if has_ref.any():
             rgb_out = _np_hsv_recolor(arr[:, :, :3], arr[:, :, 3],
                                       t_h, t_s, ref_v_map, mv, t_v,
-                                      shade_map=_SHADE_MAP)
+                                      shade_map=_SHADE_MAP, v_floor=0.45)
             ys, xs = np.where(has_ref)
             arr[ys, xs, :3] = rgb_out[ys, xs]
             arr[ys, xs, 3]  = 255
