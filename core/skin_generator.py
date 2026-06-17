@@ -1007,6 +1007,19 @@ def apply_mask_clothing(arr: np.ndarray, features: dict,
     _paint_mask(arr, mask_arr, body_ref, leg_ref, zone_colors, zone_maxv, arm_ref,
                 is_skirt=is_skirt, skirt_shade_map=skirt_shade_map, is_denim=is_denim)
 
+    # 치마류: 마스크가 커버하지 않는 다리 측면·뒷면 픽셀을 shoes_color로 채움.
+    # 짧은치마 마스크는 다리 UV y=23~31 구간을 어떤 존에도 넣지 않아
+    # 베이스 스킨 살색이 세로 줄기(선)처럼 노출되는 버그를 방지.
+    if is_skirt:
+        _zms = _build_zone_masks(mask_arr)
+        _leg_covered = _zms["bottom"] | _zms["shoes"]
+        _skirt_leg_sides = np.zeros((64, 64), dtype=bool)
+        _skirt_leg_sides[20:32, 0:16] = True   # 오른다리 4면 (y=20..32)
+        _skirt_leg_sides[52:64, 16:32] = True  # 왼다리 4면 (y=52..64)
+        _leg_uncovered = _skirt_leg_sides & ~_leg_covered
+        if _leg_uncovered.any():
+            _paint_bot_zone_flat(arr, _leg_uncovered, shoes_rgb)
+
     # 악세서리 오버레이 적용
     # 벨트는 상의(셔츠/재킷)가 덮는 위치에선 가려지는 게 자연스럽다.
     # 일반 길이 셔츠 → 벨트 안 보임, 크롭탑처럼 짧으면 → 벨트 노출.
